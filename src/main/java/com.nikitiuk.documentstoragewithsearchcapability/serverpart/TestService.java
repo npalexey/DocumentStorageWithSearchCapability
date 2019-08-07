@@ -1,4 +1,4 @@
-package com.nikitiuk.documentstoragewithsearchcapability;
+package com.nikitiuk.documentstoragewithsearchcapability.serverpart;
 
 public class TestService {
 
