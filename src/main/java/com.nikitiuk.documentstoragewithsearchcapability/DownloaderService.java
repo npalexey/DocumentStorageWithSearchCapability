@@ -16,6 +16,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -23,6 +25,7 @@ import java.util.stream.Stream;
 public class DownloaderService {
 
     private static final String PATH = "/home/npalexey/workenv/DOWNLOADED/";
+    private static ExecutorService executorService = Executors.newSingleThreadExecutor();
 
     @GET
     @Produces(MediaType.TEXT_PLAIN)
@@ -112,7 +115,16 @@ public class DownloaderService {
         } catch (IOException e) {
             throw new WebApplicationException("Error while uploading file. Please, try again");
         }
-        SolrService.indexDocumentWithSolr(parentid, URLConnection.guessContentTypeFromName(new File(PATH + parentid).getName()));
+        //String contentType = URLConnection.guessContentTypeFromName(new File(PATH + parentid).getName());
+        //SolrService.indexDocumentWithSolr(parentid, URLConnection.guessContentTypeFromName(new File(PATH + parentid).getName()));
+        Runnable addTask = () -> {
+            try {
+                SolrService.indexDocumentWithSolr(parentid, URLConnection.guessContentTypeFromName(new File(PATH + parentid).getName()));
+            } catch (IOException|SolrServerException e) {
+                throw new WebApplicationException("Error while indexing file. Please, try again");
+            }
+        };
+        executorService.execute(addTask);
         return Response.ok("Data uploaded successfully").build();
     }
 
@@ -154,7 +166,6 @@ public class DownloaderService {
             try {
                 int read = 0;
                 byte[] bytes = new byte[1024];
-
                 OutputStream out = new FileOutputStream(new File(PATH + docID));
                 while ((read = fileInputStream.read(bytes)) != -1) {
                     out.write(bytes, 0, read);
@@ -167,7 +178,15 @@ public class DownloaderService {
         } else {
             return Response.noContent().build();
         }
-        SolrService.indexDocumentWithSolr(docID, URLConnection.guessContentTypeFromName(tempFile.getName()));
+        //SolrService.indexDocumentWithSolr(docID, URLConnection.guessContentTypeFromName(tempFile.getName()));
+        Runnable putTask = () -> {
+            try {
+                SolrService.indexDocumentWithSolr(docID, URLConnection.guessContentTypeFromName(tempFile.getName()));
+            } catch (IOException|SolrServerException e) {
+                throw new WebApplicationException("Error while indexing file. Please, try again");
+            }
+        };
+        executorService.execute(putTask);
         return Response.ok("File updated successfully").build();
     }
 
@@ -177,7 +196,15 @@ public class DownloaderService {
         FileUtils.touch(new File(PATH + docID));
         File fileToDelete = FileUtils.getFile(PATH + docID);
         boolean success = FileUtils.deleteQuietly(fileToDelete);
-        SolrService.deleteDocumentFromSolrIndex(docID);
+        //SolrService.deleteDocumentFromSolrIndex(docID);
+        Runnable deleteTask = () -> {
+            try {
+                SolrService.deleteDocumentFromSolrIndex(docID);
+            } catch (IOException|SolrServerException e) {
+                throw new WebApplicationException("Error while indexing file. Please, try again");
+            }
+        };
+        executorService.execute(deleteTask);
         return Response.ok("File deleted successfully? " + success).build();
     }
 }

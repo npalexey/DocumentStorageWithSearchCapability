@@ -67,7 +67,8 @@ public class SolrService {
                 .append("\nQuery request: ").append(queryString)
                 .append("\nFound ").append(documents.getNumFound()).append(" document(s)");
         for(Map.Entry<String, Map<String, List<String>>> entry: hitHighlightedMap.entrySet()){
-            contentBuilder.append("\n\n\nIn document: ").append(entry.getKey()).append("\n\n\n")
+            contentBuilder.append("\n\n\n").append("-------------------------------------------------")
+                    .append("In document: ").append(entry.getKey()).append("\n\n\n")
                     .append(entry.getValue().get("_text_"));
         }
         return contentBuilder;
