@@ -1,5 +1,5 @@
 <html>
 <body>
-<h2>Hello World!</h2>
+<h2>Doc storage @/rest/doc/</h2>
 </body>
 </html>

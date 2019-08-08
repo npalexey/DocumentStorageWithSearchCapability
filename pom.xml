@@ -9,7 +9,7 @@
     <version>1.0-SNAPSHOT</version>
     <packaging>war</packaging>
     <name>DocumentStorageWithSearchCapability</name>
-    <description>Yet to add</description>
+    <description>Pretty simple doc storage, tho capable of searching in doc's content</description>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <jersey.version>2.27</jersey.version>

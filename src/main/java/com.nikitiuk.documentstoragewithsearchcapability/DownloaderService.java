@@ -1,4 +1,4 @@
-package com.nikitiuk.documentstoragewithsearchcapability.serverpart;
+package com.nikitiuk.documentstoragewithsearchcapability;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -27,18 +27,22 @@ public class DownloaderService {
     @GET
     @Produces(MediaType.TEXT_PLAIN)
     public Response showFilesInDoc() {
-        StringBuilder contentBuilder = new StringBuilder();
+        StringBuilder contentBuilder = new StringBuilder("Files in storage:\n");
         try (Stream<java.nio.file.Path> walk = Files.walk(Paths.get(PATH))) {
-
             List<String> result = walk.map(x -> x.toString())
-                    .filter(f -> f.endsWith(".doc") || f.endsWith(".pdf") || f.endsWith(".txt")).collect(Collectors.toList());
-
-            //result.forEach(System.out::println);
-            for (String document : result) {
-                contentBuilder.append(document).append("\n");
+                    .filter(f -> f.endsWith(".doc") || f.endsWith(".docx")
+                            || f.endsWith(".pdf") || f.endsWith(".txt")
+                            || f.endsWith(".html") || f.endsWith(".xml"))
+                    .collect(Collectors.toList());
+            if (result.isEmpty()) {
+                contentBuilder.append("No files in storage.");
+            } else {
+                for (String document : result) {
+                    contentBuilder.append(document).append("\n");
+                }
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new WebApplicationException("Error while producing list of content.");
         }
         return Response.ok(contentBuilder.toString(), MediaType.TEXT_PLAIN).build();
     }
@@ -46,11 +50,11 @@ public class DownloaderService {
     @GET
     @Path("/{filename}/content")
     @Produces(MediaType.TEXT_PLAIN)
-    public Response showContentOfFile(@PathParam("filename") String name) {
+    public Response showContentOfFile(@PathParam("filename") String filename) {
         StringBuilder contentBuilder = new StringBuilder();
-        if (name.endsWith(".pdf")) {
+        if (filename.endsWith(".pdf")) {
             try {
-                PDDocument document = PDDocument.load(new File(PATH + name));
+                PDDocument document = PDDocument.load(new File(PATH + filename));
                 if (!document.isEncrypted()) {
                     PDFTextStripper stripper = new PDFTextStripper();
                     String text = stripper.getText(document);
@@ -58,27 +62,25 @@ public class DownloaderService {
                 }
                 document.close();
             } catch (IOException e) {
-                e.printStackTrace();
+                throw new WebApplicationException("Error while getting content of " + filename + ". Please, try again");
             }
         } else {
-            try (Stream<String> stream = Files.lines(Paths.get(PATH + name), StandardCharsets.UTF_8)) {
+            try (Stream<String> stream = Files.lines(Paths.get(PATH + filename), StandardCharsets.UTF_8)) {
                 stream.forEach(s -> contentBuilder.append(s).append("\n"));
             } catch (IOException e) {
-                e.printStackTrace();
+                throw new WebApplicationException("Error while getting content of " + filename + ". Please, try again");
             }
         }
-
-
         return Response.ok(contentBuilder.toString(), MediaType.TEXT_PLAIN).build();
     }
 
     @GET
     @Path("/{filename}")
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
-    public Response downloadFile(@PathParam("filename") String name) throws Exception {
+    public Response downloadFile(@PathParam("filename") String filename) throws Exception {
         StreamingOutput fileStream = output -> {
             try {
-                java.nio.file.Path path = Paths.get(PATH + name);
+                java.nio.file.Path path = Paths.get(PATH + filename);
                 byte[] data = Files.readAllBytes(path);
                 output.write(data);
                 output.flush();
@@ -88,7 +90,7 @@ public class DownloaderService {
         };
         return Response
                 .ok(fileStream, MediaType.APPLICATION_OCTET_STREAM)
-                .header("content-disposition", "attachment; filename = " + name)
+                .header("content-disposition", "attachment; filename = " + filename)
                 .build();
     }
 
@@ -101,7 +103,6 @@ public class DownloaderService {
         try {
             int read = 0;
             byte[] bytes = new byte[1024];
-
             OutputStream out = new FileOutputStream(new File(PATH + parentid));//fileMetaData.getFileName()
             while ((read = fileInputStream.read(bytes)) != -1) {
                 out.write(bytes, 0, read);
@@ -109,9 +110,8 @@ public class DownloaderService {
             out.flush();
             out.close();
         } catch (IOException e) {
-            throw new WebApplicationException("Error while uploading file. Please try again");
+            throw new WebApplicationException("Error while uploading file. Please, try again");
         }
-
         SolrService.indexDocumentWithSolr(parentid, URLConnection.guessContentTypeFromName(new File(PATH + parentid).getName()));
         return Response.ok("Data uploaded successfully").build();
     }
@@ -135,13 +135,12 @@ public class DownloaderService {
     @Path("/search")
     @Produces(MediaType.TEXT_PLAIN)
     public Response searchInEveryFileWithStringQuery(@DefaultValue("") @QueryParam("query") String query) {
-        StringBuilder contentBuilder = new StringBuilder("");
-        try{
-            contentBuilder.append(SolrService.searchAndReturnDocsAndHighlightedText(query));
-        } catch (IOException|SolrServerException e){
-            throw new WebApplicationException("Error while searching. Please try again");
+        StringBuilder contentBuilder = new StringBuilder("Nothing was found");
+        try {
+            contentBuilder.append(SolrService.searchAndReturnDocsAndHighlightedText(query)).delete(0, 18);
+        } catch (IOException | SolrServerException e) {
+            throw new WebApplicationException("Error while searching. Please, try again");
         }
-
         return Response.ok(contentBuilder.toString(), MediaType.TEXT_PLAIN).build();
     }
 
@@ -156,20 +155,18 @@ public class DownloaderService {
                 int read = 0;
                 byte[] bytes = new byte[1024];
 
-                OutputStream out = new FileOutputStream(new File(PATH + docID));//fileMetaData.getFileName()
+                OutputStream out = new FileOutputStream(new File(PATH + docID));
                 while ((read = fileInputStream.read(bytes)) != -1) {
                     out.write(bytes, 0, read);
                 }
                 out.flush();
                 out.close();
-
             } catch (IOException e) {
-                throw new WebApplicationException("Error while updating file. Please try again");
+                throw new WebApplicationException("Error while updating file. Please, try again");
             }
         } else {
             return Response.noContent().build();
         }
-
         SolrService.indexDocumentWithSolr(docID, URLConnection.guessContentTypeFromName(tempFile.getName()));
         return Response.ok("File updated successfully").build();
     }
@@ -180,9 +177,7 @@ public class DownloaderService {
         FileUtils.touch(new File(PATH + docID));
         File fileToDelete = FileUtils.getFile(PATH + docID);
         boolean success = FileUtils.deleteQuietly(fileToDelete);
-
-        SolrService.deletDocumentFromSolrIndex(docID);
+        SolrService.deleteDocumentFromSolrIndex(docID);
         return Response.ok("File deleted successfully? " + success).build();
     }
 }
-

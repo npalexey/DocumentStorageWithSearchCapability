@@ -3,9 +3,9 @@
         "http://java.sun.com/dtd/web-app_2_3.dtd" >
 
 <web-app>
-    <display-name>Some Name To Display</display-name>
+    <display-name>Document Storage</display-name>
     <servlet>
-        <servlet-name>Test Jersey Service</servlet-name>
+        <servlet-name>Document Storage</servlet-name>
         <!-- For Jersey 1.x -->
         <!-- <servlet-class>com.sun.jersey.spi.container.servlet.ServletContainer</servlet-class> -->
         <!-- For Jersey 2.x -->
@@ -24,7 +24,7 @@
         <load-on-startup>1</load-on-startup>
     </servlet>
     <servlet-mapping>
-        <servlet-name>Test Jersey Service</servlet-name>
+        <servlet-name>Document Storage</servlet-name>
         <url-pattern>/rest/*</url-pattern>
     </servlet-mapping>
 </web-app>
