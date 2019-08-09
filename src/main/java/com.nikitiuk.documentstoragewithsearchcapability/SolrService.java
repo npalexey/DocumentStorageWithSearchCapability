@@ -59,6 +59,7 @@ public class SolrService {
         return formDocsAndHighlightText(response, queryString);
     }
 
+
     private static StringBuilder formDocsAndHighlightText(QueryResponse response, String queryString) {
         Map<String, Map<String, List<String>>> hitHighlightedMap = response.getHighlighting();
         SolrDocumentList documents = response.getResults();
