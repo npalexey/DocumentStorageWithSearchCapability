@@ -1,0 +1,30 @@
+<!DOCTYPE html SYSTEM "http://www.thymeleaf.org/dtd/xhtml1-strict-thymeleaf-4.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Document Storage</title>
+</head>
+
+<body>
+<table>
+    <tbody>
+<!--    <tr th:if="${inStorage.empty}">-->
+<!--        <td colspan="2"> No Documents Available </td>-->
+<!--    </tr>-->
+    <tr th:each="entry : ${inStorage}">
+        <td><span th:utext="${entry}">Document Title</span></td>
+    </tr>
+    </tbody>
+</table>
+<!--<p th:utext="${inStorageContentBuilder}"> Document Title </p>-->
+</body>
+</html>
+<!--<body>-->
+<!--<section th:fragment="fragment1">-->
+<!--    <div th:text="${message}" />-->
+<!--</section>-->
+
+<!--<section th:fragment="fragment2">-->
+<!--    <div th:text="${message}" />-->
+<!--</section>-->
+<!--</body>-->

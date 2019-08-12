@@ -44,8 +44,8 @@ public class SolrService {
         query.setParam("hl.method", "original");          //default original, other: unified, fastVector
         //query.setParam("hl.bs.type", "LINE");                          //if unified method was chosen
         //query.setParam("hl.mergeContiguous", "true");
-        query.setParam("hl.simple.pre", ">>>");           //default <em>, hl.tag.pre for other than original
-        query.setParam("hl.simple.post", "<<<");          //default </em>, hl.tag.post for other
+        query.setParam("hl.simple.pre", " <span style=\"color: #011DFE; font-weight:bold;\">");  //default <em>, hl.tag.pre for other than original
+        query.setParam("hl.simple.post", "</span> ");      //default </em>, hl.tag.post for other
         query.setParam("hl.fl", "*");                     //default *, fields to search in
         query.setParam("hl.encoder", "");                 //default html
         query.setParam("hl.snippets", "10");              //default 1
