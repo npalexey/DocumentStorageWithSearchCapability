@@ -1,4 +1,4 @@
-package com.nikitiuk.documentstoragewithsearchcapability;
+package com.nikitiuk.documentstoragewithsearchcapability.services;
 
 import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.SolrQuery;
@@ -53,7 +53,7 @@ public class SolrService {
         query.setParam("hl.fragsize", "100");             //default 100
         //query.setParam("hl.usePhraseHighlighter", "false");            //default true
         //query.setStart(0);
-        //query.setRows(10);
+        query.setRows(50);
         //NamedList<Object> items = response.getResponse();
         QueryResponse response = client.query(query);
         return formDocsAndHighlightText(response, queryString);

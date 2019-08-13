@@ -1,7 +1,9 @@
-package com.nikitiuk.documentstoragewithsearchcapability;
+package com.nikitiuk.documentstoragewithsearchcapability.services;
 
+import com.nikitiuk.documentstoragewithsearchcapability.dao.DocDao;
+import com.nikitiuk.documentstoragewithsearchcapability.entities.DocBean;
+import com.nikitiuk.documentstoragewithsearchcapability.utils.ThymeleafUtil;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.FilenameUtils;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.apache.solr.client.solrj.SolrServerException;
@@ -18,46 +20,29 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Path("/doc")
-public class DownloaderService {
+public class RestService {
 
     private static final String PATH = "/home/npalexey/workenv/DOWNLOADED/";
     private static ExecutorService executorService = Executors.newSingleThreadExecutor();
-    private static ThymeleafService thymeleafService = new ThymeleafService();
 
     @GET
     @Produces(MediaType.TEXT_HTML)
     public Response showFilesInDoc() {
-        List<String> docList = new ArrayList<>();
-        final Context ctx = new Context();
-        docList.add("Files in storage:");
-        try (Stream<java.nio.file.Path> walk = Files.walk(Paths.get(PATH))) {
-            Set<String> allowedFormats = Stream.of("doc", "docx", "pdf", "txt", "html", "xml")
-                    .collect(Collectors.toCollection(HashSet::new));
-            List<String> result = walk.map(x -> x.toString())
-                    .filter(f -> allowedFormats.contains(FilenameUtils.getExtension(f)))
-                    .collect(Collectors.toList());
-            if (result.isEmpty()) {
-                docList.add("No files in storage.");
-            } else {
-                docList.addAll(result);
-            }
+        List<DocBean> docBeanList;
+        try {
+            docBeanList = new ArrayList<>(LocalStorageService.getDocsInPath());
         } catch (IOException e) {
-            ctx.setVariable("code", "NOT FOUND");
-            ctx.setVariable("message", "Error while producing list of content.");
-            return Response.status(404).entity(thymeleafService.getEngine().process("info", ctx)).build();
+            return ResponseService.errorResponse(404, "Error while producing list of content.");
         }
-        ctx.setVariable("inStorage", docList);
-
-        return Response.ok(thymeleafService.getEngine().process("storagehome", ctx)).build();
+        final Context ctx = new Context();
+        ctx.setVariable("inStorage", docBeanList);
+        return ResponseService.okResponseForText("storagehome", ctx);
     }
 
     @GET
@@ -65,7 +50,6 @@ public class DownloaderService {
     @Produces(MediaType.TEXT_HTML)
     public Response showContentOfFile(@PathParam("filename") String filename) {
         List<String> docContent = new ArrayList<>();
-        final Context ctx = new Context();
         if (filename.endsWith(".pdf")) {
             try {
                 PDDocument document = PDDocument.load(new File(PATH + filename));
@@ -78,9 +62,7 @@ public class DownloaderService {
                 }
                 document.close();
             } catch (IOException e) {
-                ctx.setVariable("code", "NOT FOUND");
-                ctx.setVariable("message", "Error while getting content of " + filename + ". Please, try again");
-                return Response.status(404).entity(thymeleafService.getEngine().process("info", ctx)).build();
+                return ResponseService.errorResponse(404, "Error while getting content of " + filename + ". Please, try again");
             }
         } else {
             try (Stream<String> stream = Files.lines(Paths.get(PATH + filename), StandardCharsets.UTF_8)) {
@@ -88,14 +70,13 @@ public class DownloaderService {
                     docContent.add(s.replace(" ", "&nbsp;") + "<br />");
                 });
             } catch (IOException e) {
-                ctx.setVariable("code", "NOT FOUND");
-                ctx.setVariable("message", "Error while getting content of " + filename + ". Please, try again");
-                return Response.status(404).entity(thymeleafService.getEngine().process("info", ctx)).build();
+                return ResponseService.errorResponse(404, "Error while getting content of " + filename + ". Please, try again");
             }
         }
+        final Context ctx = new Context();
         ctx.setVariable("docContent", docContent);
         ctx.setVariable("fileName", filename);
-        return Response.ok(thymeleafService.getEngine().process("content", ctx)).build();
+        return ResponseService.okResponseForText("content", ctx);
     }
 
     @GET
@@ -112,10 +93,7 @@ public class DownloaderService {
                 throw new WebApplicationException("File Not Found");
             }
         };
-        return Response
-                .ok(fileStream, MediaType.APPLICATION_OCTET_STREAM)
-                .header("content-disposition", "attachment; filename = " + filename)
-                .build();
+        return ResponseService.okResponseForFile(fileStream , filename);
     }
 
     @POST
@@ -139,12 +117,13 @@ public class DownloaderService {
         Runnable addTask = () -> {
             try {
                 SolrService.indexDocumentWithSolr(parentid, URLConnection.guessContentTypeFromName(new File(PATH + parentid).getName()));
+                DocDao.saveDocument(new DocBean(parentid, PATH + parentid));
             } catch (IOException | SolrServerException e) {
                 throw new WebApplicationException("Error while indexing file. Please, try again");
             }
         };
         executorService.execute(addTask);
-        return Response.ok("Data uploaded successfully").build();
+        return ResponseService.okResponseSimple("Data uploaded successfully");
     }
 
     @POST
@@ -152,16 +131,14 @@ public class DownloaderService {
     @Produces(MediaType.TEXT_HTML)
     public Response searchInEveryFileWithStringQuery(@DefaultValue("") @QueryParam("query") String query) {
         StringBuilder contentBuilder = new StringBuilder("Nothing was found");
-        final Context ctx = new Context();
         try {
             contentBuilder.append(SolrService.searchAndReturnDocsAndHighlightedText(query)).delete(0, 18);
         } catch (IOException | SolrServerException e) {
-            ctx.setVariable("code", "NOT FOUND");
-            ctx.setVariable("message", "Error while searching for: " + query + ". Please, try again");
-            return Response.status(404).entity(thymeleafService.getEngine().process("info", ctx)).build();
+            return ResponseService.errorResponse(404, "Error while searching for: " + query + ". Please, try again");
         }
+        final Context ctx = new Context();
         ctx.setVariable("searchResult", contentBuilder.toString().replace("\n", "<br/>"));
-        return Response.ok(thymeleafService.getEngine().process("search", ctx)).build();
+        return ResponseService.okResponseForText("search", ctx);
     }
 
     @PUT
@@ -194,7 +171,7 @@ public class DownloaderService {
             }
         };
         executorService.execute(putTask);
-        return Response.ok("File updated successfully").build();
+        return ResponseService.okResponseSimple("File updated successfully");
     }
 
     @DELETE
@@ -204,22 +181,21 @@ public class DownloaderService {
         FileUtils.touch(new File(PATH + docID));
         File fileToDelete = FileUtils.getFile(PATH + docID);
         boolean success = FileUtils.deleteQuietly(fileToDelete);
-        final Context ctx = new Context();
         Runnable deleteTask = () -> {
             try {
                 SolrService.deleteDocumentFromSolrIndex(docID);
+                DocDao.deleteDocument(new DocBean(docID, PATH + docID));
             } catch (IOException | SolrServerException e) {
                 throw new WebApplicationException("Error while indexing file. Please, try again");
             }
         };
         executorService.execute(deleteTask);
+        final Context ctx = new Context();
         if (success) {
             ctx.setVariable("code", "OK");
             ctx.setVariable("message", "File deleted successfully");
-            return Response.ok(thymeleafService.getEngine().process("info", ctx)).build();
+            return ResponseService.okResponseForText("info", ctx);
         }
-        ctx.setVariable("code", "NOT FOUND");
-        ctx.setVariable("message", "Error occurred while deleting the file " + docID);
-        return Response.status(404).entity(thymeleafService.getEngine().process("info", ctx)).build();
+        return ResponseService.errorResponse(404, "Error occurred while deleting the file " + docID);
     }
 }

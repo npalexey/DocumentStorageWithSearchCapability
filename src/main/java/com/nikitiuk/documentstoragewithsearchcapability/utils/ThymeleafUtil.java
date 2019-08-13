@@ -1,4 +1,4 @@
-package com.nikitiuk.documentstoragewithsearchcapability;
+package com.nikitiuk.documentstoragewithsearchcapability.utils;
 
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
@@ -7,12 +7,12 @@ import org.thymeleaf.templateresolver.ITemplateResolver;
 import java.util.HashSet;
 import java.util.Set;
 
-public class ThymeleafService {
+public class ThymeleafUtil {
 
     private ClassLoaderTemplateResolver resolver;
     private TemplateEngine engine;
 
-    public ThymeleafService() {
+    public ThymeleafUtil() {
         this.resolver = new ClassLoaderTemplateResolver();
 
         resolver.setCacheable(false);

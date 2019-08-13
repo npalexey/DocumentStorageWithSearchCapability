@@ -1,5 +1,6 @@
 package com.nikitiuk.documentstoragewithsearchcapability;
 
+import com.nikitiuk.documentstoragewithsearchcapability.services.RestService;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.media.multipart.file.FileDataBodyPart;
@@ -15,13 +16,11 @@ import javax.ws.rs.core.Response;
 import java.io.File;
 import java.io.IOException;
 
-import static org.junit.jupiter.api.Assertions.*;
-
-class DownloaderServiceTest {
+class RestServiceTest {
 
     @Test
     void downloadFileTest() {
-        Logger logger = LoggerFactory.getLogger(DownloaderService.class);
+        Logger logger = LoggerFactory.getLogger(RestService.class);
         try {
             Client client = ClientBuilder.newBuilder().register(MultiPartFeature.class).build();
             FileDataBodyPart filePart = new FileDataBodyPart("file", new File("/home/npalexey/Downloads/codeconventions-150003.pdf"));

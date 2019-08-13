@@ -1,4 +1,4 @@
-package com.nikitiuk.documentstoragewithsearchcapability;
+package com.nikitiuk.documentstoragewithsearchcapability.services;
 
 import java.io.File;
 
