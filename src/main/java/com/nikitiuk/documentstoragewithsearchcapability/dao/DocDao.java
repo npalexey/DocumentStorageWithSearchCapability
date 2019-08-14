@@ -5,8 +5,12 @@ import org.hibernate.Session;
 import org.hibernate.Transaction;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.DocBean;
 import com.nikitiuk.documentstoragewithsearchcapability.utils.HibernateUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class DocDao {
+
+    private static final Logger logger =  LoggerFactory.getLogger(DocDao.class);
 
     public static void populateTableWithDocs(List<DocBean> docBeanList, Session session) {
         for (DocBean docBean : docBeanList) {
@@ -22,7 +26,7 @@ public class DocDao {
                 if (transaction != null) {
                     transaction.rollback();
                 }
-                e.printStackTrace();
+                logger.error("Error at DocDao populate: ", e);
             }
         }
     }
@@ -47,7 +51,7 @@ public class DocDao {
             if (transaction != null) {
                 transaction.rollback();
             }
-            e.printStackTrace();
+            logger.error("Error at DocDao save: ", e);
         }
     }
 
