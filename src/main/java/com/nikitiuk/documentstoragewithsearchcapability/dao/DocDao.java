@@ -12,21 +12,24 @@ public class DocDao {
 
     private static final Logger logger =  LoggerFactory.getLogger(DocDao.class);
 
-    public static void populateTableWithDocs(List<DocBean> docBeanList, Session session) {
-        for (DocBean docBean : docBeanList) {
-            Transaction transaction = null;
-            try {
-                // start a transaction
-                transaction = session.beginTransaction();
-                // save the document object
-                session.save(docBean);
-                // commit transaction
-                transaction.commit();
-            } catch (Exception e) {
-                if (transaction != null) {
-                    transaction.rollback();
+    public static void populateTableWithDocs(List<DocBean> docBeanList) {
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            List<DocBean> beanList = session.createQuery("FROM DocBean", DocBean.class).list();
+            for (DocBean docBean : docBeanList) {
+                Transaction transaction = null;
+                try {
+                    // start a transaction
+                    transaction = session.beginTransaction();
+                    // save the document object
+                    session.saveOrUpdate(docBean);
+                    // commit transaction
+                    transaction.commit();
+                } catch (Exception e) {
+                    if (transaction != null) {
+                        transaction.rollback();
+                    }
+                    logger.error("Error at DocDao populate: ", e);
                 }
-                logger.error("Error at DocDao populate: ", e);
             }
         }
     }
@@ -62,9 +65,17 @@ public class DocDao {
     }
 
     public static void deleteDocument(DocBean docBean){
+        Transaction transaction = null;
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            transaction = session.beginTransaction();
             session.createQuery("DELETE FROM DocBean WHERE name = '"
-                    + docBean.getName() + "' AND path = '" + docBean.getPath() + "' ");
+                    + docBean.getName() + "' AND path = '" + docBean.getPath() + "' ").executeUpdate();
+            transaction.commit();
+        } catch (Exception e) {
+            if (transaction != null) {
+                transaction.rollback();
+            }
+            logger.error("Error at DocDao delete: ", e);
         }
     }
 }

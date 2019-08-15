@@ -2,6 +2,7 @@ package com.nikitiuk.documentstoragewithsearchcapability.services;
 
 import com.nikitiuk.documentstoragewithsearchcapability.dao.DocDao;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.DocBean;
+import com.nikitiuk.documentstoragewithsearchcapability.utils.HibernateUtil;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.thymeleaf.context.Context;
@@ -38,6 +39,15 @@ public class RestService {
         } catch (IOException e) {
             return ResponseService.errorResponse(404, "Error while producing list of content.");
         }
+        /*Runnable getTask = () -> {
+            try {
+                HibernateUtil.getSessionFactory().openSession();
+            } catch (Exception e) {
+                throw new WebApplicationException("Error while indexing files with DB. Please, try again");
+            }
+        };
+        executorService.execute(getTask);*/
+        //Executor.updateDbInfo();
         final Context ctx = new Context();
         ctx.setVariable("inStorage", docBeanList);
         return ResponseService.okResponseForText("storagehome", ctx);

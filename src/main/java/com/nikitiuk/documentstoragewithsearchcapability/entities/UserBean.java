@@ -1,43 +1,59 @@
 package com.nikitiuk.documentstoragewithsearchcapability.entities;
 
+import org.hibernate.annotations.GenericGenerator;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.ManyToMany;
 import javax.persistence.Table;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
-@Table(name = "users")
+@Table(name = "Users")
 public class UserBean {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id", unique = true)
+    @GeneratedValue(generator = "native")
+    @GenericGenerator(name = "native", strategy = "native")
+    @Column(name = "user_id", unique = true, updatable = false, nullable = false)
     private int id;
 
-    @Column(name = "name")
+    @Column(name = "user_name")
     private String name;
 
-    @Column(name = "usergroup")
-    private String group;
+    /*@Column(name = "user_group")
+    private String group;*/
 
-    public UserBean(String name, String group) {
+    @ManyToMany(mappedBy = "users")
+    private Set<GroupBean> groups = new HashSet<>();
+
+    public UserBean(String name) {
         this.name = name;
-        this.group = group;
     }
 
     public UserBean() {
 
     }
 
-    public String getGroup() {
+    public Set<GroupBean> getGroups() {
+        return groups;
+    }
+
+    public void setGroups(Set<GroupBean> groups) {
+        this.groups = groups;
+    }
+
+    /*public String getGroup() {
         return group;
     }
 
     public void setGroup(String group) {
         this.group = group;
-    }
+    }*/
 
     public int getId() {
         return id;
@@ -57,10 +73,10 @@ public class UserBean {
 
     @Override
     public String toString() {
-        return "User [id=" + id + ", Name=" + name + ", Group=" + "]";
+        return "User [user_id=" + id + ", user_name=" + name + ", user_groups=" + groups.toString() + "]";
     }
 
     public Boolean equals(UserBean otherUserBean) {
-        return this.getName().equals(otherUserBean.getName()) && this.getGroup().equals(otherUserBean.getGroup());
+        return this.getName().equals(otherUserBean.getName()) && this.getGroups().equals(otherUserBean.getGroups());
     }
 }

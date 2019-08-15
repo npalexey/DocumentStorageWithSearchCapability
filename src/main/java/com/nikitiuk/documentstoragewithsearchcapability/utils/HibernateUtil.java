@@ -7,7 +7,9 @@ import com.nikitiuk.documentstoragewithsearchcapability.entities.DocBean;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.GroupBean;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.UserBean;
 import com.nikitiuk.documentstoragewithsearchcapability.services.LocalStorageService;
+import org.hibernate.Session;
 import org.hibernate.SessionFactory;
+import org.hibernate.Transaction;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.cfg.Configuration;
 import org.hibernate.cfg.Environment;
@@ -34,28 +36,52 @@ public class HibernateUtil {
                 settings.put(Environment.USER, "root");
                 settings.put(Environment.PASS, "deranbor8989");
                 settings.put(Environment.DIALECT, "org.hibernate.dialect.MySQL8Dialect");
-                settings.put(Environment.SHOW_SQL, "true");
+                //settings.put(Environment.USE_NEW_ID_GENERATOR_MAPPINGS, "true");
+                //settings.put(Environment.SHOW_SQL, "true");
+                //settings.put(Environment.FORMAT_SQL, "true");
+                //settings.put(Environment.USE_SQL_COMMENTS, "true");
                 settings.put(Environment.CURRENT_SESSION_CONTEXT_CLASS, "thread");
-                settings.put(Environment.HBM2DDL_AUTO, "create-drop");
+                settings.put(Environment.HBM2DDL_AUTO, "create");
+                //settings.put(Environment.UNIQUE_CONSTRAINT_SCHEMA_UPDATE_STRATEGY, "RECREATE_QUIETLY");
                 //settings.put(Environment.STORAGE_ENGINE, "");
                 configuration.setProperties(settings);
                 configuration.addAnnotatedClass(DocBean.class);
-                configuration.addAnnotatedClass(UserBean.class);
                 configuration.addAnnotatedClass(GroupBean.class);
+                configuration.addAnnotatedClass(UserBean.class);
                 ServiceRegistry serviceRegistry = new StandardServiceRegistryBuilder()
                         .applySettings(configuration.getProperties()).build();
                 sessionFactory = configuration.buildSessionFactory(serviceRegistry);
-                populateTable(sessionFactory);
+                populateTables();
             } catch (Exception e) {
-                logger.error("Exception caught while working with DB. " + e);
+                logger.error("Exception caught while creating Session Factory. " + e);
             }
         }
         return sessionFactory;
     }
 
-    private static void populateTable(SessionFactory sessionFactory) throws Exception {
-        DocDao.populateTableWithDocs(LocalStorageService.listDocumentsInPath(), sessionFactory.openSession());
-        UserDao.populateTableWithUsers(sessionFactory.openSession());
-        GroupDao.populateTableWithGroups(sessionFactory.openSession());
+    /*private static void deleteAllDataFromDb() throws Exception {
+        Transaction transaction = null;
+        try (Session session = sessionFactory.openSession()) {
+
+            // start a transaction
+            transaction = session.beginTransaction();
+            // save the document object
+            session.createSQLQuery("DROP TABLE IF EXISTS Documents, User_groups_binding, Users, Permission_groups").executeUpdate();
+            // commit transaction
+            transaction.commit();
+            //session.close();
+        } catch (Exception e) {
+            if (transaction != null) {
+                transaction.rollback();
+            }
+            logger.error("Error while dropping DB: ", e);
+        }
+    }*/
+
+    private static void populateTables() throws Exception {
+        //deleteAllDataFromDb();
+        DocDao.populateTableWithDocs(LocalStorageService.listDocumentsInPath());
+        UserDao.populateTableWithUsers();
+        GroupDao.populateTableWithGroups();
     }
 }

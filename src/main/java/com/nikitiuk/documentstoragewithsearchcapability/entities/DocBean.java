@@ -1,5 +1,7 @@
 package com.nikitiuk.documentstoragewithsearchcapability.entities;
 
+import org.hibernate.annotations.GenericGenerator;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -8,18 +10,19 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 
 @Entity
-@Table(name = "document")
+@Table(name = "Documents")
 public class DocBean {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id", unique = true)
+    @GeneratedValue(generator = "native")
+    @GenericGenerator(name = "native", strategy = "native")
+    @Column(name = "document_id", unique = true, updatable = false, nullable = false)
     private int id;
 
-    @Column(name = "name")
+    @Column(name = "document_name")
     private String name;
 
-    @Column(name = "path")
+    @Column(name = "document_path")
     private String path;
 
     public DocBean(String name, String path) {
@@ -57,7 +60,7 @@ public class DocBean {
 
     @Override
     public String toString() {
-        return "Document [id=" + id + ", Name=" + name + ", Path=" + path + "]";
+        return "Document [document_id=" + id + ", document_name=" + name + ", document_path=" + path + "]";
     }
 
     public Boolean equals(DocBean otherDocBean){
