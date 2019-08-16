@@ -1,6 +1,8 @@
-package com.nikitiuk.documentstoragewithsearchcapability.dao;
+package com.nikitiuk.documentstoragewithsearchcapability.dao.implementations;
 
 import java.util.List;
+
+import com.nikitiuk.documentstoragewithsearchcapability.dao.GenericHibernateDao;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.DocBean;
@@ -8,9 +10,13 @@ import com.nikitiuk.documentstoragewithsearchcapability.utils.HibernateUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class DocDao {
+public class DocDao extends GenericHibernateDao<DocBean> {
 
     private static final Logger logger =  LoggerFactory.getLogger(DocDao.class);
+
+    public DocDao() {
+        super(DocBean.class);
+    }
 
     public static void populateTableWithDocs(List<DocBean> docBeanList) {
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {

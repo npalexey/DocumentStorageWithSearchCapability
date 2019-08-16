@@ -1,15 +1,13 @@
 package com.nikitiuk.documentstoragewithsearchcapability.utils;
 
-import com.nikitiuk.documentstoragewithsearchcapability.dao.DocDao;
-import com.nikitiuk.documentstoragewithsearchcapability.dao.GroupDao;
-import com.nikitiuk.documentstoragewithsearchcapability.dao.UserDao;
+import com.nikitiuk.documentstoragewithsearchcapability.dao.implementations.DocDao;
+import com.nikitiuk.documentstoragewithsearchcapability.dao.implementations.GroupDao;
+import com.nikitiuk.documentstoragewithsearchcapability.dao.implementations.UserDao;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.DocBean;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.GroupBean;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.UserBean;
 import com.nikitiuk.documentstoragewithsearchcapability.services.LocalStorageService;
-import org.hibernate.Session;
 import org.hibernate.SessionFactory;
-import org.hibernate.Transaction;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.cfg.Configuration;
 import org.hibernate.cfg.Environment;

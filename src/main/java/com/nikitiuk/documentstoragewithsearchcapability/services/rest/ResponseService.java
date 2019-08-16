@@ -1,4 +1,4 @@
-package com.nikitiuk.documentstoragewithsearchcapability.services;
+package com.nikitiuk.documentstoragewithsearchcapability.services.rest;
 
 import com.nikitiuk.documentstoragewithsearchcapability.utils.ThymeleafUtil;
 import org.thymeleaf.context.Context;

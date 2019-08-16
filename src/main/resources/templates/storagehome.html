@@ -8,14 +8,20 @@
 <body>
     <table>
         <tbody>
-        <tr><td><span>Files in storage:</span></td></tr>
+        <tr><td><span><span th:text="|${entityName}s|">Entities</span> in storage:</span></td></tr>
         <tr th:if="${inStorage.empty}">
-        <td colspan="2">No Documents Available</td>
+        <td colspan="2">No <span th:text="for (GroupBean groupBean : groupBeanList) {
+                Hibernate.initialize(groupBean.getUsers());
+            }${entityName}s|">Entities</span> Available</td>
         </tr>
-        <tr th:each="entry : ${inStorage}">
+        <tr th:if="${entityName} == 'Doc'" th:each="entry : ${inStorage}">
             <td><span th:utext="${entry.path}">Document Title</span></td>
             <td><a href="content" th:href="@{~/DocumentStorageWithSearchCapability/rest/doc/{name}/content(name=${entry.name})}">Get Content</a></td>
             <td><a href="download" th:href="@{~/DocumentStorageWithSearchCapability/rest/doc/{name}(name=${entry.name})}">Download</a></td>
+        </tr>
+        <tr th:if="${entityName} == 'User'" th:each="entry : ${inStorage}">
+            <td><span th:utext="${entry.name}">User name</span></td>
+            <th:block th:each="group : ${entry.groups}"><td><span th:utext="|Group: ${group.name}, permissions: ${group.permissions}; |">User Group</span></td></th:block>
         </tr>
         </tbody>
     </table>

@@ -1,14 +1,14 @@
-package com.nikitiuk.documentstoragewithsearchcapability.services;
+package com.nikitiuk.documentstoragewithsearchcapability.services.rest;
 
-import com.nikitiuk.documentstoragewithsearchcapability.dao.DocDao;
+import com.nikitiuk.documentstoragewithsearchcapability.dao.implementations.DocDao;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.DocBean;
-import com.nikitiuk.documentstoragewithsearchcapability.utils.HibernateUtil;
+import com.nikitiuk.documentstoragewithsearchcapability.services.LocalStorageService;
+import com.nikitiuk.documentstoragewithsearchcapability.services.SolrService;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.thymeleaf.context.Context;
 
 import javax.annotation.security.PermitAll;
-import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -24,7 +24,7 @@ import java.util.concurrent.Executors;
 
 @PermitAll
 @Path("/doc")
-public class RestService {
+public class RestDocService {
 
     private static final String PATH = "/home/npalexey/workenv/DOWNLOADED/";
     private static ExecutorService executorService = Executors.newSingleThreadExecutor();
@@ -49,6 +49,7 @@ public class RestService {
         executorService.execute(getTask);*/
         //Executor.updateDbInfo();
         final Context ctx = new Context();
+        ctx.setVariable("entityName", "Document");
         ctx.setVariable("inStorage", docBeanList);
         return ResponseService.okResponseForText("storagehome", ctx);
     }

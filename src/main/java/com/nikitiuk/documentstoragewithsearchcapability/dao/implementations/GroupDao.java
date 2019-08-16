@@ -1,8 +1,10 @@
-package com.nikitiuk.documentstoragewithsearchcapability.dao;
+package com.nikitiuk.documentstoragewithsearchcapability.dao.implementations;
 
+import com.nikitiuk.documentstoragewithsearchcapability.dao.GenericHibernateDao;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.GroupBean;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.UserBean;
 import com.nikitiuk.documentstoragewithsearchcapability.utils.HibernateUtil;
+import org.hibernate.Hibernate;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.slf4j.Logger;
@@ -10,12 +12,12 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
-public class GroupDao {
+public class GroupDao extends GenericHibernateDao<GroupBean> {
 
     private static final Logger logger =  LoggerFactory.getLogger(GroupDao.class);
     public static List<GroupBean> groupList = new ArrayList<>();
     static {
-        groupList.add(new GroupBean("ADMIN", "rwd"));
+        groupList.add(new GroupBean("ADMINS", "rwd"));
         groupList.add(new GroupBean("USERS", "rw"));
         groupList.add(new GroupBean("GUESTS", "r"));
         Set<UserBean> userBeans0 = new HashSet<>(Collections.singletonList(UserDao.userList.get(0)));
@@ -27,6 +29,10 @@ public class GroupDao {
         groupList.get(2).setUsers(userBeans2);
     }
 
+    public GroupDao() {
+        super(GroupBean.class);
+    }
+
     public static void populateTableWithGroups() {
         try (Session session = HibernateUtil.getSessionFactory().openSession()){
             for (GroupBean groupBean : groupList) {
@@ -36,6 +42,7 @@ public class GroupDao {
                     transaction = session.beginTransaction();
                     // save the group object
                     session.saveOrUpdate(groupBean);
+                    Hibernate.initialize(groupBean.getUsers());
                     // commit transaction
                     transaction.commit();
                 } catch (Exception e) {
@@ -74,15 +81,38 @@ public class GroupDao {
     }
 
     public static List<GroupBean> getGroups() {
+        Transaction transaction = null;
+        List<GroupBean> groupBeanList = new ArrayList<>();
+        List<GroupBean> mergedList = new ArrayList<>();
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
-            return session.createQuery("FROM GroupBean", GroupBean.class).list();
+            transaction = session.beginTransaction();
+            groupBeanList = session.createQuery("FROM GroupBean", GroupBean.class).list();
+            for (GroupBean groupBean : groupBeanList) {
+                Hibernate.initialize(groupBean.getUsers());
+            }
+            transaction.commit();
+            return groupBeanList;
+        } catch (Exception e) {
+            if (transaction != null) {
+                transaction.rollback();
+            }
+            logger.error("Error at GroupDao getAll: ", e);
+            return groupBeanList;
         }
     }
 
     public static void deleteGroup(GroupBean groupBean){
+        Transaction transaction = null;
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            transaction = session.beginTransaction();
             session.createQuery("DELETE FROM GroupBean WHERE name = '"
                     + groupBean.getName() + "' AND permissions = '" + groupBean.getPermissions() + "' ");
+            transaction.commit();
+        } catch (Exception e) {
+            if (transaction != null) {
+                transaction.rollback();
+            }
+            logger.error("Error at GroupDao delete: ", e);
         }
     }
 }

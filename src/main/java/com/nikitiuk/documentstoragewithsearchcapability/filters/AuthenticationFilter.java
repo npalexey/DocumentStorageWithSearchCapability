@@ -1,6 +1,6 @@
 package com.nikitiuk.documentstoragewithsearchcapability.filters;
 
-import com.nikitiuk.documentstoragewithsearchcapability.services.ResponseService;
+import com.nikitiuk.documentstoragewithsearchcapability.services.rest.ResponseService;
 import org.glassfish.jersey.internal.util.Base64;
 
 import javax.annotation.security.DenyAll;

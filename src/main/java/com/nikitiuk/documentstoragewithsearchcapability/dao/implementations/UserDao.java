@@ -1,15 +1,15 @@
-package com.nikitiuk.documentstoragewithsearchcapability.dao;
+package com.nikitiuk.documentstoragewithsearchcapability.dao.implementations;
 
+import com.nikitiuk.documentstoragewithsearchcapability.entities.GroupBean;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.UserBean;
 import com.nikitiuk.documentstoragewithsearchcapability.utils.HibernateUtil;
+import org.hibernate.Hibernate;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 public class UserDao {
 
@@ -64,9 +64,24 @@ public class UserDao {
                         // start a transaction
                         transaction = session.beginTransaction();
                         // save the user object
+                        Set<GroupBean> checkedGroups = new HashSet<>();
+                        for (GroupBean groupBean : GroupDao.getGroups()) {
+                            for (GroupBean userGroup : user.getGroups()) {
+                                if(userGroup.getName().equals(groupBean.getName())){
+                                    checkedGroups.add(groupBean);
+                                }
+                            }
+                        }
+                        user.setGroups(checkedGroups);
                         session.save(user);
+                        session.persist(user);
+                        Hibernate.initialize(user.getGroups());
+                        Hibernate.initialize(getUsers());
+                        logger.info(user.toString());
                         // commit transaction
                         transaction.commit();
+
+                        return;
                     }
                 }
             }
@@ -79,15 +94,37 @@ public class UserDao {
     }
 
     public static List<UserBean> getUsers() {
+        Transaction transaction = null;
+        List<UserBean> userBeanList = new ArrayList<>();
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
-            return session.createQuery("FROM UserBean", UserBean.class).list();
+            transaction = session.beginTransaction();
+            userBeanList = session.createQuery("FROM UserBean", UserBean.class).list();
+            for (UserBean userBean : userBeanList) {
+                Hibernate.initialize(userBean.getGroups());
+            }
+            transaction.commit();
+            return userBeanList;
+        } catch (Exception e) {
+            if (transaction != null) {
+                transaction.rollback();
+            }
+            logger.error("Error at UserDao getAll: ", e);
+            return userBeanList;
         }
     }
 
     public static void deleteUser(UserBean userBean) {
+        Transaction transaction = null;
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            transaction = session.beginTransaction();
             session.createQuery("DELETE FROM UserBean WHERE name = '"
                     + userBean.getName());
+            transaction.commit();
+        } catch (Exception e) {
+            if (transaction != null) {
+                transaction.rollback();
+            }
+            logger.error("Error at UserDao delete: ", e);
         }
     }
 }

@@ -2,13 +2,7 @@ package com.nikitiuk.documentstoragewithsearchcapability.entities;
 
 import org.hibernate.annotations.GenericGenerator;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.ManyToMany;
-import javax.persistence.Table;
+import javax.persistence.*;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -28,7 +22,7 @@ public class UserBean {
     /*@Column(name = "user_group")
     private String group;*/
 
-    @ManyToMany(mappedBy = "users")
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE}, mappedBy = "users")
     private Set<GroupBean> groups = new HashSet<>();
 
     public UserBean(String name) {
