@@ -1,16 +1,15 @@
-package com.nikitiuk.documentstoragewithsearchcapability.services.rest;
+package com.nikitiuk.documentstoragewithsearchcapability.rest.services;
 
 import com.nikitiuk.documentstoragewithsearchcapability.dao.implementations.DocDao;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.DocBean;
 import com.nikitiuk.documentstoragewithsearchcapability.services.LocalStorageService;
 import com.nikitiuk.documentstoragewithsearchcapability.services.SolrService;
 import org.apache.solr.client.solrj.SolrServerException;
-import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.thymeleaf.context.Context;
 
 import javax.annotation.security.PermitAll;
-import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
+import javax.ws.rs.Path;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 import java.io.File;
@@ -29,9 +28,6 @@ public class RestDocService {
     private static final String PATH = "/home/npalexey/workenv/DOWNLOADED/";
     private static ExecutorService executorService = Executors.newSingleThreadExecutor();
 
-    @PermitAll
-    @GET
-    @Produces(MediaType.TEXT_HTML)
     public Response showFilesInDoc() {
         List<DocBean> docBeanList;
         try {
@@ -54,11 +50,7 @@ public class RestDocService {
         return ResponseService.okResponseForText("storagehome", ctx);
     }
 
-    @PermitAll
-    @GET
-    @Path("/{filename}/content")
-    @Produces(MediaType.TEXT_HTML)
-    public Response showContentOfFile(@PathParam("filename") String filename) {
+    public Response showContentOfFile(String filename) {
         List<String> docContent;
         try {
             docContent = new ArrayList<>(LocalStorageService.documentContentGetter(filename));
@@ -71,11 +63,7 @@ public class RestDocService {
         return ResponseService.okResponseForText("content", ctx);
     }
 
-    @PermitAll
-    @GET
-    @Path("/{filename}")
-    @Produces(MediaType.APPLICATION_OCTET_STREAM)
-    public Response downloadFile(@PathParam("filename") String filename) {
+    public Response downloadFile(String filename) {
         StreamingOutput fileStream;
         try {
             fileStream = LocalStorageService.fileDownloader(filename);
@@ -85,13 +73,9 @@ public class RestDocService {
         return ResponseService.okResponseForFile(fileStream, filename);
     }
 
-    @PermitAll
-    @POST
-    @Path("/{parentid}")
-    @Consumes(MediaType.MULTIPART_FORM_DATA)
-    public Response uploadFile(@FormDataParam("file") InputStream fileInputStream,
-                               //@FormDataParam("file") FormDataContentDisposition fileMetaData,
-                               @PathParam("parentid") String parentID) throws Exception {
+    public Response uploadFile(InputStream fileInputStream,
+                               //FormDataContentDisposition fileMetaData,
+                               String parentID) {
         try {
             LocalStorageService.fileUploader(fileInputStream, parentID);
         } catch (IOException e) {
@@ -110,16 +94,12 @@ public class RestDocService {
         return ResponseService.okResponseSimple("Data uploaded successfully");
     }
 
-    @PermitAll
-    @POST
-    @Path("/search")
-    @Produces(MediaType.TEXT_HTML)
-    public Response searchInEveryFileWithStringQuery(@DefaultValue("") @QueryParam("query") String query) {
+    public Response searchInEveryFileWithStringQuery(String query) {
         StringBuilder contentBuilder = new StringBuilder("Nothing was found");
         try {
             contentBuilder.append(SolrService.searchAndReturnDocsAndHighlightedText(query)).delete(0, 18);
         } catch (IOException | SolrServerException e) {
-            return ResponseService.errorResponse(404,"Error while searching for: " + query
+            return ResponseService.errorResponse(404, "Error while searching for: " + query
                     + ". Please, try again");
         }
         final Context ctx = new Context();
@@ -127,12 +107,7 @@ public class RestDocService {
         return ResponseService.okResponseForText("search", ctx);
     }
 
-    @PermitAll
-    @PUT
-    @Path("/{documentid}")
-    @Consumes(MediaType.MULTIPART_FORM_DATA)
-    public Response updateDocument(@PathParam("documentid") String docID,
-                                   @FormDataParam("file") InputStream fileInputStream) {
+    public Response updateDocument(String docID, InputStream fileInputStream) {
         String filename;
         try {
             filename = LocalStorageService.fileUpdater(fileInputStream, docID);
@@ -150,11 +125,7 @@ public class RestDocService {
         return ResponseService.okResponseSimple("File updated successfully");
     }
 
-    @PermitAll
-    @DELETE
-    @Path("/{documentid}")
-    @Produces(MediaType.TEXT_HTML)
-    public Response deleteDocument(@PathParam("documentid") String docID) {
+    public Response deleteDocument(String docID) {
         try {
             LocalStorageService.fileDeleter(docID);
         } catch (IOException e) {

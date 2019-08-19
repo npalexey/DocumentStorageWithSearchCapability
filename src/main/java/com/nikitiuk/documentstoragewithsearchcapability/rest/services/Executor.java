@@ -1,4 +1,4 @@
-package com.nikitiuk.documentstoragewithsearchcapability.services;
+package com.nikitiuk.documentstoragewithsearchcapability.rest.services;
 
 import com.nikitiuk.documentstoragewithsearchcapability.utils.HibernateUtil;
 

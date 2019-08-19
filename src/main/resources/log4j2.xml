@@ -20,7 +20,9 @@
 			<AppenderRef ref="Console" />
 <!--			<AppenderRef ref="RollingFile" />-->
 		</Root>
-<!--		<Logger name="org.hibernate" level="debug" />-->
+<!--		<Logger name="org.hibernate" level="debug">-->
+<!--			<AppenderRef ref="Console" />-->
+<!--		</Logger>-->
 		<Logger name="org.hibernate" level="info" additivity="false">
 			<AppenderRef ref="Console" />
 		</Logger>

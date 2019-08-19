@@ -1,13 +1,21 @@
 package com.nikitiuk.documentstoragewithsearchcapability.entities;
 
-import org.hibernate.annotations.GenericGenerator;
+import org.hibernate.annotations.*;
 
+import javax.persistence.CascadeType;
+import javax.persistence.Entity;
+import javax.persistence.Table;
 import javax.persistence.*;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 @Entity
 @Table(name = "Users")
+@org.hibernate.annotations.Cache(
+        usage = CacheConcurrencyStrategy.READ_WRITE
+)
+@NaturalIdCache
 public class UserBean {
 
     @Id
@@ -16,17 +24,25 @@ public class UserBean {
     @Column(name = "user_id", unique = true, updatable = false, nullable = false)
     private int id;
 
-    @Column(name = "user_name")
+    @NaturalId
+    @Column(name = "user_name", unique = true, nullable = false)
     private String name;
 
-    /*@Column(name = "user_group")
-    private String group;*/
+    @Column(name = "user_password")
+    private String password;
 
-    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE}, mappedBy = "users")
+    @ManyToMany(cascade = { CascadeType.PERSIST, CascadeType.MERGE }, fetch = FetchType.LAZY)
+    @Cascade(org.hibernate.annotations.CascadeType.SAVE_UPDATE)
+    @JoinTable(
+            name = "User_groups_binding",
+            joinColumns = { @JoinColumn(name = "user_id") },
+            inverseJoinColumns = { @JoinColumn(name = "group_id") }
+    )
     private Set<GroupBean> groups = new HashSet<>();
 
-    public UserBean(String name) {
+    public UserBean(String name, String password) {
         this.name = name;
+        this.password = password;
     }
 
     public UserBean() {
@@ -41,13 +57,13 @@ public class UserBean {
         this.groups = groups;
     }
 
-    /*public String getGroup() {
-        return group;
+    public String getPassword() {
+        return password;
     }
 
-    public void setGroup(String group) {
-        this.group = group;
-    }*/
+    public void setPassword(String password) {
+        this.password = password;
+    }
 
     public int getId() {
         return id;
@@ -70,7 +86,18 @@ public class UserBean {
         return "User [user_id=" + id + ", user_name=" + name + ", user_groups=" + groups.toString() + "]";
     }
 
-    public Boolean equals(UserBean otherUserBean) {
-        return this.getName().equals(otherUserBean.getName()) && this.getGroups().equals(otherUserBean.getGroups());
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
+        UserBean userBean = (UserBean) o;
+        return Objects.equals(name, userBean.name);
+        //return this.getName().equals(otherUserBean.getName()) && this.getGroups().equals(otherUserBean.getGroups());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name);
     }
 }

@@ -1,15 +1,21 @@
 package com.nikitiuk.documentstoragewithsearchcapability.entities;
 
-import org.hibernate.annotations.Cascade;
-import org.hibernate.annotations.GenericGenerator;
+import org.hibernate.annotations.*;
 
 import javax.persistence.*;
+import javax.persistence.Entity;
+import javax.persistence.Table;
 import java.io.Serializable;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 @Entity
 @Table(name = "Permission_groups")
+@org.hibernate.annotations.Cache(
+        usage = CacheConcurrencyStrategy.READ_WRITE
+)
+@NaturalIdCache
 public class GroupBean implements Serializable {
 
     @Id
@@ -18,19 +24,14 @@ public class GroupBean implements Serializable {
     @Column(name = "group_id", unique = true, updatable = false, nullable = false)
     private int id;
 
-    @Column(name = "group_name")
+    @NaturalId
+    @Column(name = "group_name", unique = true, nullable = false)
     private String name;
 
     @Column(name = "group_permissions")
     private String permissions;
 
-    @ManyToMany(cascade = { CascadeType.PERSIST, CascadeType.MERGE }, fetch= FetchType.LAZY)
-    @Cascade(org.hibernate.annotations.CascadeType.SAVE_UPDATE)
-    @JoinTable(
-            name = "User_groups_binding",
-            joinColumns = { @JoinColumn(name = "group_id") },
-            inverseJoinColumns = { @JoinColumn(name = "user_id") }
-    )
+    @ManyToMany(mappedBy = "groups")//, fetch = FetchType.LAZY)
     Set<UserBean> users = new HashSet<>();
 
     public GroupBean(String name, String permissions) {
@@ -79,7 +80,18 @@ public class GroupBean implements Serializable {
         return "Group [gourp_id=" + id + ", group_name=" + name + ", group_permissions=" + permissions + "]";
     }
 
-    public Boolean equals(GroupBean otherGroupBean){
-        return this.getName().equals(otherGroupBean.getName());
+    @Override
+    public boolean equals(Object o){
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
+        GroupBean groupBean = (GroupBean) o;
+        return Objects.equals(name, groupBean.name);
+        //return this.getName().equals(o.getName());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name);
     }
 }

@@ -1,16 +1,19 @@
 package com.nikitiuk.documentstoragewithsearchcapability.entities;
 
+import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.GenericGenerator;
+import org.hibernate.annotations.NaturalId;
+import org.hibernate.annotations.NaturalIdCache;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
+import java.util.Objects;
 
 @Entity
 @Table(name = "Documents")
+@org.hibernate.annotations.Cache(
+        usage = CacheConcurrencyStrategy.READ_WRITE
+)
+@NaturalIdCache
 public class DocBean {
 
     @Id
@@ -19,10 +22,11 @@ public class DocBean {
     @Column(name = "document_id", unique = true, updatable = false, nullable = false)
     private int id;
 
-    @Column(name = "document_name")
+    @Column(name = "document_name", nullable = false)
     private String name;
 
-    @Column(name = "document_path")
+    @NaturalId
+    @Column(name = "document_path", unique = true, nullable = false)
     private String path;
 
     public DocBean(String name, String path) {
@@ -30,7 +34,7 @@ public class DocBean {
         this.path = path;
     }
 
-    public DocBean(){
+    public DocBean() {
 
     }
 
@@ -63,7 +67,18 @@ public class DocBean {
         return "Document [document_id=" + id + ", document_name=" + name + ", document_path=" + path + "]";
     }
 
-    public Boolean equals(DocBean otherDocBean){
-        return this.getName().equals(otherDocBean.getName()) && this.getPath().equals(otherDocBean.getPath());
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
+        DocBean docBean = (DocBean) o;
+        return Objects.equals(path, docBean.path);
+        //return this.getName().equals(otherDocBean.getName()) && this.getPath().equals(otherDocBean.getPath());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(path);
     }
 }

@@ -78,8 +78,8 @@ public class HibernateUtil {
 
     private static void populateTables() throws Exception {
         //deleteAllDataFromDb();
-        DocDao.populateTableWithDocs(LocalStorageService.listDocumentsInPath());
-        UserDao.populateTableWithUsers();
         GroupDao.populateTableWithGroups();
+        UserDao.populateTableWithUsers();
+        DocDao.populateTableWithDocs(LocalStorageService.listDocumentsInPath());
     }
 }

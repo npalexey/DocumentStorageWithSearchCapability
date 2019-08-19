@@ -1,6 +1,6 @@
 package com.nikitiuk.documentstoragewithsearchcapability;
 
-import com.nikitiuk.documentstoragewithsearchcapability.services.rest.RestDocService;
+import com.nikitiuk.documentstoragewithsearchcapability.rest.services.RestDocService;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.media.multipart.file.FileDataBodyPart;

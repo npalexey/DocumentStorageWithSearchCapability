@@ -13,7 +13,7 @@ import java.util.function.Function;
 
 public class GenericHibernateDao<T> {
 
-    private static final Logger logger =  LoggerFactory.getLogger(DocDao.class);
+    private static final Logger logger =  LoggerFactory.getLogger(GenericHibernateDao.class);
 
     private Class<T> clazz;
     private SessionFactory sessionFactory;
