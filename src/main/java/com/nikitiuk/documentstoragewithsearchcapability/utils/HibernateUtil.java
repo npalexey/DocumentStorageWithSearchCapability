@@ -82,4 +82,9 @@ public class HibernateUtil {
         UserDao.populateTableWithUsers();
         DocDao.populateTableWithDocs(LocalStorageService.listDocumentsInPath());
     }
+
+    public static void shutdown()
+    {
+        getSessionFactory().close();
+    }
 }

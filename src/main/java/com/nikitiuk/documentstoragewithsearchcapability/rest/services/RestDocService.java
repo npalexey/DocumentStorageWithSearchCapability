@@ -28,6 +28,8 @@ public class RestDocService {
     private static final String PATH = "/home/npalexey/workenv/DOWNLOADED/";
     private static ExecutorService executorService = Executors.newSingleThreadExecutor();
 
+    private DocDao docDao = new DocDao();
+
     public Response showFilesInDoc() {
         List<DocBean> docBeanList;
         try {
@@ -85,7 +87,7 @@ public class RestDocService {
             try {
                 SolrService.indexDocumentWithSolr(parentID,
                         URLConnection.guessContentTypeFromName(new File(PATH + parentID).getName()));
-                DocDao.saveDocument(new DocBean(parentID, PATH + parentID));
+                docDao.saveDocument(new DocBean(parentID, PATH + parentID));
             } catch (IOException | SolrServerException e) {
                 throw new WebApplicationException("Error while indexing file. Please, try again");
             }
@@ -134,7 +136,7 @@ public class RestDocService {
         Runnable deleteTask = () -> {
             try {
                 SolrService.deleteDocumentFromSolrIndex(docID);
-                DocDao.deleteDocument(new DocBean(docID, PATH + docID));
+                docDao.deleteDocument(new DocBean(docID, PATH + docID));
             } catch (IOException | SolrServerException e) {
                 throw new WebApplicationException("Error while indexing file. Please, try again");
             }

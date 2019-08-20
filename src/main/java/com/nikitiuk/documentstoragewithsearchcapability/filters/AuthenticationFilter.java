@@ -2,6 +2,8 @@ package com.nikitiuk.documentstoragewithsearchcapability.filters;
 
 import com.nikitiuk.documentstoragewithsearchcapability.rest.services.ResponseService;
 import org.glassfish.jersey.internal.util.Base64;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.security.DenyAll;
 import javax.annotation.security.PermitAll;
@@ -24,6 +26,8 @@ public class AuthenticationFilter implements javax.ws.rs.container.ContainerRequ
 
     private static final String AUTHORIZATION_PROPERTY = "Authorization";
     private static final String AUTHENTICATION_SCHEME = "Basic";
+    private static final Logger logger = LoggerFactory.getLogger(AuthenticationFilter.class);
+
     @Context
     private ResourceInfo resourceInfo;
 
@@ -64,8 +68,8 @@ public class AuthenticationFilter implements javax.ws.rs.container.ContainerRequ
             final String password = tokenizer.nextToken();
 
             //Verifying Username and password
-            System.out.println(username);
-            System.out.println(password);
+            logger.info("Username: " + username);
+            logger.info("Password: " + password);
 
             //Verify user access
             if (method.isAnnotationPresent(RolesAllowed.class)) {

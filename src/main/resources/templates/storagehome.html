@@ -22,11 +22,11 @@
             <th:block th:each="group : ${entry.groups}"><td><span th:utext="|Group: ${group.name}, permissions: ${group.permissions}; |">User's Groups</span></td></th:block>
         </tr>
         <tr th:if="${entityName} == 'Group'" th:each="entry : ${inStorage}">
-            <td><span th:utext="${entry.name}">Group name</span></td>
-            <td><span th:utext="${entry.permissions}">Permissions</span></td>
+            <td><span th:utext="|Name: ${entry.name} |">Group name</span></td>
+            <td><span th:utext="|Permissions: ${entry.permissions} |">Permissions</span></td>
             <td><span th:utext="|Users: |">Group's users</span></td>
             <th:block th:each="user : ${entry.users}">
-                <td><span th:utext="|${user.name}, |">Group's users</span></td>
+                <td><span th:utext="|${user.name} ;|">Group's users</span></td>
 <!--                <th:block th:each="group : ${user.groups}"><td><span th:text="|${group.name} |">Group Name</span></td></th:block>-->
             </th:block>
         </tr>

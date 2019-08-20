@@ -13,10 +13,12 @@ public class RestUserService {
 
     private static ExecutorService executorService = Executors.newSingleThreadExecutor();
 
+    private UserDao userDao = new UserDao();
+
     public Response showUsers() {
         List<UserBean> userBeanList;
         try {
-            userBeanList = UserDao.getUsers();
+            userBeanList = userDao.getUsers();
         } catch (Exception e) {
             return ResponseService.errorResponse(404, "Error while producing list of users.");
         }
@@ -37,7 +39,7 @@ public class RestUserService {
 
     public Response createUser(UserBean userBean) {
         try {
-            UserDao.saveUser(userBean);
+            userDao.saveUser(userBean);
         } catch (Exception e) {
             return ResponseService.errorResponse(404, "Error while creating user.");
         }
@@ -46,7 +48,7 @@ public class RestUserService {
 
     public Response updateUser(UserBean userBean) {
         try {
-            UserDao.updateUser(userBean);
+            userDao.updateUser(userBean);
         } catch (Exception e) {
             return ResponseService.errorResponse(404, "Error while updating user.");
         }
@@ -55,7 +57,7 @@ public class RestUserService {
 
     public Response deleteUserByName(String name) {
         try {
-            UserDao.deleteUserByName(name);
+            userDao.deleteUserByName(name);
         } catch (Exception e) {
             return ResponseService.errorResponse(404, "Error while deleting user.");
         }

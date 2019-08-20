@@ -6,3 +6,10 @@ openAPI:
     title: 'Document Storage With Search Capability'
   servers:
   - url: '/DocumentStorageWithSearchCapability/rest'
+#    components:
+#      securitySchemes:
+#        basicAuth:     # <-- arbitrary name for the security scheme
+#          type: http
+#          scheme: basic
+#      security:
+#        - basicAuth: []  # <-- use the same name here

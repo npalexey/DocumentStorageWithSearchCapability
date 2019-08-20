@@ -1,5 +1,6 @@
 package com.nikitiuk.documentstoragewithsearchcapability.dao.implementations;
 
+import com.nikitiuk.documentstoragewithsearchcapability.dao.GenericHibernateDao;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.GroupBean;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.UserBean;
 import com.nikitiuk.documentstoragewithsearchcapability.utils.HibernateUtil;
@@ -11,10 +12,10 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
-public class UserDao {
+public class UserDao extends GenericHibernateDao<UserBean> {
 
     private static final Logger logger = LoggerFactory.getLogger(UserDao.class);
-    public static List<UserBean> userList = new ArrayList<>()/*(Arrays.asList(new UserBean("Admin"),
+    private static List<UserBean> userList = new ArrayList<>()/*(Arrays.asList(new UserBean("Admin"),
             new UserBean("Employee"), new UserBean("Guest")))*/;
 
     static {
@@ -30,8 +31,12 @@ public class UserDao {
         userList.get(0).setGroups(groupBeans2);
     }
 
+    public UserDao() {
+        super(UserBean.class);
+    }
+
     public static void populateTableWithUsers() {
-        try (Session session = HibernateUtil.getSessionFactory().openSession()){
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             for (UserBean userBean : userList) {
                 Transaction transaction = null;
                 try {
@@ -52,7 +57,7 @@ public class UserDao {
         }
     }
 
-    public static List<UserBean> getUsers() {
+    public List<UserBean> getUsers() {
         Transaction transaction = null;
         List<UserBean> userBeanList = new ArrayList<>();
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
@@ -72,7 +77,7 @@ public class UserDao {
         }
     }
 
-    public static UserBean getUserByName(String userName) {
+    public UserBean getUserByName(String userName) {
         Transaction transaction = null;
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             transaction = session.beginTransaction();
@@ -90,32 +95,32 @@ public class UserDao {
         }
     }
 
-    public static void saveUser(UserBean user) {
+    public void saveUser(UserBean userBean) {
         try {
-            if (exists(user)) {
+            if (exists(userBean)) {
                 throw new Exception("Such User Already Exists");
             }
-            save(user);
+            save(userBean);
         } catch (Exception e) {
             logger.error("Error at UserDao saveUser: ", e);
         }
     }
 
-    public static void updateUser(UserBean user) {
+    public void updateUser(UserBean userBean) {
         try {
-            if (exists(user)) {
-                UserBean updatedUser = getUserByName(user.getName());
-                updatedUser.setGroups(user.getGroups());
+            if (exists(userBean)) {
+                UserBean updatedUser = getUserByName(userBean.getName());
+                updatedUser.setGroups(userBean.getGroups());
+                updatedUser.setPassword(userBean.getPassword());
                 Hibernate.initialize(updatedUser.getGroups());
                 save(updatedUser);
             }
-        }
-         catch (Exception e) {
+        } catch (Exception e) {
             logger.error("Error at UserDao updateAndSaveUser: ", e);
         }
     }
 
-    public static void deleteUserByName(String userName) {
+    public void deleteUserByName(String userName) {
         Transaction transaction = null;
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             transaction = session.beginTransaction();
@@ -126,11 +131,11 @@ public class UserDao {
             if (transaction != null) {
                 transaction.rollback();
             }
-            logger.error("Error at UserDao delete: ", e);
+            logger.error("Error at UserDao deleteUserByName: ", e);
         }
     }
 
-    public static boolean exists(UserBean user) throws Exception{
+    public boolean exists(UserBean user) throws Exception {
         Session session = HibernateUtil.getSessionFactory().openSession();
         List<UserBean> beanList = session.createQuery("FROM UserBean", UserBean.class).list();
         if (!beanList.isEmpty()) {
@@ -139,11 +144,11 @@ public class UserDao {
                     return true;
                 }
             }
-        };
+        }
         return false;
     }
 
-    public static void save(UserBean user) throws Exception {
+    public void save(UserBean user) throws Exception {
         Transaction transaction = null;
         try {
             user.setGroups(checkGroupsAndReturnMatched(user));
@@ -163,10 +168,14 @@ public class UserDao {
         }
     }
 
-    private static Set<GroupBean> checkGroupsAndReturnMatched(UserBean user) {
+    private Set<GroupBean> checkGroupsAndReturnMatched(UserBean user) throws Exception {
         Set<GroupBean> checkedGroups = new HashSet<>();
-        for (GroupBean groupBean : GroupDao.getGroups()) {
-            if(user.getGroups().contains(groupBean)){          //checks equality with hashCode()
+        GroupDao groupDao = new GroupDao();
+        if (user == null) {
+            throw new Exception("No UserBean was passed to check");
+        }
+        for (GroupBean groupBean : groupDao.getGroups()) {
+            if (user.getGroups().contains(groupBean)) {          //checks equality with hashCode()
                 checkedGroups.add(groupBean);
             }
         }

@@ -2,6 +2,7 @@ package com.nikitiuk.documentstoragewithsearchcapability.dao;
 
 import com.nikitiuk.documentstoragewithsearchcapability.dao.implementations.DocDao;
 import com.nikitiuk.documentstoragewithsearchcapability.utils.HibernateUtil;
+import org.hibernate.Hibernate;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
@@ -38,7 +39,7 @@ public class GenericHibernateDao<T> {
             transaction = session.beginTransaction();
             return function.apply(session);
         } catch (Exception e) {
-            logger.error("Error while executing function: ", e);
+            logger.error("Error while executing function. ", e);
             if (transaction != null) {
                 transaction.rollback();
             }
@@ -77,7 +78,7 @@ public class GenericHibernateDao<T> {
         return (T) getCurrentSession().merge(entity);
     }*/
 
-    public void populateTable(List<T> entityList){
+    /*public void populateTableWithEntities(List<T> entityList){
         executeFunction((session) -> {
             for (T bean : entityList) {
                 Transaction transaction = null;
@@ -97,7 +98,7 @@ public class GenericHibernateDao<T> {
             }
             return entityList;
         });
-    }
+    }*/
 
     public void deleteById(long entityId) {
         executeFunction((session) -> {

@@ -1,18 +1,18 @@
 package com.nikitiuk.documentstoragewithsearchcapability.dao.implementations;
 
-import java.util.List;
-
 import com.nikitiuk.documentstoragewithsearchcapability.dao.GenericHibernateDao;
-import org.hibernate.Session;
-import org.hibernate.Transaction;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.DocBean;
 import com.nikitiuk.documentstoragewithsearchcapability.utils.HibernateUtil;
+import org.hibernate.Session;
+import org.hibernate.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
+
 public class DocDao extends GenericHibernateDao<DocBean> {
 
-    private static final Logger logger =  LoggerFactory.getLogger(DocDao.class);
+    private static final Logger logger = LoggerFactory.getLogger(DocDao.class);
 
     public DocDao() {
         super(DocBean.class);
@@ -20,7 +20,6 @@ public class DocDao extends GenericHibernateDao<DocBean> {
 
     public static void populateTableWithDocs(List<DocBean> docBeanList) {
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
-            List<DocBean> beanList = session.createQuery("FROM DocBean", DocBean.class).list();
             for (DocBean docBean : docBeanList) {
                 Transaction transaction = null;
                 try {
@@ -40,13 +39,13 @@ public class DocDao extends GenericHibernateDao<DocBean> {
         }
     }
 
-    public static void saveDocument(DocBean document) {
+    public void saveDocument(DocBean document) {
         Transaction transaction = null;
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             List<DocBean> beanList = session.createQuery("FROM DocBean", DocBean.class).list();
-            if(!beanList.isEmpty()){
+            if (!beanList.isEmpty()) {
                 for (DocBean docBean : beanList) {
-                    if(!docBean.equals(document)){
+                    if (!docBean.equals(document)) {
                         // start a transaction
                         transaction = session.beginTransaction();
                         // save the document object
@@ -64,13 +63,13 @@ public class DocDao extends GenericHibernateDao<DocBean> {
         }
     }
 
-    public static List<DocBean> getDocuments() {
+    public List<DocBean> getDocuments() {
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             return session.createQuery("FROM DocBean", DocBean.class).list();
         }
     }
 
-    public static void deleteDocument(DocBean docBean){
+    public void deleteDocument(DocBean docBean) {
         Transaction transaction = null;
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             transaction = session.beginTransaction();

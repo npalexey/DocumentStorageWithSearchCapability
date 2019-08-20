@@ -20,7 +20,7 @@ public class DocBean {
     @GeneratedValue(generator = "native")
     @GenericGenerator(name = "native", strategy = "native")
     @Column(name = "document_id", unique = true, updatable = false, nullable = false)
-    private int id;
+    private long id;
 
     @Column(name = "document_name", nullable = false)
     private String name;
@@ -38,11 +38,11 @@ public class DocBean {
 
     }
 
-    public int getId() {
+    public long getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(long id) {
         this.id = id;
     }
 
