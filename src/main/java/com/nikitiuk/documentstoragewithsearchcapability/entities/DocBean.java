@@ -4,23 +4,24 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.NaturalId;
 import org.hibernate.annotations.NaturalIdCache;
+import org.hibernate.annotations.Cache;
 
 import javax.persistence.*;
 import java.util.Objects;
 
 @Entity
 @Table(name = "Documents")
-@org.hibernate.annotations.Cache(
+@NaturalIdCache
+@Cache(
         usage = CacheConcurrencyStrategy.READ_WRITE
 )
-@NaturalIdCache
 public class DocBean {
 
     @Id
     @GeneratedValue(generator = "native")
     @GenericGenerator(name = "native", strategy = "native")
-    @Column(name = "document_id", unique = true, updatable = false, nullable = false)
-    private long id;
+    @Column(name = "id", unique = true, updatable = false, nullable = false)
+    private Long id;
 
     @Column(name = "document_name", nullable = false)
     private String name;

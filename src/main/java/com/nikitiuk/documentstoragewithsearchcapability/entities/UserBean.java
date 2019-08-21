@@ -1,5 +1,6 @@
 package com.nikitiuk.documentstoragewithsearchcapability.entities;
 
+import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.*;
 
 import javax.persistence.CascadeType;
@@ -12,17 +13,17 @@ import java.util.Set;
 
 @Entity
 @Table(name = "Users")
-@org.hibernate.annotations.Cache(
+@NaturalIdCache
+@Cache(
         usage = CacheConcurrencyStrategy.READ_WRITE
 )
-@NaturalIdCache
 public class UserBean {
 
     @Id
     @GeneratedValue(generator = "native")
     @GenericGenerator(name = "native", strategy = "native")
-    @Column(name = "user_id", unique = true, updatable = false, nullable = false)
-    private long id;
+    @Column(name = "id", unique = true, updatable = false, nullable = false)
+    private Long id;
 
     @NaturalId
     @Column(name = "user_name", unique = true, nullable = false)
@@ -65,11 +66,11 @@ public class UserBean {
         this.password = password;
     }
 
-    public long getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(long id) {
+    public void setId(Long id) {
         this.id = id;
     }
 

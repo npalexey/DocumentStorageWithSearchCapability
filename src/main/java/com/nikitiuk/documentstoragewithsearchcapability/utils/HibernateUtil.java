@@ -1,11 +1,15 @@
 package com.nikitiuk.documentstoragewithsearchcapability.utils;
 
 import com.nikitiuk.documentstoragewithsearchcapability.dao.implementations.DocDao;
+import com.nikitiuk.documentstoragewithsearchcapability.dao.implementations.DocGroupPermissionsDao;
 import com.nikitiuk.documentstoragewithsearchcapability.dao.implementations.GroupDao;
 import com.nikitiuk.documentstoragewithsearchcapability.dao.implementations.UserDao;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.DocBean;
+import com.nikitiuk.documentstoragewithsearchcapability.entities.DocGroupPermissions;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.GroupBean;
+import com.nikitiuk.documentstoragewithsearchcapability.entities.TestEntities.TestTwo.*;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.UserBean;
+import com.nikitiuk.documentstoragewithsearchcapability.entities.helpers.DocGroupPermissionsId;
 import com.nikitiuk.documentstoragewithsearchcapability.services.LocalStorageService;
 import org.hibernate.SessionFactory;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
@@ -29,6 +33,10 @@ public class HibernateUtil {
                 Configuration configuration = new Configuration();
                 // Hibernate settings equivalent to hibernate.cfg.xml's properties
                 Properties settings = new Properties();
+                /*settings.put(Environment.DRIVER, "org.h2.Driver");
+                settings.put(Environment.URL, "jdbc:h2:mem:docstore;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;INIT=CREATE SCHEMA IF NOT EXISTS DOCSTORE");
+                settings.put(Environment.DIALECT, "org.hibernate.dialect.H2Dialect");
+                settings.put(Environment.DEFAULT_SCHEMA, "docstore.docstore");*/
                 settings.put(Environment.DRIVER, "com.mysql.cj.jdbc.Driver");
                 settings.put(Environment.URL, "jdbc:mysql://localhost:3306/document_tracker?useSSL=false&serverTimezone=Europe/Moscow");
                 settings.put(Environment.USER, "root");
@@ -46,6 +54,13 @@ public class HibernateUtil {
                 configuration.addAnnotatedClass(DocBean.class);
                 configuration.addAnnotatedClass(GroupBean.class);
                 configuration.addAnnotatedClass(UserBean.class);
+                configuration.addAnnotatedClass(DocGroupPermissions.class);
+                configuration.addAnnotatedClass(DocGroupPermissionsId.class);
+                /*configuration.addAnnotatedClass(User.class);
+                configuration.addAnnotatedClass(Group.class);
+                configuration.addAnnotatedClass(Resource.class);
+                configuration.addAnnotatedClass(ResourcePermission.class);
+                configuration.addAnnotatedClass(GroupResourceId.class);*/
                 ServiceRegistry serviceRegistry = new StandardServiceRegistryBuilder()
                         .applySettings(configuration.getProperties()).build();
                 sessionFactory = configuration.buildSessionFactory(serviceRegistry);
@@ -81,10 +96,10 @@ public class HibernateUtil {
         GroupDao.populateTableWithGroups();
         UserDao.populateTableWithUsers();
         DocDao.populateTableWithDocs(LocalStorageService.listDocumentsInPath());
+        DocGroupPermissionsDao.populateTableWithDocGroupPermissions();
     }
 
-    public static void shutdown()
-    {
+    public static void shutdown() {
         getSessionFactory().close();
     }
 }

@@ -1,4 +1,4 @@
-package com.nikitiuk.documentstoragewithsearchcapability.filters;
+package com.nikitiuk.documentstoragewithsearchcapability.entities.helpers;
 
 public enum Permissions {
     WRITE, READ;

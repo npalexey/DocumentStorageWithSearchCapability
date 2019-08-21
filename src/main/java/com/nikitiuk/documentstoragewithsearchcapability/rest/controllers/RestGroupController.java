@@ -41,23 +41,23 @@ public class RestGroupController {
 
     /*@PermitAll
     @DELETE
-    @Path("/{groupNameOrId}")
+    @Path("/delete/{groupNameOrId}")
     @Produces(MediaType.TEXT_HTML)
     public Response deleteGroup(@PathParam("groupNameOrId") Object groupNameOrId) {
         return groupService.deleteGroup(groupNameOrId);
     }*/
 
-    /*@PermitAll
+    @PermitAll
     @DELETE
-    @Path("/with-id/{groupid}")
+    @Path("/delete-by-id/{groupid}")
     @Produces(MediaType.TEXT_HTML)
-    public Response deleteGroupById(@PathParam("groupid") Object id) {
+    public Response deleteGroupById(@PathParam("groupid") long id) {
         return groupService.deleteGroupById(id);
-    }*/
+    }
 
     @PermitAll
     @DELETE
-    @Path("/{groupname}")
+    @Path("/delete-by-name/{groupname}")
     @Produces(MediaType.TEXT_HTML)
     public Response deleteGroupByName(@PathParam("groupname") String groupname) {
         return groupService.deleteGroupByName(groupname);

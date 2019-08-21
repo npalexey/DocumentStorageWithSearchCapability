@@ -1,8 +1,9 @@
 package com.nikitiuk.documentstoragewithsearchcapability.dao.implementations;
 
 import com.nikitiuk.documentstoragewithsearchcapability.dao.GenericHibernateDao;
+import com.nikitiuk.documentstoragewithsearchcapability.entities.DocGroupPermissions;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.GroupBean;
-import com.nikitiuk.documentstoragewithsearchcapability.filters.Permissions;
+import com.nikitiuk.documentstoragewithsearchcapability.entities.helpers.Permissions;
 import com.nikitiuk.documentstoragewithsearchcapability.utils.HibernateUtil;
 import org.hibernate.Hibernate;
 import org.hibernate.Session;
@@ -17,8 +18,8 @@ import java.util.List;
 public class GroupDao extends GenericHibernateDao<GroupBean> {
 
     private static final Logger logger = LoggerFactory.getLogger(GroupDao.class);
-    static List<GroupBean> groupList = new ArrayList<>(Arrays.asList(new GroupBean("ADMINS", Permissions.WRITE),
-            new GroupBean("USERS", Permissions.WRITE), new GroupBean("GUESTS", Permissions.READ)));
+    static List<GroupBean> groupList = new ArrayList<>(Arrays.asList(new GroupBean("ADMINS"),
+            new GroupBean("USERS"), new GroupBean("GUESTS")));
 
     /*static {
         groupList.add(new GroupBean("ADMINS", "rwd"));
@@ -66,7 +67,9 @@ public class GroupDao extends GenericHibernateDao<GroupBean> {
             transaction = session.beginTransaction();
             groupBeanList = session.createQuery("FROM GroupBean", GroupBean.class).list();
             for (GroupBean groupBean : groupBeanList) {
-                Hibernate.initialize(groupBean.getUsers());
+                initializeConnections(groupBean);
+                /*Hibernate.initialize(groupBean.getUsers());
+                Hibernate.initialize(groupBean.getDocumentsPermissions());*/
                 /*for (UserBean user : groupBean.getUsers()) {
                     Hibernate.initialize(user.getGroups());
                 }*/
@@ -88,7 +91,9 @@ public class GroupDao extends GenericHibernateDao<GroupBean> {
             transaction = session.beginTransaction();
             GroupBean groupBean = session.createQuery("FROM GroupBean WHERE name = '"
                     + groupName + "'", GroupBean.class).uniqueResult();
-            Hibernate.initialize(groupBean.getUsers());
+            initializeConnections(groupBean);
+            /*Hibernate.initialize(groupBean.getUsers());
+            Hibernate.initialize(groupBean.getDocumentsPermissions());*/
             transaction.commit();
             session.close();
             return groupBean;
@@ -106,7 +111,9 @@ public class GroupDao extends GenericHibernateDao<GroupBean> {
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             transaction = session.beginTransaction();
             GroupBean groupBean = session.get(GroupBean.class, id);
-            Hibernate.initialize(groupBean.getUsers());
+            initializeConnections(groupBean);
+            /*Hibernate.initialize(groupBean.getUsers());
+            Hibernate.initialize(groupBean.getDocumentsPermissions());*/
             transaction.commit();
             session.close();
             return groupBean;
@@ -134,9 +141,11 @@ public class GroupDao extends GenericHibernateDao<GroupBean> {
             if (exists(groupBean)) {
                 GroupBean updatedGroup = getGroupByName(groupBean.getName());
                 updatedGroup.setUsers(groupBean.getUsers());
-                updatedGroup.setPermissions(groupBean.getPermissions());
-                Hibernate.initialize(updatedGroup.getUsers());
-                //Hibernate.initialize(updatedGroup.getPermissions());
+                updatedGroup.setDocumentsPermissions(groupBean.getDocumentsPermissions());
+                //updatedGroup.setPermissions(groupBean.getPermissions());
+                initializeConnections(updatedGroup);
+                /*Hibernate.initialize(updatedGroup.getUsers());
+                Hibernate.initialize(updatedGroup.getDocumentsPermissions());*/
                 save(updatedGroup);
             }
         } catch (Exception e) {
@@ -187,6 +196,13 @@ public class GroupDao extends GenericHibernateDao<GroupBean> {
                 transaction.rollback();
             }
             throw e;
+        }
+    }
+
+    public void initializeConnections(GroupBean group) {
+        Hibernate.initialize(group.getUsers());
+        for (DocGroupPermissions docGroupPermissions : group.getDocumentsPermissions()) {
+            Hibernate.initialize(docGroupPermissions);
         }
     }
 }
