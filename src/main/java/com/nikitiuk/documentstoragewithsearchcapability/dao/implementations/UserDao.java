@@ -15,10 +15,9 @@ import java.util.*;
 public class UserDao extends GenericHibernateDao<UserBean> {
 
     private static final Logger logger = LoggerFactory.getLogger(UserDao.class);
-    private static List<UserBean> userList = new ArrayList<>()/*(Arrays.asList(new UserBean("Admin"),
-            new UserBean("Employee"), new UserBean("Guest")))*/;
+    private static List<UserBean> userList = new ArrayList<>();
 
-    static {
+    private static void getUserListForPopulate() {
         userList.add(new UserBean("Admin", "adminpswrd"));
         userList.add(new UserBean("Employee", "employeepswrd"));
         userList.add(new UserBean("Guest", "guestpswrd"));
@@ -36,6 +35,7 @@ public class UserDao extends GenericHibernateDao<UserBean> {
     }
 
     public static void populateTableWithUsers() {
+        getUserListForPopulate();
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             for (UserBean userBean : userList) {
                 Transaction transaction = null;

@@ -19,23 +19,23 @@
         </tr>
         <tr th:if="${entityName} == 'User'" th:each="entry : ${inStorage}">
             <td><span th:utext="${entry.name}">User name</span></td>
-            <th:block th:each="group : ${entry.groups}"><td><span th:utext="|Group: ${group.name}, permissions: ${group.permissions}; |">User's Groups</span></td></th:block>
+            <td><span th:utext="|Groups: |">Group name</span></td>
+            <td><th:block th:each="group : ${entry.groups}"><span th:utext="|${group.name}   |">Groups</span></th:block></td>
+<!--            <th:block th:each="group : ${entry.groups}"><td><span th:utext="|Group: ${group.name}; |">User's Groups</span></td></th:block>-->
         </tr>
         <tr th:if="${entityName} == 'Group'" th:each="entry : ${inStorage}">
-            <td><span th:utext="|Name: ${entry.name} |">Group name</span></td>
-            <th:block th:each="docPermissions : ${entry.documentsPermissions}">
-                <td><span th:utext="|Permissions: ${docPermissions} |">Permissions</span></td>
-            </th:block>
-            <td><span th:utext="|Users: |">Group's users</span></td>
-            <th:block th:each="user : ${entry.users}">
-                <td><span th:utext="|${user.name} ;|">Group's users</span></td>
+            <td><span th:utext="${entry.name}">Group name</span></td>
+            <td><span th:utext="|Docs: |">Docs</span></td>
+            <td><th:block th:each="docPermissions : ${entry.documentsPermissions}"><span th:utext="|[${docPermissions}]  |">Permissions</span></th:block></td>
+            <td><span th:utext="| Users: |">Group's users</span></td>
+            <td><th:block th:each="user : ${entry.users}"><span th:utext="|${user.name} |">Group's users</span></th:block></td>
+            <!--<th:block th:each="user : ${entry.users}">
+                <td><span th:utext="|${user.name} |">Group's users</span></td>-->
 <!--                <th:block th:each="group : ${user.groups}"><td><span th:text="|${group.name} |">Group Name</span></td></th:block>-->
-            </th:block>
+            <!--</th:block>-->
         </tr>
         <tr th:if="${entityName} == 'DocGroupPermissions'" th:each="entry : ${inStorage}">
-            <td><span th:utext="|Group id: ${entry.group} |">Group Id</span></td>
-            <td><span th:utext="|Doc id: ${entry.document} |">Doc Id</span></td>
-            <td><span th:utext="|Permissions: ${entry.permissions}|">Permissions</span></td>
+            <td><span th:utext="|Group id: ${entry.group.id}, Doc id: ${entry.document.id}, Permissions: ${entry.permissions}|">Group Id</span></td>
         </tr>
         </tbody>
     </table>

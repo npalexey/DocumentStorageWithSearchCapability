@@ -8,10 +8,10 @@ import java.util.Objects;
 @Embeddable
 public class DocGroupPermissionsId implements Serializable {
 
-    //@Column(name = "comb_group_id")
+    @Column(name = "group_id")
     private Long groupId;
 
-    //@Column(name = "comb_document_id")
+    @Column(name = "document_id")
     private Long documentId;
 
     public DocGroupPermissionsId() {

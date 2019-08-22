@@ -21,19 +21,6 @@ public class GroupDao extends GenericHibernateDao<GroupBean> {
     static List<GroupBean> groupList = new ArrayList<>(Arrays.asList(new GroupBean("ADMINS"),
             new GroupBean("USERS"), new GroupBean("GUESTS")));
 
-    /*static {
-        groupList.add(new GroupBean("ADMINS", "rwd"));
-        groupList.add(new GroupBean("USERS", "rw"));
-        groupList.add(new GroupBean("GUESTS", "r"));
-        Set<UserBean> userBeans0 = new HashSet<>(Collections.singletonList(UserDao.userList.get(0)));
-        groupList.get(0).setUsers(userBeans0);
-        Set<UserBean> userBeans1 = new HashSet<>(Arrays.asList(UserDao.userList.get(0), UserDao.userList.get(1)));
-        groupList.get(1).setUsers(userBeans1);
-        Set<UserBean> userBeans2 = new HashSet<>(Arrays.asList(UserDao.userList.get(0), UserDao.userList.get(1),
-                UserDao.userList.get(2)));
-        groupList.get(2).setUsers(userBeans2);
-    }*/
-
     public GroupDao() {
         super(GroupBean.class);
     }
@@ -51,10 +38,10 @@ public class GroupDao extends GenericHibernateDao<GroupBean> {
                     // commit transaction
                     transaction.commit();
                 } catch (Exception e) {
+                    logger.error("Error at GroupDao populate: ", e);
                     if (transaction != null) {
                         transaction.rollback();
                     }
-                    logger.error("Error at GroupDao populate: ", e);
                 }
             }
         }
@@ -77,10 +64,10 @@ public class GroupDao extends GenericHibernateDao<GroupBean> {
             transaction.commit();
             return groupBeanList;
         } catch (Exception e) {
+            logger.error("Error at GroupDao getAll: ", e);
             if (transaction != null) {
                 transaction.rollback();
             }
-            logger.error("Error at GroupDao getAll: ", e);
             return groupBeanList;
         }
     }
@@ -98,6 +85,7 @@ public class GroupDao extends GenericHibernateDao<GroupBean> {
             session.close();
             return groupBean;
         } catch (Exception e) {
+            logger.error("Error at GroupDao getGroupByName: ", e);
             if (transaction != null) {
                 transaction.rollback();
             }
@@ -118,6 +106,7 @@ public class GroupDao extends GenericHibernateDao<GroupBean> {
             session.close();
             return groupBean;
         } catch (Exception e) {
+            logger.error("Error at GroupDao getOneById: ", e);
             if (transaction != null) {
                 transaction.rollback();
             }
@@ -161,10 +150,10 @@ public class GroupDao extends GenericHibernateDao<GroupBean> {
                     + groupName + "'").executeUpdate();
             transaction.commit();
         } catch (Exception e) {
+            logger.error("Error at GroupDao deleteGroupByName: ", e);
             if (transaction != null) {
                 transaction.rollback();
             }
-            logger.error("Error at GroupDao deleteGroupByName: ", e);
         }
     }
 

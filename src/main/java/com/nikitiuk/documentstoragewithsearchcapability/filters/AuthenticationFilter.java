@@ -1,28 +1,34 @@
 package com.nikitiuk.documentstoragewithsearchcapability.filters;
 
+import com.nikitiuk.documentstoragewithsearchcapability.dao.implementations.UserDao;
+import com.nikitiuk.documentstoragewithsearchcapability.entities.GroupBean;
+import com.nikitiuk.documentstoragewithsearchcapability.entities.UserBean;
 import com.nikitiuk.documentstoragewithsearchcapability.rest.services.ResponseService;
 import org.glassfish.jersey.internal.util.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Priority;
 import javax.annotation.security.DenyAll;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
+import javax.ws.rs.Priorities;
 import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.container.ContainerRequestFilter;
 import javax.ws.rs.container.ResourceInfo;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.Provider;
 import java.lang.reflect.Method;
 import java.util.*;
 
 /**
  * This filter verify the access permissions for a user
- * based on username and passowrd provided in request
+ * based on username and password provided in request
  */
 @Provider
-public class AuthenticationFilter implements javax.ws.rs.container.ContainerRequestFilter {
+@Priority(Priorities.AUTHORIZATION)
+public class AuthenticationFilter implements ContainerRequestFilter {
 
     private static final String AUTHORIZATION_PROPERTY = "Authorization";
     private static final String AUTHENTICATION_SCHEME = "Basic";
@@ -38,8 +44,7 @@ public class AuthenticationFilter implements javax.ws.rs.container.ContainerRequ
         if (!method.isAnnotationPresent(PermitAll.class)) {
             //Access denied for all
             if (method.isAnnotationPresent(DenyAll.class)) {
-                requestContext.abortWith(Response.status(Response.Status.FORBIDDEN)
-                        .entity("Access blocked for all users !!").build());
+                requestContext.abortWith(ResponseService.errorResponse(403, "Access blocked for all users!"));
                 return;
             }
 
@@ -60,7 +65,6 @@ public class AuthenticationFilter implements javax.ws.rs.container.ContainerRequ
 
             //Decode username and password
             String usernameAndPassword = new String(Base64.decode(encodedUserPassword.getBytes()));
-            ;
 
             //Split username and password tokens
             final StringTokenizer tokenizer = new StringTokenizer(usernameAndPassword, ":");
@@ -74,34 +78,44 @@ public class AuthenticationFilter implements javax.ws.rs.container.ContainerRequ
             //Verify user access
             if (method.isAnnotationPresent(RolesAllowed.class)) {
                 RolesAllowed rolesAnnotation = method.getAnnotation(RolesAllowed.class);
-                Set<String> rolesSet = new HashSet<String>(Arrays.asList(rolesAnnotation.value()));
+                Set<String> rolesSet = new HashSet<>(Arrays.asList(rolesAnnotation.value()));
 
                 //Is user valid?
                 if (!isUserAllowed(username, password, rolesSet)) {
                     requestContext.abortWith(ResponseService.errorResponse(401, "You cannot access this resource"));
-                    /*requestContext.abortWith(Response.status(Response.Status.UNAUTHORIZED)
-                            .entity("You cannot access this resource").build());*/
-                    return;
                 }
             }
         }
     }
 
+    public void authorizationProcess(){
+
+    }
+
     private boolean isUserAllowed(final String username, final String password, final Set<String> rolesSet) {
-        boolean isAllowed = false;
+        UserDao userDao = new UserDao();
 
-        //Step 1. Fetch password from database and match with password in argument
-        //If both match then get the defined role for user from database and continue; else return isAllowed [false]
-        //Access the database and do this part yourself
-        //String userRole = userMgr.getUserRole(username);
-
+        //Test user for swagger-ui
         if (username.equals("me") && password.equals("somepassword")) {
-            String userRole = "ADMIN";
-            //Step 2. Verify user role
+            String userRole = "ADMINS";
             if (rolesSet.contains(userRole)) {
-                isAllowed = true;
+                return true;
             }
         }
-        return isAllowed;
+
+        //Step 1. Fetch password from database and match with password in argument
+        //If both match then get the defined role for user from database and continue; else return [false]
+        UserBean user = userDao.getUserByName(username);
+        if (!user.getPassword().equals(password)) {
+            return false;
+        }
+
+        //Step 2. Verify user role
+        for (GroupBean group : user.getGroups()) {
+            if (rolesSet.contains(group.getName())) {
+                return true;
+            }
+        }
+        return false;
     }
 }

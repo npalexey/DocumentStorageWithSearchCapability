@@ -4,6 +4,8 @@ import com.nikitiuk.documentstoragewithsearchcapability.dao.implementations.DocG
 import com.nikitiuk.documentstoragewithsearchcapability.dao.implementations.GroupDao;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.DocGroupPermissions;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.GroupBean;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.thymeleaf.context.Context;
 
 import javax.ws.rs.core.Response;
@@ -13,6 +15,7 @@ public class RestDocGroupPermissionsService {
 
     private DocGroupPermissionsDao docGroupPermissionsDao = new DocGroupPermissionsDao();
     private GroupDao groupDao = new GroupDao();
+    private static final Logger logger = LoggerFactory.getLogger(RestDocGroupPermissionsService.class);
 
     public Response showGroupPermissionsForDocuments(long groupId) {
         List<DocGroupPermissions> docGroupPermissionsList;
@@ -20,6 +23,7 @@ public class RestDocGroupPermissionsService {
         try {
             docGroupPermissionsList = docGroupPermissionsDao.getGroupPermissionsForDocuments(checkedGroupBean);
         } catch (Exception e) {
+            logger.error("Error at showGroupPermissionsForDocuments: ", e);
             return ResponseService.errorResponse(404, "Error while producing group permissions for documents.");
         }
         /*Runnable getTask = () -> {

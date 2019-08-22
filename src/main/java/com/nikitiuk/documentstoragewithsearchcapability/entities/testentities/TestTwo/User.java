@@ -1,4 +1,4 @@
-package com.nikitiuk.documentstoragewithsearchcapability.entities.TestEntities.TestTwo;
+package com.nikitiuk.documentstoragewithsearchcapability.entities.testentities.TestTwo;
 
 import javax.persistence.*;
 import java.util.ArrayList;

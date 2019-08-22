@@ -7,7 +7,6 @@ import com.nikitiuk.documentstoragewithsearchcapability.dao.implementations.User
 import com.nikitiuk.documentstoragewithsearchcapability.entities.DocBean;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.DocGroupPermissions;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.GroupBean;
-import com.nikitiuk.documentstoragewithsearchcapability.entities.TestEntities.TestTwo.*;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.UserBean;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.helpers.DocGroupPermissionsId;
 import com.nikitiuk.documentstoragewithsearchcapability.services.LocalStorageService;
@@ -23,7 +22,11 @@ import java.util.Properties;
 
 public class HibernateUtil {
 
-    private static final Logger logger = LoggerFactory.getLogger(DocDao.class);
+    private static final Logger logger = LoggerFactory.getLogger(HibernateUtil.class);
+    private static GroupDao groupDao = new GroupDao();
+    private static UserDao userDao = new UserDao();
+    private static DocDao docDao = new DocDao();
+    private static DocGroupPermissionsDao docGroupPermissionsDao = new DocGroupPermissionsDao();
 
     private static SessionFactory sessionFactory;
 
@@ -96,7 +99,9 @@ public class HibernateUtil {
         GroupDao.populateTableWithGroups();
         UserDao.populateTableWithUsers();
         DocDao.populateTableWithDocs(LocalStorageService.listDocumentsInPath());
+        logger.info("NOW CALLING DocGroupPermissionsDao.populateTableWithDocGroupPermissions()");
         DocGroupPermissionsDao.populateTableWithDocGroupPermissions();
+        logger.info("FINISHED CALLING DocGroupPermissionsDao.populateTableWithDocGroupPermissions()");
     }
 
     public static void shutdown() {

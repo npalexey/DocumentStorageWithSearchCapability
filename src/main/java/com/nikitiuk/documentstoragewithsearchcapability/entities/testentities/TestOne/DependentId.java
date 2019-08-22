@@ -1,4 +1,4 @@
-package com.nikitiuk.documentstoragewithsearchcapability.entities.TestEntities.TestOne;
+package com.nikitiuk.documentstoragewithsearchcapability.entities.testentities.TestOne;
 
 import javax.persistence.Embeddable;
 import java.io.Serializable;
