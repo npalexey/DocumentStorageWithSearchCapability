@@ -22,16 +22,16 @@ import java.util.Set;
 )
 public class GroupBean implements Serializable {
 
-    @ManyToMany(mappedBy = "groups")//, fetch = FetchType.LAZY)
-            //@OrderBy("name ASC")
-            Set<UserBean> users = new HashSet<>();
+    @ManyToMany(mappedBy = "groups", cascade = {CascadeType.PERSIST, CascadeType.MERGE})//, fetch = FetchType.LAZY)
+    // @OrderBy("name ASC")
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    Set<UserBean> users = new HashSet<>();
 
     @OneToMany(
             mappedBy = "group",
             cascade = CascadeType.ALL,
             orphanRemoval = true
     )
-    //private List<DocumentGroupPermissions> documentsPermissions = new ArrayList<>();
     private Set<DocGroupPermissions> documentsPermissions = new HashSet<>();
 
     @Id
@@ -44,22 +44,8 @@ public class GroupBean implements Serializable {
     @Column(name = "group_name", unique = true, nullable = false)
     private String name;
 
-    /*@Enumerated(EnumType.STRING)
-    @Column(name = "group_permissions")
-    private Permissions permissions;
-
-    public GroupBean(String name, String permissions) {
+    public GroupBean(String name) {
         this.name = name;
-        if (permissions != null && Permissions.contains(permissions)) {
-            this.permissions = Permissions.valueOf(permissions);
-        } else {
-            this.permissions = null;
-        }
-    }*/
-
-    public GroupBean(String name/*, Permissions permissions*/) {
-        this.name = name;
-        //this.permissions = permissions;
     }
 
     public GroupBean() {
@@ -72,6 +58,9 @@ public class GroupBean implements Serializable {
 
     public void setUsers(Set<UserBean> users) {
         this.users = users;
+        for (UserBean user : users){
+            user.getGroups().add(this);
+        }
     }
 
     public Set<DocGroupPermissions> getDocumentsPermissions() {
@@ -81,22 +70,6 @@ public class GroupBean implements Serializable {
     public void setDocumentsPermissions(Set<DocGroupPermissions> documentsPermissions) {
         this.documentsPermissions = documentsPermissions;
     }
-
-    /*public Permissions getPermissions() {
-        return permissions;
-    }
-
-    public void setPermissions(Permissions permissions) {
-        this.permissions = permissions;
-    }
-
-    public void setPermissions(String permissions) {
-        if (permissions != null && Permissions.contains(permissions)) {
-            this.permissions = Permissions.valueOf(permissions);
-        } else {
-            this.permissions = null;
-        }
-    }*/
 
     public Long getId() {
         return id;
@@ -145,6 +118,16 @@ public class GroupBean implements Serializable {
         }
     }
 
+    public void addUser(UserBean user) {
+        this.users.add(user);
+        user.getGroups().add(this);
+    }
+
+    public void removeUser(UserBean user) {
+        this.users.remove(user);
+        user.getGroups().remove(this);
+    }
+
     public boolean checkIfGroupHasDocument(DocBean document) {
         for (DocGroupPermissions docGroupPermissions : documentsPermissions) {
             if (docGroupPermissions.getGroup().equals(this) &&
@@ -154,10 +137,6 @@ public class GroupBean implements Serializable {
         }
         return false;
     }
-
-    /*public void addDocumentPermissions(DocBean document, Permissions permissions) {
-
-    }*/
 
     @Override
     public String toString() {
@@ -171,7 +150,6 @@ public class GroupBean implements Serializable {
             return false;
         GroupBean groupBean = (GroupBean) o;
         return Objects.equals(name, groupBean.name);
-        //return this.getName().equals(o.getName());
     }
 
     @Override

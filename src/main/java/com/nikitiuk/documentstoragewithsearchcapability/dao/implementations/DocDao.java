@@ -9,16 +9,24 @@ import org.hibernate.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.SecurityContext;
 import java.util.ArrayList;
 import java.util.List;
 
 public class DocDao extends GenericHibernateDao<DocBean> {
 
     private static final Logger logger = LoggerFactory.getLogger(DocDao.class);
+    private DocGroupPermissionsDao docGroupPermissionsDao = new DocGroupPermissionsDao();
 
     public DocDao() {
         super(DocBean.class);
     }
+
+
+
+    @Context
+    private SecurityContext context;
 
     public static void populateTableWithDocs(List<DocBean> docBeanList) {
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
@@ -42,26 +50,13 @@ public class DocDao extends GenericHibernateDao<DocBean> {
     }
 
     public void saveDocument(DocBean document) {
-        Transaction transaction = null;
-        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
-            List<DocBean> beanList = session.createQuery("FROM DocBean", DocBean.class).list();
-            if (!beanList.isEmpty()) {
-                for (DocBean docBean : beanList) {
-                    if (!docBean.equals(document)) {
-                        // start a transaction
-                        transaction = session.beginTransaction();
-                        // save the document object
-                        session.save(document);
-                        // commit transaction
-                        transaction.commit();
-                    }
-                }
+        try {
+            if (exists(document)) {
+                throw new Exception("Such Document Already Exists");
             }
+            save(document);
         } catch (Exception e) {
-            if (transaction != null) {
-                transaction.rollback();
-            }
-            logger.error("Error at DocDao save: ", e);
+            logger.error("Error at DocDao saveDocument: ", e);
         }
     }
 
@@ -74,27 +69,63 @@ public class DocDao extends GenericHibernateDao<DocBean> {
             transaction.commit();
             return docBeanList;
         } catch (Exception e) {
+            logger.error("Error at DocDao getAll: ", e);
             if (transaction != null) {
                 transaction.rollback();
             }
-            logger.error("Error at DocDao getAll: ", e);
-            return docBeanList;
         }
-
+        return docBeanList;
     }
 
     public void deleteDocument(DocBean docBean) {
         Transaction transaction = null;
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             transaction = session.beginTransaction();
-            session.createQuery("DELETE FROM DocBean WHERE name = '"
-                    + docBean.getName() + "' AND path = '" + docBean.getPath() + "' ").executeUpdate();
+            DocBean checkedDoc = session.createQuery("FROM DocBean WHERE name = '"
+                    + docBean.getName() + "' AND path = '" + docBean.getPath() + "' ", DocBean.class).uniqueResult();
+            if(checkedDoc != null){
+                docGroupPermissionsDao.deleteAllPermissionsForDocument(checkedDoc);
+                session.delete(checkedDoc);
+            }
+            /*session.createQuery("DELETE FROM DocBean WHERE name = '"
+                    + docBean.getName() + "' AND path = '" + docBean.getPath() + "' ").executeUpdate();*/
+            transaction.commit();
+        } catch (Exception e) {
+            logger.error("Error at DocDao delete: ", e);
+            if (transaction != null) {
+                transaction.rollback();
+            }
+        }
+    }
+
+    public boolean exists(DocBean document) throws Exception {
+        Session session = HibernateUtil.getSessionFactory().openSession();
+        List<DocBean> beanList = session.createQuery("FROM DocBean", DocBean.class).list();
+        if (!beanList.isEmpty()) {
+            for (DocBean docBean : beanList) {
+                if (docBean.equals(document)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public void save(DocBean document) throws Exception {
+        Transaction transaction = null;
+        try {
+            Session session = HibernateUtil.getSessionFactory().openSession();
+            // start a transaction
+            transaction = session.beginTransaction();
+            // save the user object
+            session.saveOrUpdate(document);
+            // commit transaction
             transaction.commit();
         } catch (Exception e) {
             if (transaction != null) {
                 transaction.rollback();
             }
-            logger.error("Error at DocDao delete: ", e);
+            throw e;
         }
     }
 }

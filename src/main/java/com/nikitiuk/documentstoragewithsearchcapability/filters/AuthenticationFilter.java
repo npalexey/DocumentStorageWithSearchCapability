@@ -67,13 +67,13 @@ public class AuthenticationFilter implements ContainerRequestFilter {
             String usernameAndPassword = new String(Base64.decode(encodedUserPassword.getBytes()));
 
             //Split username and password tokens
-            final StringTokenizer tokenizer = new StringTokenizer(usernameAndPassword, ":");
+            /*final StringTokenizer tokenizer = new StringTokenizer(usernameAndPassword, ":");
             final String username = tokenizer.nextToken();
             final String password = tokenizer.nextToken();
 
             //Verifying Username and password
             logger.info("Username: " + username);
-            logger.info("Password: " + password);
+            logger.info("Password: " + password);*/
 
             //Verify user access
             if (method.isAnnotationPresent(RolesAllowed.class)) {
@@ -81,7 +81,7 @@ public class AuthenticationFilter implements ContainerRequestFilter {
                 Set<String> rolesSet = new HashSet<>(Arrays.asList(rolesAnnotation.value()));
 
                 //Is user valid?
-                if (!isUserAllowed(username, password, rolesSet)) {
+                if (!isUserAllowed(usernameAndPassword, rolesSet, requestContext)) {
                     requestContext.abortWith(ResponseService.errorResponse(401, "You cannot access this resource"));
                 }
             }
@@ -92,7 +92,10 @@ public class AuthenticationFilter implements ContainerRequestFilter {
 
     }
 
-    private boolean isUserAllowed(final String username, final String password, final Set<String> rolesSet) {
+    private boolean isUserAllowed(final String usernameAndPassword, final Set<String> rolesSet, ContainerRequestContext requestContext) {
+        final StringTokenizer tokenizer = new StringTokenizer(usernameAndPassword, ":");
+        final String username = tokenizer.nextToken();
+        final String password = tokenizer.nextToken();
         UserDao userDao = new UserDao();
 
         //Test user for swagger-ui
@@ -113,6 +116,8 @@ public class AuthenticationFilter implements ContainerRequestFilter {
         //Step 2. Verify user role
         for (GroupBean group : user.getGroups()) {
             if (rolesSet.contains(group.getName())) {
+                String scheme = requestContext.getUriInfo().getRequestUri().getScheme();
+                requestContext.setSecurityContext(new SecurityContextImplementation(user, scheme));
                 return true;
             }
         }

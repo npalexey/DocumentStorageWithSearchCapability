@@ -7,6 +7,7 @@ import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.Table;
 import javax.persistence.*;
+import java.security.Principal;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -17,7 +18,7 @@ import java.util.Set;
 @Cache(
         usage = CacheConcurrencyStrategy.READ_WRITE
 )
-public class UserBean {
+public class UserBean implements Principal {
 
     @Id
     @GeneratedValue(generator = "native")
@@ -33,7 +34,7 @@ public class UserBean {
     private String password;
 
     @ManyToMany(cascade = { CascadeType.PERSIST, CascadeType.MERGE }, fetch = FetchType.LAZY)
-    @Cascade(org.hibernate.annotations.CascadeType.SAVE_UPDATE)
+    //@Cascade(org.hibernate.annotations.CascadeType.SAVE_UPDATE)
     @JoinTable(
             name = "User_groups_binding",
             joinColumns = { @JoinColumn(name = "user_id") },
@@ -82,6 +83,16 @@ public class UserBean {
         this.name = name;
     }
 
+    public void addGroup(GroupBean group) {
+        this.groups.add(group);
+        group.getUsers().add(this);
+    }
+
+    public void removeGroup(GroupBean group) {
+        this.groups.remove(group);
+        group.getUsers().remove(this);
+    }
+
     @Override
     public String toString() {
         return "User [user_id=" + id + ", user_name=" + name + ", user_groups=" + groups.toString() + "]";
@@ -94,7 +105,6 @@ public class UserBean {
             return false;
         UserBean userBean = (UserBean) o;
         return Objects.equals(name, userBean.name);
-        //return this.getName().equals(otherUserBean.getName()) && this.getGroups().equals(otherUserBean.getGroups());
     }
 
     @Override

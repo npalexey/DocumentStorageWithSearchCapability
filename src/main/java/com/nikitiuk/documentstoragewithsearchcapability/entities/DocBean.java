@@ -1,11 +1,10 @@
 package com.nikitiuk.documentstoragewithsearchcapability.entities;
 
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.hibernate.annotations.GenericGenerator;
-import org.hibernate.annotations.NaturalId;
-import org.hibernate.annotations.NaturalIdCache;
 import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.*;
 
+import javax.persistence.Entity;
+import javax.persistence.Table;
 import javax.persistence.*;
 import java.util.Objects;
 
@@ -75,7 +74,6 @@ public class DocBean {
             return false;
         DocBean docBean = (DocBean) o;
         return Objects.equals(path, docBean.path);
-        //return this.getName().equals(otherDocBean.getName()) && this.getPath().equals(otherDocBean.getPath());
     }
 
     @Override

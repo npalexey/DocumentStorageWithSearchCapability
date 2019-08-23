@@ -1,5 +1,6 @@
 package com.nikitiuk.documentstoragewithsearchcapability.dao.implementations;
 
+import com.nikitiuk.documentstoragewithsearchcapability.dao.GenericHibernateDao;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.DocBean;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.DocGroupPermissions;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.GroupBean;
@@ -14,10 +15,12 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DocGroupPermissionsDao {
+public class DocGroupPermissionsDao extends GenericHibernateDao<DocGroupPermissions> {
 
     private static final Logger logger = LoggerFactory.getLogger(DocGroupPermissionsDao.class);
     private static List<DocGroupPermissions> docGroupPermissionsList = new ArrayList<>();
+
+    public DocGroupPermissionsDao () {super(DocGroupPermissions.class);}
 
     private static void getDocGroupPermissionsListForPopulate() {
         DocDao docDao = new DocDao();

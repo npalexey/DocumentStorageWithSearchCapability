@@ -148,7 +148,7 @@ public class UserDao extends GenericHibernateDao<UserBean> {
         return false;
     }
 
-    public void save(UserBean user) throws Exception {
+    private void save(UserBean user) throws Exception {
         Transaction transaction = null;
         try {
             user.setGroups(checkGroupsAndReturnMatched(user));

@@ -23,11 +23,6 @@ import java.util.Properties;
 public class HibernateUtil {
 
     private static final Logger logger = LoggerFactory.getLogger(HibernateUtil.class);
-    private static GroupDao groupDao = new GroupDao();
-    private static UserDao userDao = new UserDao();
-    private static DocDao docDao = new DocDao();
-    private static DocGroupPermissionsDao docGroupPermissionsDao = new DocGroupPermissionsDao();
-
     private static SessionFactory sessionFactory;
 
     public static SessionFactory getSessionFactory() {
@@ -75,33 +70,12 @@ public class HibernateUtil {
         return sessionFactory;
     }
 
-    /*private static void deleteAllDataFromDb() throws Exception {
-        Transaction transaction = null;
-        try (Session session = sessionFactory.openSession()) {
-
-            // start a transaction
-            transaction = session.beginTransaction();
-            // save the document object
-            session.createSQLQuery("DROP TABLE IF EXISTS Documents, User_groups_binding, Users, Permission_groups").executeUpdate();
-            // commit transaction
-            transaction.commit();
-            //session.close();
-        } catch (Exception e) {
-            if (transaction != null) {
-                transaction.rollback();
-            }
-            logger.error("Error while dropping DB: ", e);
-        }
-    }*/
-
     private static void populateTables() throws Exception {
         //deleteAllDataFromDb();
         GroupDao.populateTableWithGroups();
         UserDao.populateTableWithUsers();
         DocDao.populateTableWithDocs(LocalStorageService.listDocumentsInPath());
-        logger.info("NOW CALLING DocGroupPermissionsDao.populateTableWithDocGroupPermissions()");
         DocGroupPermissionsDao.populateTableWithDocGroupPermissions();
-        logger.info("FINISHED CALLING DocGroupPermissionsDao.populateTableWithDocGroupPermissions()");
     }
 
     public static void shutdown() {
