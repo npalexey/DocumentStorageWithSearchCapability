@@ -16,6 +16,12 @@ public class SecurityContextImplementation implements SecurityContext {
         this.scheme = scheme;
     }
 
+    public UserBean getUser(){
+        Hibernate.initialize(user);
+        Hibernate.initialize(user.getGroups());
+        return user;
+    }
+
     @Override
     public Principal getUserPrincipal() {return this.user;}
 

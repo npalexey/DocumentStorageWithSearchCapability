@@ -12,6 +12,10 @@
         <tr th:if="${inStorage.empty}">
         <td colspan="2">No <span th:text="|${entityName}s|">Entities</span> Available</td>
         </tr>
+        </tbody>
+    </table>
+    <table>
+        <tbody>
         <tr th:if="${entityName} == 'Document'" th:each="entry : ${inStorage}">
             <td><span th:utext="${entry.path}">Document Title</span></td>
             <td><a href="content" th:href="@{~/DocumentStorageWithSearchCapability/rest/doc/{name}/content(name=${entry.name})}">Get Content</a></td>
@@ -24,10 +28,11 @@
 <!--            <th:block th:each="group : ${entry.groups}"><td><span th:utext="|Group: ${group.name}; |">User's Groups</span></td></th:block>-->
         </tr>
         <tr th:if="${entityName} == 'Group'" th:each="entry : ${inStorage}">
-            <td><span th:utext="${entry.name}">Group name</span></td>
-            <td><span th:utext="|Docs: |">Docs</span></td>
+            <td><span th:utext="|${entry.name} |">Group name</span></td>
+            <td><span th:utext="|, Id: ${entry.id} |">Group id</span></td>
+            <td><span th:utext="|, Docs: |">Docs</span></td>
             <td><th:block th:each="docPermissions : ${entry.documentsPermissions}"><span th:utext="|[${docPermissions}]  |">Permissions</span></th:block></td>
-            <td><span th:utext="| Users: |">Group's users</span></td>
+            <td><span th:utext="|, Users: |">Group's users</span></td>
             <td><th:block th:each="user : ${entry.users}"><span th:utext="|${user.name} |">Group's users</span></th:block></td>
             <!--<th:block th:each="user : ${entry.users}">
                 <td><span th:utext="|${user.name} |">Group's users</span></td>-->

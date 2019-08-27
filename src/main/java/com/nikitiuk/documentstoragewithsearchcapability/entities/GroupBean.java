@@ -1,6 +1,7 @@
 package com.nikitiuk.documentstoragewithsearchcapability.entities;
 
 import com.nikitiuk.documentstoragewithsearchcapability.entities.helpers.Permissions;
+import org.hibernate.Hibernate;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.*;
 
@@ -23,7 +24,7 @@ import java.util.Set;
 public class GroupBean implements Serializable {
 
     @ManyToMany(mappedBy = "groups", cascade = {CascadeType.PERSIST, CascadeType.MERGE})//, fetch = FetchType.LAZY)
-    // @OrderBy("name ASC")
+    //@OrderBy("name ASC")
     @OnDelete(action = OnDeleteAction.CASCADE)
     Set<UserBean> users = new HashSet<>();
 

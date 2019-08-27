@@ -24,7 +24,7 @@ public class DocGroupPermissionsDao extends GenericHibernateDao<DocGroupPermissi
 
     private static void getDocGroupPermissionsListForPopulate() {
         DocDao docDao = new DocDao();
-        List<DocBean> docBeanList = docDao.getDocuments();
+        List<DocBean> docBeanList = docDao.getAllDocumentsForPopulate();
         if (!docBeanList.isEmpty()) {
             GroupDao groupDao = new GroupDao();
             List<GroupBean> groupBeanList = groupDao.getGroups();
@@ -39,7 +39,6 @@ public class DocGroupPermissionsDao extends GenericHibernateDao<DocGroupPermissi
                 docGroupPermissionsList.add(docGroupPermissionsUser);
                 docGroupPermissionsList.add(docGroupPermissionsGuest);
             }
-            logger.info(docGroupPermissionsList.toString());
         }
     }
 

@@ -22,7 +22,7 @@ public class DocGroupPermissions {
     private DocBean document;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "group_permissions_for_doc")
+    @Column(name = "group_permissions_for_doc", nullable = false)
     private Permissions permissions;
 
     public DocGroupPermissions() {

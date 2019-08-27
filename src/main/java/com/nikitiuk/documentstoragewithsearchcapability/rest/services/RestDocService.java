@@ -1,7 +1,10 @@
 package com.nikitiuk.documentstoragewithsearchcapability.rest.services;
 
 import com.nikitiuk.documentstoragewithsearchcapability.dao.implementations.DocDao;
+import com.nikitiuk.documentstoragewithsearchcapability.dao.implementations.UserDao;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.DocBean;
+import com.nikitiuk.documentstoragewithsearchcapability.entities.UserBean;
+import com.nikitiuk.documentstoragewithsearchcapability.filters.SecurityContextImplementation;
 import com.nikitiuk.documentstoragewithsearchcapability.services.LocalStorageService;
 import com.nikitiuk.documentstoragewithsearchcapability.services.SolrService;
 import org.apache.solr.client.solrj.SolrServerException;
@@ -11,6 +14,7 @@ import javax.annotation.security.PermitAll;
 import javax.ws.rs.Path;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.StreamingOutput;
 import java.io.File;
 import java.io.IOException;
@@ -29,12 +33,14 @@ public class RestDocService {
     private static ExecutorService executorService = Executors.newSingleThreadExecutor();
 
     private DocDao docDao = new DocDao();
+    private UserDao userDao = new UserDao();
 
-    public Response showFilesInDoc() {
+    public Response showFilesInDoc(SecurityContextImplementation securityContext) {
         List<DocBean> docBeanList;
         try {
-            docBeanList = new ArrayList<>(LocalStorageService.listDocumentsInPath());
-        } catch (IOException e) {
+            //docBeanList = new ArrayList<>(LocalStorageService.listDocumentsInPath());
+            docBeanList = docDao.getDocuments(securityContext.getUser());
+        } catch (/*IOException*/ Exception e) {
             return ResponseService.errorResponse(404, "Error while producing list of content.");
         }
         /*Runnable getTask = () -> {
@@ -96,10 +102,12 @@ public class RestDocService {
         return ResponseService.okResponseSimple("Data uploaded successfully");
     }
 
-    public Response searchInEveryFileWithStringQuery(String query) {
+    public Response searchInEveryFileWithStringQuery(String query, SecurityContextImplementation securityContext) {
         StringBuilder contentBuilder = new StringBuilder("Nothing was found");
+        List<DocBean> docBeanList;
         try {
-            contentBuilder.append(SolrService.searchAndReturnDocsAndHighlightedText(query)).delete(0, 18);
+            docBeanList = docDao.getDocuments(securityContext.getUser());
+            contentBuilder.append(SolrService.searchAndReturnDocsAndHighlightedText(query, docBeanList)).delete(0, 18);
         } catch (IOException | SolrServerException e) {
             return ResponseService.errorResponse(404, "Error while searching for: " + query
                     + ". Please, try again");

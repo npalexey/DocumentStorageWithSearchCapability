@@ -1,5 +1,6 @@
 package com.nikitiuk.documentstoragewithsearchcapability.services;
 
+import com.nikitiuk.documentstoragewithsearchcapability.entities.DocBean;
 import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServerException;
@@ -15,6 +16,7 @@ import org.apache.solr.common.params.CoreAdminParams;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -35,10 +37,21 @@ public class SolrService {
         client.commit();
     }
 
-    public static StringBuilder searchAndReturnDocsAndHighlightedText(String queryString) throws IOException, SolrServerException {
+    public static StringBuilder searchAndReturnDocsAndHighlightedText(String queryString, List<DocBean> docBeanList) throws IOException, SolrServerException {
         SolrClient client = new HttpSolrClient.Builder("http://localhost:8983/solr/mycoll").build();
         SolrQuery query = new SolrQuery();
-        query.setQuery("\"" + queryString + "\"");
+        Iterator<DocBean> iterator = docBeanList.iterator();
+        StringBuilder contentBuilder = new StringBuilder();
+        if(iterator.hasNext()){
+            contentBuilder.append("docname:(\"").append(iterator.next().getName()).append("\"");
+            while (iterator.hasNext()){
+                contentBuilder.append(" OR ").append("\"").append(iterator.next().getName()).append("\"");
+            }
+            contentBuilder.append(") AND ");
+        }
+        contentBuilder.append("\"").append(queryString).append("\"");
+        query.setQuery(contentBuilder.toString());
+        //query.setQuery("\"" + queryString + "\"");
         query.setHighlight(true);
         //query.setParam("hl", "on");                                    //same as .setHighlight(true);
         query.setParam("hl.method", "original");          //default original, other: unified, fastVector

@@ -8,9 +8,7 @@ import javax.persistence.Entity;
 import javax.persistence.Table;
 import javax.persistence.*;
 import java.security.Principal;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 @Entity
 @Table(name = "Users")
@@ -95,7 +93,11 @@ public class UserBean implements Principal {
 
     @Override
     public String toString() {
-        return "User [user_id=" + id + ", user_name=" + name + ", user_groups=" + groups.toString() + "]";
+        List<String> groupNames = new ArrayList<>();
+        for(GroupBean groupBean : groups){
+            groupNames.add(groupBean.getName());
+        }
+        return "User [user_id=" + id + ", user_name=" + name + ", user_groups=" + groupNames + "]";
     }
 
     @Override

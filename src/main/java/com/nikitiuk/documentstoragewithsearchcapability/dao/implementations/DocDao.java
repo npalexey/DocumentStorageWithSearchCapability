@@ -2,6 +2,11 @@ package com.nikitiuk.documentstoragewithsearchcapability.dao.implementations;
 
 import com.nikitiuk.documentstoragewithsearchcapability.dao.GenericHibernateDao;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.DocBean;
+import com.nikitiuk.documentstoragewithsearchcapability.entities.DocGroupPermissions;
+import com.nikitiuk.documentstoragewithsearchcapability.entities.GroupBean;
+import com.nikitiuk.documentstoragewithsearchcapability.entities.UserBean;
+import com.nikitiuk.documentstoragewithsearchcapability.entities.helpers.Permissions;
+import com.nikitiuk.documentstoragewithsearchcapability.filters.SecurityContextImplementation;
 import com.nikitiuk.documentstoragewithsearchcapability.utils.HibernateUtil;
 import org.hibernate.Hibernate;
 import org.hibernate.Session;
@@ -12,7 +17,9 @@ import org.slf4j.LoggerFactory;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.SecurityContext;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class DocDao extends GenericHibernateDao<DocBean> {
 
@@ -22,11 +29,6 @@ public class DocDao extends GenericHibernateDao<DocBean> {
     public DocDao() {
         super(DocBean.class);
     }
-
-
-
-    @Context
-    private SecurityContext context;
 
     public static void populateTableWithDocs(List<DocBean> docBeanList) {
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
@@ -60,12 +62,13 @@ public class DocDao extends GenericHibernateDao<DocBean> {
         }
     }
 
-    public List<DocBean> getDocuments() {
+    protected List<DocBean> getAllDocumentsForPopulate() {
         Transaction transaction = null;
         List<DocBean> docBeanList = new ArrayList<>();
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             transaction = session.beginTransaction();
             docBeanList = session.createQuery("FROM DocBean", DocBean.class).list();
+            //docBeanList = session.createQuery("FROM DocBean INNER JOIN DocGroupPermissions ON DocBean.id = DocGroupPermissions.document", DocBean.class).list();
             transaction.commit();
             return docBeanList;
         } catch (Exception e) {
@@ -75,6 +78,68 @@ public class DocDao extends GenericHibernateDao<DocBean> {
             }
         }
         return docBeanList;
+    }
+
+    public DocBean getDocByPath(String path) {
+        Transaction transaction = null;
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            transaction = session.beginTransaction();
+            DocBean docBean = session.createQuery("FROM DocBean WHERE path = '"
+                    + path + "'", DocBean.class).uniqueResult();
+            /*Hibernate.initialize(groupBean.getUsers());
+            Hibernate.initialize(groupBean.getDocumentsPermissions());*/
+            transaction.commit();
+            session.close();
+            return docBean;
+        } catch (Exception e) {
+            logger.error("Error at DocDao getDocByPath: ", e);
+            if (transaction != null) {
+                transaction.rollback();
+            }
+            throw e;
+        }
+    }
+
+    public List<DocBean> getDocuments(UserBean userBean) {
+        Transaction transaction = null;
+        List<DocBean> docBeanList = new ArrayList<>();
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            transaction = session.beginTransaction();
+            Set<Long> ids = getIdsOfUserPermittedDocs(userBean);
+            if(!ids.isEmpty()){
+                docBeanList = session.createQuery("FROM DocBean WHERE id IN :ids", DocBean.class).setParameter("ids", ids).list();
+            }
+            //docBeanList = session.createQuery("FROM DocBean INNER JOIN DocGroupPermissions ON DocBean.id = DocGroupPermissions.document", DocBean.class).list();
+            transaction.commit();
+            return docBeanList;
+        } catch (Exception e) {
+            logger.error("Error at DocDao getAll: ", e);
+            if (transaction != null) {
+                transaction.rollback();
+            }
+        }
+        return docBeanList;
+    }
+
+    public Set<Long> getIdsOfUserPermittedDocs(UserBean userBean) {
+        Set<Long> permittedDocsIds = new HashSet<>();
+        /*logger.info(securityContext.getUser().toString());
+        logger.info(securityContext.getUserPrincipal().toString());*/
+        if(userBean != null){
+            /*UserBean user = (UserBean) securityContext.getUserPrincipal();
+            logger.info(user.toString());*/
+            //if(user != null){
+                Hibernate.initialize(userBean.getGroups());
+                for(GroupBean groupBean : userBean.getGroups()){
+                    for(DocGroupPermissions docGroupPermissions : docGroupPermissionsDao.getGroupPermissionsForDocuments(groupBean)) {
+                        if(docGroupPermissions.getPermissions() != null) {
+                            permittedDocsIds.add(docGroupPermissions.getDocument().getId());
+                        }
+                    }
+                }
+            //}
+        }
+        return permittedDocsIds;
     }
 
     public void deleteDocument(DocBean docBean) {
@@ -111,7 +176,7 @@ public class DocDao extends GenericHibernateDao<DocBean> {
         return false;
     }
 
-    public void save(DocBean document) throws Exception {
+    private void save(DocBean document) throws Exception {
         Transaction transaction = null;
         try {
             Session session = HibernateUtil.getSessionFactory().openSession();

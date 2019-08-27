@@ -1,12 +1,18 @@
 package com.nikitiuk.documentstoragewithsearchcapability.rest.controllers;
 
+import com.nikitiuk.documentstoragewithsearchcapability.filters.SecurityContextImplementation;
 import com.nikitiuk.documentstoragewithsearchcapability.rest.services.RestDocService;
 import org.glassfish.jersey.media.multipart.FormDataParam;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.security.PermitAll;
 import javax.ws.rs.*;
+import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.SecurityContext;
 import java.io.InputStream;
 
 @PermitAll
@@ -14,12 +20,14 @@ import java.io.InputStream;
 public class RestDocController {
 
     private RestDocService docService = new RestDocService();
+    private static final Logger logger = LoggerFactory.getLogger(RestDocController.class);
 
     @PermitAll
     @GET
     @Produces(MediaType.TEXT_HTML)
-    public Response showFilesInDoc() {
-        return docService.showFilesInDoc();
+    public Response showFilesInDoc(@Context ContainerRequestContext context) {
+        SecurityContextImplementation securityContextImplementation = (SecurityContextImplementation) context.getSecurityContext();
+        return docService.showFilesInDoc(securityContextImplementation);
     }
 
     @PermitAll
@@ -52,8 +60,9 @@ public class RestDocController {
     @POST
     @Path("/search")
     @Produces(MediaType.TEXT_HTML)
-    public Response searchInEveryFileWithStringQuery(@DefaultValue("") @QueryParam("query") String query) {
-        return docService.searchInEveryFileWithStringQuery(query);
+    public Response searchInEveryFileWithStringQuery(@DefaultValue("") @QueryParam("query") String query, @Context ContainerRequestContext context) {
+        SecurityContextImplementation securityContextImplementation = (SecurityContextImplementation) context.getSecurityContext();
+        return docService.searchInEveryFileWithStringQuery(query, securityContextImplementation);
     }
 
     @PermitAll
