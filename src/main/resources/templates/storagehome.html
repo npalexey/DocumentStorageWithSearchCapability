@@ -40,7 +40,7 @@
             <!--</th:block>-->
         </tr>
         <tr th:if="${entityName} == 'DocGroupPermissions'" th:each="entry : ${inStorage}">
-            <td><span th:utext="|Group id: ${entry.group.id}, Doc id: ${entry.document.id}, Permissions: ${entry.permissions}|">Group Id</span></td>
+            <td><span th:utext="|Doc id: ${entry.document.id}, Group id: ${entry.group.id}, Permissions: ${entry.permissions}|">Permissions</span></td>
         </tr>
         </tbody>
     </table>

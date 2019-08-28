@@ -123,21 +123,16 @@ public class DocDao extends GenericHibernateDao<DocBean> {
 
     public Set<Long> getIdsOfUserPermittedDocs(UserBean userBean) {
         Set<Long> permittedDocsIds = new HashSet<>();
-        /*logger.info(securityContext.getUser().toString());
-        logger.info(securityContext.getUserPrincipal().toString());*/
         if(userBean != null){
-            /*UserBean user = (UserBean) securityContext.getUserPrincipal();
-            logger.info(user.toString());*/
-            //if(user != null){
-                Hibernate.initialize(userBean.getGroups());
-                for(GroupBean groupBean : userBean.getGroups()){
-                    for(DocGroupPermissions docGroupPermissions : docGroupPermissionsDao.getGroupPermissionsForDocuments(groupBean)) {
-                        if(docGroupPermissions.getPermissions() != null) {
-                            permittedDocsIds.add(docGroupPermissions.getDocument().getId());
-                        }
+            Hibernate.initialize(userBean.getGroups());
+            for(GroupBean groupBean : userBean.getGroups()){
+                for(DocGroupPermissions docGroupPermissions : docGroupPermissionsDao.getGroupPermissionsForDocuments(groupBean)) {
+                    if(docGroupPermissions.getPermissions() != null) {
+                        permittedDocsIds.add(docGroupPermissions.getDocument().getId());
                     }
                 }
-            //}
+            }
+
         }
         return permittedDocsIds;
     }
@@ -165,7 +160,10 @@ public class DocDao extends GenericHibernateDao<DocBean> {
 
     public boolean exists(DocBean document) throws Exception {
         Session session = HibernateUtil.getSessionFactory().openSession();
-        List<DocBean> beanList = session.createQuery("FROM DocBean", DocBean.class).list();
+        return session.createQuery(
+                "SELECT 1 FROM DocBean WHERE EXISTS (SELECT 1 FROM DocBean WHERE path = '"+ document.getPath() +"')")
+                .uniqueResult() != null;
+        /*List<DocBean> beanList = session.createQuery("FROM DocBean", DocBean.class).list();
         if (!beanList.isEmpty()) {
             for (DocBean docBean : beanList) {
                 if (docBean.equals(document)) {
@@ -173,7 +171,7 @@ public class DocDao extends GenericHibernateDao<DocBean> {
                 }
             }
         }
-        return false;
+        return false;*/
     }
 
     private void save(DocBean document) throws Exception {

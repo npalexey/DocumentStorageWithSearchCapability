@@ -20,7 +20,9 @@ public class DocGroupPermissionsDao extends GenericHibernateDao<DocGroupPermissi
     private static final Logger logger = LoggerFactory.getLogger(DocGroupPermissionsDao.class);
     private static List<DocGroupPermissions> docGroupPermissionsList = new ArrayList<>();
 
-    public DocGroupPermissionsDao () {super(DocGroupPermissions.class);}
+    public DocGroupPermissionsDao() {
+        super(DocGroupPermissions.class);
+    }
 
     private static void getDocGroupPermissionsListForPopulate() {
         DocDao docDao = new DocDao();
@@ -114,7 +116,7 @@ public class DocGroupPermissionsDao extends GenericHibernateDao<DocGroupPermissi
         }
     }
 
-    public void deletePermissionsForDocumentForGroup(GroupBean groupBean, DocBean docBean) {
+    public void deletePermissionsForDocumentForGroup(DocBean docBean, GroupBean groupBean) {
         Transaction transaction = null;
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             transaction = session.beginTransaction();
@@ -163,8 +165,16 @@ public class DocGroupPermissionsDao extends GenericHibernateDao<DocGroupPermissi
         setPermission(docBean.getId(), groupBean.getId(), Permissions.WRITE);
     }
 
+    public void setWriteForDocumentForGroup(long docId, long groupId) {
+        setPermission(docId, groupId, Permissions.WRITE);
+    }
+
     public void setReadForDocumentForGroup(DocBean docBean, GroupBean groupBean) {
         setPermission(docBean.getId(), groupBean.getId(), Permissions.READ);
+    }
+
+    public void setReadForDocumentForGroup(long docId, long groupId) {
+        setPermission(docId, groupId, Permissions.READ);
     }
 
     private void setPermission(Long docId, Long groupId, Permissions permission) {
@@ -173,16 +183,31 @@ public class DocGroupPermissionsDao extends GenericHibernateDao<DocGroupPermissi
             transaction = session.beginTransaction();
             DocGroupPermissions docGroupPermissions = session.createQuery("FROM DocGroupPermissions WHERE document = "
                     + docId + " AND group = " + groupId, DocGroupPermissions.class).uniqueResult();
-            docGroupPermissions.setPermissions(permission);
-            session.merge(docGroupPermissions);
+            if (docGroupPermissions != null) {
+                docGroupPermissions.setPermissions(permission);
+                session.merge(docGroupPermissions);
+            } else {
+                session.saveOrUpdate(createNewPermissions(docId, groupId, permission));
+            }
             transaction.commit();
         } catch (Exception e) {
-            logger.error("Error at DocGroupPermissionsDao set" + permission + "ForDocumentForGroup, where " +
-                    "DocId = " + docId + "and GroupId = " + groupId, e);
+            logger.error("Error at DocGroupPermissionsDao set " + permission + " ForDocumentForGroup, where " +
+                    "DocId = " + docId + " and GroupId = " + groupId, e);
             if (transaction != null) {
                 transaction.rollback();
             }
         }
+    }
+
+    private DocGroupPermissions createNewPermissions(Long docId, Long groupId, Permissions permission) {
+        DocDao docDao = new DocDao();
+        GroupDao groupDao = new GroupDao();
+        DocBean docBean = docDao.getOneById(docId);
+        GroupBean groupBean = groupDao.getOneById(groupId);
+        DocGroupPermissions newDocGroupPermissions = new DocGroupPermissions(groupBean, docBean);
+        newDocGroupPermissions.setPermissions(permission);
+        groupBean.addDocument(docBean, permission);
+        return newDocGroupPermissions;
     }
 
     private void initializeList(List<DocGroupPermissions> docGroupPermissionsList) {

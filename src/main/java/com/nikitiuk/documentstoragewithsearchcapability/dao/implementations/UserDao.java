@@ -16,6 +16,7 @@ public class UserDao extends GenericHibernateDao<UserBean> {
 
     private static final Logger logger = LoggerFactory.getLogger(UserDao.class);
     private static List<UserBean> userList = new ArrayList<>();
+    private GroupDao groupDao = new GroupDao();
 
     private static void getUserListForPopulate() {
         userList.add(new UserBean("Admin", "adminpswrd"));
@@ -83,7 +84,9 @@ public class UserDao extends GenericHibernateDao<UserBean> {
             transaction = session.beginTransaction();
             UserBean userBean = session.createQuery("FROM UserBean WHERE name = '"
                     + userName + "'", UserBean.class).uniqueResult();
-            Hibernate.initialize(userBean.getGroups());
+            if(userBean != null) {
+                Hibernate.initialize(userBean.getGroups());
+            }
             transaction.commit();
             session.close();
             return userBean;
@@ -108,13 +111,14 @@ public class UserDao extends GenericHibernateDao<UserBean> {
 
     public void updateUser(UserBean userBean) {
         try {
-            if (exists(userBean)) {
-                UserBean updatedUser = getUserByName(userBean.getName());
-                updatedUser.setGroups(userBean.getGroups());
-                updatedUser.setPassword(userBean.getPassword());
-                Hibernate.initialize(updatedUser.getGroups());
-                save(updatedUser);
+            UserBean updatedUser = getUserByName(userBean.getName());
+            if (updatedUser == null) {
+                throw new Exception("User not found");
             }
+            updatedUser.setGroups(userBean.getGroups());
+            updatedUser.setPassword(userBean.getPassword());
+            Hibernate.initialize(updatedUser.getGroups());
+            save(updatedUser);
         } catch (Exception e) {
             logger.error("Error at UserDao updateAndSaveUser: ", e);
         }
@@ -137,7 +141,10 @@ public class UserDao extends GenericHibernateDao<UserBean> {
 
     public boolean exists(UserBean user) throws Exception {
         Session session = HibernateUtil.getSessionFactory().openSession();
-        List<UserBean> beanList = session.createQuery("FROM UserBean", UserBean.class).list();
+        return session.createQuery(
+                "SELECT 1 FROM UserBean WHERE EXISTS (SELECT 1 FROM UserBean WHERE name = '"+ user.getName() +"')")
+                .uniqueResult() != null;
+        /*List<UserBean> beanList = session.createQuery("FROM UserBean", UserBean.class).list();
         if (!beanList.isEmpty()) {
             for (UserBean userBean : beanList) {
                 if (userBean.equals(user)) {
@@ -145,7 +152,7 @@ public class UserDao extends GenericHibernateDao<UserBean> {
                 }
             }
         }
-        return false;
+        return false;*/
     }
 
     private void save(UserBean user) throws Exception {
@@ -170,7 +177,6 @@ public class UserDao extends GenericHibernateDao<UserBean> {
 
     private Set<GroupBean> checkGroupsAndReturnMatched(UserBean user) throws Exception {
         Set<GroupBean> checkedGroups = new HashSet<>();
-        GroupDao groupDao = new GroupDao();
         if (user == null) {
             throw new Exception("No UserBean was passed to check");
         }

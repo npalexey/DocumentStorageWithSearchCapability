@@ -34,6 +34,7 @@ public class AuthenticationFilter implements ContainerRequestFilter {
     private static final String AUTHORIZATION_PROPERTY = "Authorization";
     private static final String AUTHENTICATION_SCHEME = "Basic";
     private static final Logger logger = LoggerFactory.getLogger(AuthenticationFilter.class);
+    private UserDao userDao = new UserDao();
 
     @Context
     private ResourceInfo resourceInfo;
@@ -95,7 +96,6 @@ public class AuthenticationFilter implements ContainerRequestFilter {
 
     public void setContextIfNoAnnotationsArePresent(final String usernameAndPassword, ContainerRequestContext requestContext){
         final String[] decipheredUsernameAndPassword = decipherBasicAuth(usernameAndPassword);
-        UserDao userDao = new UserDao();
         UserBean user = userDao.getUserByName(decipheredUsernameAndPassword[0]);
         Hibernate.initialize(user.getGroups());
         if (!user.getPassword().equals(decipheredUsernameAndPassword[1])) {
@@ -110,15 +110,6 @@ public class AuthenticationFilter implements ContainerRequestFilter {
         final StringTokenizer tokenizer = new StringTokenizer(usernameAndPassword, ":");
         final String username = tokenizer.nextToken();
         final String password = tokenizer.nextToken();
-        UserDao userDao = new UserDao();
-
-        //Test user for swagger-ui
-        if (username.equals("me") && password.equals("somepassword")) {
-            String userRole = "ADMINS";
-            if (rolesSet.contains(userRole)) {
-                return true;
-            }
-        }
 
         //Step 1. Fetch password from database and match with password in argument
         //If both match then get the defined role for user from database and continue; else return [false]

@@ -5,7 +5,6 @@ import com.nikitiuk.documentstoragewithsearchcapability.entities.DocBean;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.DocGroupPermissions;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.GroupBean;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.UserBean;
-import com.nikitiuk.documentstoragewithsearchcapability.entities.helpers.Permissions;
 import com.nikitiuk.documentstoragewithsearchcapability.utils.HibernateUtil;
 import org.hibernate.Hibernate;
 import org.hibernate.Session;
@@ -18,8 +17,6 @@ import java.util.*;
 public class GroupDao extends GenericHibernateDao<GroupBean> {
 
     private static final Logger logger = LoggerFactory.getLogger(GroupDao.class);
-    private DocDao docDao = new DocDao();
-    private UserDao userDao = new UserDao();
     static List<GroupBean> groupList = new ArrayList<>(Arrays.asList(new GroupBean("ADMINS"),
             new GroupBean("USERS"), new GroupBean("GUESTS")));
 
@@ -80,9 +77,9 @@ public class GroupDao extends GenericHibernateDao<GroupBean> {
             transaction = session.beginTransaction();
             GroupBean groupBean = session.createQuery("FROM GroupBean WHERE name = '"
                     + groupName + "'", GroupBean.class).uniqueResult();
-            initializeConnections(groupBean);
-            /*Hibernate.initialize(groupBean.getUsers());
-            Hibernate.initialize(groupBean.getDocumentsPermissions());*/
+            if (groupBean != null) {
+                initializeConnections(groupBean);
+            }
             transaction.commit();
             session.close();
             return groupBean;
@@ -96,7 +93,7 @@ public class GroupDao extends GenericHibernateDao<GroupBean> {
     }
 
     @Override
-    public GroupBean getOneById(long id){
+    public GroupBean getOneById(long id) {
         Transaction transaction = null;
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             transaction = session.beginTransaction();
@@ -130,20 +127,21 @@ public class GroupDao extends GenericHibernateDao<GroupBean> {
 
     public void updateGroup(GroupBean groupBean) {
         try {
-            if (exists(groupBean)) {
-                boolean requiresMerge = true;
-                GroupBean updatedGroup = getGroupByName(groupBean.getName());
-                if(updatedGroup.getUsers().containsAll(groupBean.getUsers())){
-                    requiresMerge = false;
-                }
-                updatedGroup.setUsers(groupBean.getUsers());
-                updatedGroup.setDocumentsPermissions(groupBean.getDocumentsPermissions());
-                //updatedGroup.setPermissions(groupBean.getPermissions());
-                initializeConnections(updatedGroup);
+            boolean requiresMerge = true;
+            GroupBean updatedGroup = getGroupByName(groupBean.getName());
+            if (updatedGroup == null) {
+                throw new Exception("Group not found");
+            }
+            if (updatedGroup.getUsers().containsAll(groupBean.getUsers())) {
+                requiresMerge = false;
+            }
+            updatedGroup.setUsers(groupBean.getUsers());
+            updatedGroup.setDocumentsPermissions(groupBean.getDocumentsPermissions());
+            //updatedGroup.setPermissions(groupBean.getPermissions());
+            initializeConnections(updatedGroup);
                 /*Hibernate.initialize(updatedGroup.getUsers());
                 Hibernate.initialize(updatedGroup.getDocumentsPermissions());*/
-                save(updatedGroup, requiresMerge);
-            }
+            save(updatedGroup, requiresMerge);
         } catch (Exception e) {
             logger.error("Error at GroupDao updateAndSaveGroup: ", e);
         }
@@ -152,7 +150,7 @@ public class GroupDao extends GenericHibernateDao<GroupBean> {
     public void deleteGroupByName(String groupName) {
         Transaction transaction = null;
         GroupBean checkedGroup = getGroupByName(groupName);
-        if(checkedGroup != null) {
+        if (checkedGroup != null) {
             try (Session session = HibernateUtil.getSessionFactory().openSession()) {
                 transaction = session.beginTransaction();
                 /*session.createQuery("DELETE FROM GroupBean WHERE name = '" +
@@ -170,7 +168,10 @@ public class GroupDao extends GenericHibernateDao<GroupBean> {
 
     public boolean exists(GroupBean group) throws Exception {
         Session session = HibernateUtil.getSessionFactory().openSession();
-        List<GroupBean> beanList = session.createQuery("FROM GroupBean", GroupBean.class).list();
+        return session.createQuery(
+                "SELECT 1 FROM GroupBean WHERE EXISTS (SELECT 1 FROM GroupBean WHERE name = '" + group.getName() + "')")
+                .uniqueResult() != null;
+        /*List<GroupBean> beanList = session.createQuery("FROM GroupBean", GroupBean.class).list();
         if (!beanList.isEmpty()) {
             for (GroupBean groupBean : beanList) {
                 if (groupBean.equals(group)) {
@@ -178,22 +179,22 @@ public class GroupDao extends GenericHibernateDao<GroupBean> {
                 }
             }
         }
-        return false;
+        return false;*/
     }
 
     private void save(GroupBean group, boolean requiresMerge) throws Exception {
         Transaction transaction = null;
         try {
-            if(group.getUsers() != null){
+            if (group.getUsers() != null) {
                 group.setUsers(checkUsersAndReturnMatched(group));
             }
-            if(group.getDocumentsPermissions() != null) {
+            if (group.getDocumentsPermissions() != null) {
                 group.setDocumentsPermissions(checksDocsForExistenceAndReturnPermissionsForSuch(group));
             }
             Session session = HibernateUtil.getSessionFactory().openSession();
             transaction = session.beginTransaction();
             session.saveOrUpdate(group);
-            if(requiresMerge){
+            if (requiresMerge) {
                 session.merge(group);
             }
             transaction.commit();
@@ -207,9 +208,10 @@ public class GroupDao extends GenericHibernateDao<GroupBean> {
 
     private Set<DocGroupPermissions> checksDocsForExistenceAndReturnPermissionsForSuch(GroupBean group) throws Exception {
         Set<DocGroupPermissions> docGroupPermissionsSet = new HashSet<>();
-        for(DocGroupPermissions docGroupPermissions : group.getDocumentsPermissions()){
-            if(docGroupPermissions.getPermissions() != null){
-                if(docDao.exists(docGroupPermissions.getDocument())){
+        for (DocGroupPermissions docGroupPermissions : group.getDocumentsPermissions()) {
+            if (docGroupPermissions.getPermissions() != null) {
+                DocDao docDao = new DocDao();
+                if (docDao.exists(docGroupPermissions.getDocument())) {
                     DocBean document = docDao.getDocByPath(docGroupPermissions.getDocument().getPath());
                     DocGroupPermissions checkedDocGroupPermissions = new DocGroupPermissions(group, document);
                     checkedDocGroupPermissions.setPermissions(docGroupPermissions.getPermissions());
@@ -222,6 +224,7 @@ public class GroupDao extends GenericHibernateDao<GroupBean> {
 
     private Set<UserBean> checkUsersAndReturnMatched(GroupBean group) throws Exception {
         Set<UserBean> checkedUsers = new HashSet<>();
+        UserDao userDao = new UserDao();
         for (UserBean userBean : userDao.getUsers()) {
             if (group.getUsers().contains(userBean)) {          //checks equality with hashCode()
                 checkedUsers.add(userBean);

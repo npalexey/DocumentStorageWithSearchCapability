@@ -26,6 +26,7 @@ public class SolrService {
         SolrClient client = new HttpSolrClient.Builder("http://localhost:8983/solr/mycoll").build();
         ContentStreamUpdateRequest req = new ContentStreamUpdateRequest("/update/extract");
         req.addFile(new File("/home/npalexey/workenv/DOWNLOADED/" + docName), contentType); //application/octet-stream text/plain pdf
+        req.setParam("literal.docpath", "/home/npalexey/workenv/DOWNLOADED/" + docName);
         req.setParam("literal.docname", docName);
         req.setAction(AbstractUpdateRequest.ACTION.COMMIT, true, true);
         client.request(req);

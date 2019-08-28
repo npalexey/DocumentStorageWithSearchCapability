@@ -33,7 +33,6 @@ public class RestDocService {
     private static ExecutorService executorService = Executors.newSingleThreadExecutor();
 
     private DocDao docDao = new DocDao();
-    private UserDao userDao = new UserDao();
 
     public Response showFilesInDoc(SecurityContextImplementation securityContext) {
         List<DocBean> docBeanList;

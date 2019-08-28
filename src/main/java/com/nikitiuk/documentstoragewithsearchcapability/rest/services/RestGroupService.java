@@ -88,9 +88,9 @@ public class RestGroupService {
     }
 
     public Response deleteGroup(Object groupNameOrId) {
-        if(groupNameOrId instanceof Long) {
+        if (groupNameOrId instanceof Long) {
             return deleteGroupById((Long) groupNameOrId);
-        } else if(groupNameOrId instanceof String) {
+        } else if (groupNameOrId instanceof String) {
             return deleteGroupByName((String) groupNameOrId);
         }
         return ResponseService.errorResponse(404, "Error in syntax of group name or id.");

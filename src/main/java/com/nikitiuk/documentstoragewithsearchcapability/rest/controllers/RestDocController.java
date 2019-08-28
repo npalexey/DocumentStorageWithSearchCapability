@@ -20,7 +20,6 @@ import java.io.InputStream;
 public class RestDocController {
 
     private RestDocService docService = new RestDocService();
-    private static final Logger logger = LoggerFactory.getLogger(RestDocController.class);
 
     @PermitAll
     @GET
