@@ -3,7 +3,9 @@ package com.nikitiuk.documentstoragewithsearchcapability.dao.implementations;
 import com.nikitiuk.documentstoragewithsearchcapability.dao.GenericHibernateDao;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.GroupBean;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.UserBean;
+import com.nikitiuk.documentstoragewithsearchcapability.exceptions.AlreadyExistsException;
 import com.nikitiuk.documentstoragewithsearchcapability.utils.HibernateUtil;
+import javassist.NotFoundException;
 import org.hibernate.Hibernate;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
@@ -70,10 +72,10 @@ public class UserDao extends GenericHibernateDao<UserBean> {
             transaction.commit();
             return userBeanList;
         } catch (Exception e) {
+            logger.error("Error at UserDao getAll: ", e);
             if (transaction != null) {
                 transaction.rollback();
             }
-            logger.error("Error at UserDao getAll: ", e);
             return userBeanList;
         }
     }
@@ -91,6 +93,7 @@ public class UserDao extends GenericHibernateDao<UserBean> {
             session.close();
             return userBean;
         } catch (Exception e) {
+            logger.error("Error at UserDao getUserByName: ", e);
             if (transaction != null) {
                 transaction.rollback();
             }
@@ -98,29 +101,32 @@ public class UserDao extends GenericHibernateDao<UserBean> {
         }
     }
 
-    public void saveUser(UserBean userBean) {
+    public UserBean saveUser(UserBean userBean) throws Exception{
         try {
             if (exists(userBean)) {
-                throw new Exception("Such User Already Exists");
+                throw new AlreadyExistsException("Such user already exists.");
             }
-            save(userBean);
+            return save(userBean);
         } catch (Exception e) {
             logger.error("Error at UserDao saveUser: ", e);
+            throw e;
         }
     }
 
-    public void updateUser(UserBean userBean) {
+    public UserBean updateUser(UserBean userBean) throws Exception{
         try {
+            //if(getUserByName(userBean.getName()))
             UserBean updatedUser = getUserByName(userBean.getName());
             if (updatedUser == null) {
-                throw new Exception("User not found");
+                throw new NotFoundException("User not found.");
             }
             updatedUser.setGroups(userBean.getGroups());
             updatedUser.setPassword(userBean.getPassword());
             Hibernate.initialize(updatedUser.getGroups());
-            save(updatedUser);
+            return save(updatedUser);
         } catch (Exception e) {
             logger.error("Error at UserDao updateAndSaveUser: ", e);
+            throw e;
         }
     }
 
@@ -155,9 +161,10 @@ public class UserDao extends GenericHibernateDao<UserBean> {
         return false;*/
     }
 
-    private void save(UserBean user) throws Exception {
+    private UserBean save(UserBean user) throws Exception {
         Transaction transaction = null;
         try {
+            user.setId(null);
             user.setGroups(checkGroupsAndReturnMatched(user));
             Session session = HibernateUtil.getSessionFactory().openSession();
             // start a transaction
@@ -167,6 +174,7 @@ public class UserDao extends GenericHibernateDao<UserBean> {
             Hibernate.initialize(user.getGroups());
             // commit transaction
             transaction.commit();
+            return user;
         } catch (Exception e) {
             if (transaction != null) {
                 transaction.rollback();
@@ -178,7 +186,7 @@ public class UserDao extends GenericHibernateDao<UserBean> {
     private Set<GroupBean> checkGroupsAndReturnMatched(UserBean user) throws Exception {
         Set<GroupBean> checkedGroups = new HashSet<>();
         if (user == null) {
-            throw new Exception("No UserBean was passed to check");
+            throw new Exception("No UserBean was passed to check.");
         }
         for (GroupBean groupBean : groupDao.getGroups()) {
             if (user.getGroups().contains(groupBean)) {          //checks equality with hashCode()

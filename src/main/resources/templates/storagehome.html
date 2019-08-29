@@ -17,21 +17,23 @@
     <table>
         <tbody>
         <tr th:if="${entityName} == 'Document'" th:each="entry : ${inStorage}">
-            <td><span th:utext="${entry.path}">Document Title</span></td>
+            <td><span th:utext="|Id: ${entry.id} |">Document id</span></td>
+            <td><span th:utext="|, Path: ${entry.path} |">Document Path</span></td>
             <td><a href="content" th:href="@{~/DocumentStorageWithSearchCapability/rest/doc/{name}/content(name=${entry.name})}">Get Content</a></td>
             <td><a href="download" th:href="@{~/DocumentStorageWithSearchCapability/rest/doc/{name}(name=${entry.name})}">Download</a></td>
         </tr>
         <tr th:if="${entityName} == 'User'" th:each="entry : ${inStorage}">
-            <td><span th:utext="${entry.name}">User name</span></td>
-            <td><span th:utext="|Groups: |">Group name</span></td>
-            <td><th:block th:each="group : ${entry.groups}"><span th:utext="|${group.name}   |">Groups</span></th:block></td>
+            <td><span th:utext="|Id: ${entry.id} |">User name</span></td>
+            <td><span th:utext="|, Name: ${entry.name} |">User id</span></td>
+            <td><span th:utext="|, Groups: |">Groups</span></td>
+            <td><th:block th:each="group : ${entry.groups}"><span th:utext="|${group.name}   |">Group name</span></th:block></td>
 <!--            <th:block th:each="group : ${entry.groups}"><td><span th:utext="|Group: ${group.name}; |">User's Groups</span></td></th:block>-->
         </tr>
         <tr th:if="${entityName} == 'Group'" th:each="entry : ${inStorage}">
             <td><span th:utext="|${entry.name} |">Group name</span></td>
             <td><span th:utext="|, Id: ${entry.id} |">Group id</span></td>
             <td><span th:utext="|, Docs: |">Docs</span></td>
-            <td><th:block th:each="docPermissions : ${entry.documentsPermissions}"><span th:utext="|[${docPermissions}]  |">Permissions</span></th:block></td>
+            <td><th:block th:each="docPermissions : ${entry.documentsPermissions}"><span th:utext="|[Id: ${docPermissions.document.id}, ${docPermissions.permissions}]  |">Permissions</span></th:block></td>
             <td><span th:utext="|, Users: |">Group's users</span></td>
             <td><th:block th:each="user : ${entry.users}"><span th:utext="|${user.name} |">Group's users</span></th:block></td>
             <!--<th:block th:each="user : ${entry.users}">
@@ -40,7 +42,8 @@
             <!--</th:block>-->
         </tr>
         <tr th:if="${entityName} == 'DocGroupPermissions'" th:each="entry : ${inStorage}">
-            <td><span th:utext="|Doc id: ${entry.document.id}, Group id: ${entry.group.id}, Permissions: ${entry.permissions}|">Permissions</span></td>
+            <td><span th:utext="|${entry.id} , Permissions: ${entry.permissions}|">Permissions</span></td>
+            <!--<td><span th:utext="|Doc id: ${entry.document.id}, Group id: ${entry.group.id}, Permissions: ${entry.permissions}|">Permissions</span></td>-->
         </tr>
         </tbody>
     </table>

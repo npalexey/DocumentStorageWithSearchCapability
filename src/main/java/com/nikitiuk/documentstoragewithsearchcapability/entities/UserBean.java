@@ -92,7 +92,7 @@ public class UserBean implements Principal {
     }
 
     @Override
-    public String toString() {
+    public String   toString() {
         List<String> groupNames = new ArrayList<>();
         for(GroupBean groupBean : groups){
             groupNames.add(groupBean.getName());

@@ -19,6 +19,7 @@ import javax.ws.rs.container.ContainerRequestFilter;
 import javax.ws.rs.container.ResourceInfo;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.Provider;
 import java.lang.reflect.Method;
 import java.util.*;
@@ -45,7 +46,7 @@ public class AuthenticationFilter implements ContainerRequestFilter {
 
         //Access denied for all
         if (method.isAnnotationPresent(DenyAll.class)) {
-            requestContext.abortWith(ResponseService.errorResponse(403, "Access blocked for all users!"));
+            requestContext.abortWith(ResponseService.errorResponse(Response.Status.FORBIDDEN, "Access blocked for all users!"));
             return;
         }
 
@@ -60,7 +61,7 @@ public class AuthenticationFilter implements ContainerRequestFilter {
             //Access allowed for all
             if(!method.isAnnotationPresent(PermitAll.class)) {
                 //block access
-                requestContext.abortWith(ResponseService.errorResponse(401, "You cannot access this resource"));
+                requestContext.abortWith(ResponseService.errorResponse(Response.Status.UNAUTHORIZED, "You cannot access this resource"));
             }
             return;
         }
@@ -87,7 +88,7 @@ public class AuthenticationFilter implements ContainerRequestFilter {
 
             //Is user valid?
             if (!isUserAllowed(usernameAndPassword, rolesSet, requestContext)) {
-                requestContext.abortWith(ResponseService.errorResponse(401, "You cannot access this resource"));
+                requestContext.abortWith(ResponseService.errorResponse(Response.Status.UNAUTHORIZED, "You cannot access this resource"));
             }
         } else {
             setContextIfNoAnnotationsArePresent(usernameAndPassword, requestContext);
@@ -99,7 +100,7 @@ public class AuthenticationFilter implements ContainerRequestFilter {
         UserBean user = userDao.getUserByName(decipheredUsernameAndPassword[0]);
         Hibernate.initialize(user.getGroups());
         if (!user.getPassword().equals(decipheredUsernameAndPassword[1])) {
-            requestContext.abortWith(ResponseService.errorResponse(401, "You cannot access this resource"));
+            requestContext.abortWith(ResponseService.errorResponse(Response.Status.UNAUTHORIZED, "You cannot access this resource"));
             return;
         }
         String scheme = requestContext.getUriInfo().getRequestUri().getScheme();

@@ -202,8 +202,8 @@ public class DocGroupPermissionsDao extends GenericHibernateDao<DocGroupPermissi
     private DocGroupPermissions createNewPermissions(Long docId, Long groupId, Permissions permission) {
         DocDao docDao = new DocDao();
         GroupDao groupDao = new GroupDao();
-        DocBean docBean = docDao.getOneById(docId);
-        GroupBean groupBean = groupDao.getOneById(groupId);
+        DocBean docBean = docDao.getById(docId);
+        GroupBean groupBean = groupDao.getById(groupId);
         DocGroupPermissions newDocGroupPermissions = new DocGroupPermissions(groupBean, docBean);
         newDocGroupPermissions.setPermissions(permission);
         groupBean.addDocument(docBean, permission);

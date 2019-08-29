@@ -69,7 +69,7 @@ public class DocGroupPermissions {
 
     @Override
     public String toString(){
-        return "DocId=" + document.getId() + ", " + permissions;
+        return /*"GroupId = " + group.getId() + ", DocId = " + document.getId()*/id + " , " + permissions;
         //return "Document Permission: [gourp_id=" + group + ", document_id=" + document + ", group_permissions=" + permissions.toString() + "]";
     }
 

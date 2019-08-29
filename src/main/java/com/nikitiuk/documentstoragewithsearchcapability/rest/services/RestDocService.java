@@ -1,9 +1,7 @@
 package com.nikitiuk.documentstoragewithsearchcapability.rest.services;
 
 import com.nikitiuk.documentstoragewithsearchcapability.dao.implementations.DocDao;
-import com.nikitiuk.documentstoragewithsearchcapability.dao.implementations.UserDao;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.DocBean;
-import com.nikitiuk.documentstoragewithsearchcapability.entities.UserBean;
 import com.nikitiuk.documentstoragewithsearchcapability.filters.SecurityContextImplementation;
 import com.nikitiuk.documentstoragewithsearchcapability.services.LocalStorageService;
 import com.nikitiuk.documentstoragewithsearchcapability.services.SolrService;
@@ -14,7 +12,6 @@ import javax.annotation.security.PermitAll;
 import javax.ws.rs.Path;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.StreamingOutput;
 import java.io.File;
 import java.io.IOException;
@@ -37,10 +34,9 @@ public class RestDocService {
     public Response showFilesInDoc(SecurityContextImplementation securityContext) {
         List<DocBean> docBeanList;
         try {
-            //docBeanList = new ArrayList<>(LocalStorageService.listDocumentsInPath());
             docBeanList = docDao.getDocuments(securityContext.getUser());
-        } catch (/*IOException*/ Exception e) {
-            return ResponseService.errorResponse(404, "Error while producing list of content.");
+        } catch (Exception e) {
+            return ResponseService.errorResponse(Response.Status.NOT_FOUND, "Error while producing list of content.");
         }
         /*Runnable getTask = () -> {
             try {
@@ -54,7 +50,7 @@ public class RestDocService {
         final Context ctx = new Context();
         ctx.setVariable("entityName", "Document");
         ctx.setVariable("inStorage", docBeanList);
-        return ResponseService.okResponseForText("storagehome", ctx);
+        return ResponseService.okResponseWithContext("storagehome", ctx);
     }
 
     public Response showContentOfFile(String filename) {
@@ -62,12 +58,12 @@ public class RestDocService {
         try {
             docContent = new ArrayList<>(LocalStorageService.documentContentGetter(filename));
         } catch (IOException e) {
-            return ResponseService.errorResponse(404, "Error while getting content of " + filename);
+            return ResponseService.errorResponse(Response.Status.NOT_FOUND, "Error while getting content of " + filename);
         }
         final Context ctx = new Context();
         ctx.setVariable("docContent", docContent);
         ctx.setVariable("fileName", filename);
-        return ResponseService.okResponseForText("content", ctx);
+        return ResponseService.okResponseWithContext("content", ctx);
     }
 
     public Response downloadFile(String filename) {
@@ -75,7 +71,7 @@ public class RestDocService {
         try {
             fileStream = LocalStorageService.fileDownloader(filename);
         } catch (Exception e) {
-            return ResponseService.errorResponse(404, "Error while downloading " + filename);
+            return ResponseService.errorResponse(Response.Status.NOT_FOUND, "Error while downloading " + filename);
         }
         return ResponseService.okResponseForFile(fileStream, filename);
     }
@@ -86,7 +82,7 @@ public class RestDocService {
         try {
             LocalStorageService.fileUploader(fileInputStream, parentID);
         } catch (IOException e) {
-            return ResponseService.errorResponse(404, "Error while uploading file " + parentID);
+            return ResponseService.errorResponse(Response.Status.NOT_FOUND, "Error while uploading file " + parentID);
         }
         Runnable addTask = () -> {
             try {
@@ -108,12 +104,12 @@ public class RestDocService {
             docBeanList = docDao.getDocuments(securityContext.getUser());
             contentBuilder.append(SolrService.searchAndReturnDocsAndHighlightedText(query, docBeanList)).delete(0, 18);
         } catch (IOException | SolrServerException e) {
-            return ResponseService.errorResponse(404, "Error while searching for: " + query
+            return ResponseService.errorResponse(Response.Status.NOT_FOUND, "Error while searching for: " + query
                     + ". Please, try again");
         }
         final Context ctx = new Context();
         ctx.setVariable("searchResult", contentBuilder.toString().replace("\n", "<br/>"));
-        return ResponseService.okResponseForText("search", ctx);
+        return ResponseService.okResponseWithContext("search", ctx);
     }
 
     public Response updateDocument(String docID, InputStream fileInputStream) {
@@ -121,7 +117,7 @@ public class RestDocService {
         try {
             filename = LocalStorageService.fileUpdater(fileInputStream, docID);
         } catch (IOException e) {
-            return ResponseService.errorResponse(404, "Error while updating file: " + docID);
+            return ResponseService.errorResponse(Response.Status.NOT_FOUND, "Error while updating file: " + docID);
         }
         Runnable putTask = () -> {
             try {
@@ -138,7 +134,7 @@ public class RestDocService {
         try {
             LocalStorageService.fileDeleter(docID);
         } catch (IOException e) {
-            return ResponseService.errorResponse(404, "Error occurred while deleting the file " + docID);
+            return ResponseService.errorResponse(Response.Status.NOT_FOUND, "Error occurred while deleting the file " + docID);
         }
         Runnable deleteTask = () -> {
             try {
@@ -152,6 +148,6 @@ public class RestDocService {
         final Context ctx = new Context();
         ctx.setVariable("code", "OK");
         ctx.setVariable("message", "File deleted successfully");
-        return ResponseService.okResponseForText("info", ctx);
+        return ResponseService.okResponseWithContext("info", ctx);
     }
 }

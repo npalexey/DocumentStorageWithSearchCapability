@@ -2,6 +2,8 @@ package com.nikitiuk.documentstoragewithsearchcapability.rest.services;
 
 import com.nikitiuk.documentstoragewithsearchcapability.dao.implementations.UserDao;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.UserBean;
+import com.nikitiuk.documentstoragewithsearchcapability.exceptions.NoValidDataFromJsonException;
+import org.apache.commons.lang3.StringUtils;
 import org.thymeleaf.context.Context;
 
 import javax.ws.rs.core.Response;
@@ -11,43 +13,114 @@ public class RestUserService {
 
     private UserDao userDao = new UserDao();
 
-    public Response showUsers() {
+    public Response getUsers() {
         List<UserBean> userBeanList;
         try {
             userBeanList = userDao.getUsers();
         } catch (Exception e) {
-            return ResponseService.errorResponse(404, "Error while producing list of users.");
+            return ResponseService.errorResponse(Response.Status.NOT_FOUND, "Error while producing list of users.");
         }
         final Context ctx = new Context();
         ctx.setVariable("entityName", "User");
         ctx.setVariable("inStorage", userBeanList);
-        return ResponseService.okResponseForText("storagehome", ctx);
+        return ResponseService.okResponseWithContext("storagehome", ctx);
+    }
+
+    public Response getUserById(Long userId) {
+        UserBean userById;
+        try {
+            checkIfIdIsNull(userId);
+            userById = userDao.getById(userId);
+        } catch (Exception e) {
+            return ResponseService.errorResponse(Response.Status.NOT_FOUND, "Error while getting user by id. " + e.getMessage());
+        }
+        final Context ctx = new Context();
+        ctx.setVariable("entityType", "User");
+        ctx.setVariable("entity", userById);
+        ctx.setVariable("action", "found");
+        return ResponseService.okResponseWithContext("singleentity", ctx);
+    }
+
+    public Response getUserByName(String username){
+        UserBean userByName;
+        try{
+            checkIfNameIsBlank(username);
+            userByName = userDao.getUserByName(username);
+        } catch (Exception e) {
+            return ResponseService.errorResponse(Response.Status.NOT_FOUND, "Error while getting user by name. " + e.getMessage());
+        }
+        final Context ctx = new Context();
+        ctx.setVariable("entityType", "User");
+        ctx.setVariable("entity", userByName);
+        ctx.setVariable("action", "found");
+        return ResponseService.okResponseWithContext("singleentity", ctx);
     }
 
     public Response createUser(UserBean userBean) {
+        UserBean createdUser;
         try {
-            userDao.saveUser(userBean);
+            checkOnCreateOrUpdateForNulls(userBean);
+            createdUser = userDao.saveUser(userBean);
         } catch (Exception e) {
-            return ResponseService.errorResponse(404, "Error while creating user.");
+            return ResponseService.errorResponse(Response.Status.NOT_FOUND, "Error while creating user. " + e.getMessage());
         }
-        return ResponseService.okResponseSimple("User created successfully");
+        final Context ctx = new Context();
+        ctx.setVariable("entityType", "User");
+        ctx.setVariable("entity", createdUser);
+        ctx.setVariable("action", "created");
+        return ResponseService.okResponseWithContext("singleentity", ctx);
     }
 
     public Response updateUser(UserBean userBean) {
+        UserBean updatedUser;
         try {
-            userDao.updateUser(userBean);
+            checkOnCreateOrUpdateForNulls(userBean);
+            updatedUser = userDao.updateUser(userBean);
         } catch (Exception e) {
-            return ResponseService.errorResponse(404, "Error while updating user.");
+            return ResponseService.errorResponse(Response.Status.NOT_FOUND, "Error while updating user. " + e.getMessage());
         }
-        return ResponseService.okResponseSimple("User updated successfully");
+        final Context ctx = new Context();
+        ctx.setVariable("entityType", "User");
+        ctx.setVariable("entity", updatedUser);
+        ctx.setVariable("action", "updated");
+        return ResponseService.okResponseWithContext("singleentity", ctx);
     }
 
-    public Response deleteUserByName(String name) {
+    public Response deleteUserById(Long userId) {
         try {
-            userDao.deleteUserByName(name);
+            checkIfIdIsNull(userId);
+            userDao.deleteById(userId);
         } catch (Exception e) {
-            return ResponseService.errorResponse(404, "Error while deleting user.");
+            return ResponseService.errorResponse(Response.Status.NOT_FOUND, "Error while deleting user. " + e.getMessage());
         }
         return ResponseService.okResponseSimple("User deleted successfully");
+    }
+
+    public Response deleteUserByName(String username) {
+        try {
+            checkIfNameIsBlank(username);
+            userDao.deleteUserByName(username);
+        } catch (Exception e) {
+            return ResponseService.errorResponse(Response.Status.NOT_FOUND, "Error while deleting user. " + e.getMessage());
+        }
+        return ResponseService.okResponseSimple("User deleted successfully");
+    }
+
+    private void checkOnCreateOrUpdateForNulls(UserBean userBean) throws NoValidDataFromJsonException{
+        if(userBean == null || StringUtils.isBlank(userBean.getName())){
+            throw new NoValidDataFromJsonException("No valid data was passed.");
+        }
+    }
+
+    private void checkIfIdIsNull(Long id) throws NoValidDataFromJsonException {
+        if(id == null) {
+            throw new NoValidDataFromJsonException("No id was passed.");
+        }
+    }
+
+    private void checkIfNameIsBlank(String name) throws NoValidDataFromJsonException {
+        if(StringUtils.isBlank(name)){
+            throw new NoValidDataFromJsonException("No valid name was passed.");
+        }
     }
 }

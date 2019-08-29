@@ -17,8 +17,24 @@ public class RestUserController {
     @PermitAll
     @GET
     @Produces(MediaType.TEXT_HTML)
-    public Response showUsers() {
-        return userService.showUsers();
+    public Response getUsers() {
+        return userService.getUsers();
+    }
+
+    @PermitAll
+    @GET
+    @Path("/{userid}")
+    @Produces(MediaType.TEXT_HTML)
+    public Response getUserById(@PathParam("userid") long userId) {
+        return userService.getUserById(userId);
+    }
+
+    @PermitAll
+    @GET
+    @Path("/get-by-name/{username}")
+    @Produces(MediaType.TEXT_HTML)
+    public Response getUserByName(@PathParam("username") String username) {
+        return userService.getUserByName(username);
     }
 
     @PermitAll
@@ -41,7 +57,15 @@ public class RestUserController {
 
     @PermitAll
     @DELETE
-    @Path("/{username}")
+    @Path("/{userid}")
+    @Produces(MediaType.TEXT_HTML)
+    public Response deleteUserById(@PathParam("userid") long userId){
+        return userService.deleteUserById(userId);
+    }
+
+    @PermitAll
+    @DELETE
+    @Path("/delete-by-name/{username}")
     @Produces(MediaType.TEXT_HTML)
     public Response deleteUserByName(@PathParam("username") String username) {
         return userService.deleteUserByName(username);

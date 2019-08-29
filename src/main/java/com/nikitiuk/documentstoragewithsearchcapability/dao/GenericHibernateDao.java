@@ -1,8 +1,6 @@
 package com.nikitiuk.documentstoragewithsearchcapability.dao;
 
-import com.nikitiuk.documentstoragewithsearchcapability.dao.implementations.DocDao;
 import com.nikitiuk.documentstoragewithsearchcapability.utils.HibernateUtil;
-import org.hibernate.Hibernate;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
@@ -14,7 +12,7 @@ import java.util.function.Function;
 
 public class GenericHibernateDao<T> {
 
-    private static final Logger logger =  LoggerFactory.getLogger(GenericHibernateDao.class);
+    private static final Logger logger = LoggerFactory.getLogger(GenericHibernateDao.class);
 
     private Class<T> clazz;
     private SessionFactory sessionFactory;
@@ -24,16 +22,12 @@ public class GenericHibernateDao<T> {
         this.clazz = clazz;
     }
 
-    /*public void setClazz(Class<T> clazzToSet) {
-        this.clazz = clazzToSet;
-    }*/
-
     private Session getCurrentSession() {
         return sessionFactory.getCurrentSession();
     }
 
 
-    private  <E> E executeFunction(Function<Session, E> function) {
+    private <E> E executeFunction(Function<Session, E> function) {
         Transaction transaction = null;
         try (Session session = getCurrentSession()) {
             transaction = session.beginTransaction();
@@ -47,14 +41,12 @@ public class GenericHibernateDao<T> {
         }
     }
 
-    public T getOneById(long id) {
+    public T getById(long id) {
         return executeFunction((session) -> session.get(clazz, id));
-        //return (T) getCurrentSession().get(clazz, id);
     }
 
     public List getAll() {
-        return executeFunction((session) -> session.createQuery("From " + clazz.getSimpleName(), clazz).list());
-        //return getCurrentSession().createQuery("FROM " + clazz.getName()).list();
+        return executeFunction((session) -> session.createQuery("FROM " + clazz.getSimpleName(), clazz).list());
     }
 
 
@@ -71,34 +63,10 @@ public class GenericHibernateDao<T> {
             }
             return entity;
         });
-        /*getCurrentSession().saveOrUpdate(entity);
-        return entity;*/
     }
 
     /*public T update(T entity) {
         return (T) getCurrentSession().merge(entity);
-    }*/
-
-    /*public void populateTableWithEntities(List<T> entityList){
-        executeFunction((session) -> {
-            for (T bean : entityList) {
-                Transaction transaction = null;
-                try {
-                    // start a transaction
-                    transaction = session.beginTransaction();
-                    // save the group object
-                    session.saveOrUpdate(bean);
-                    // commit transaction
-                    transaction.commit();
-                } catch (Exception e) {
-                    if (transaction != null) {
-                        transaction.rollback();
-                    }
-                    logger.error("Error at " + clazz + " populate: ", e);
-                }
-            }
-            return entityList;
-        });
     }*/
 
     public void deleteById(long entityId) {
@@ -108,11 +76,5 @@ public class GenericHibernateDao<T> {
             session.getTransaction().commit();
             return entityId;
         });
-        /*T entity = findOne(entityId);
-        delete(entity);*/
     }
-
-    /*public void delete(T entity) {
-        getCurrentSession().delete(entity);
-    }*/
 }

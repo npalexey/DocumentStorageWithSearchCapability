@@ -17,8 +17,24 @@ public class RestGroupController {
     @PermitAll
     @GET
     @Produces(MediaType.TEXT_HTML)
-    public Response showGroups() {
-        return groupService.showGroups();
+    public Response getGroups() {
+        return groupService.getGroups();
+    }
+
+    @PermitAll
+    @GET
+    @Path("/{groupid}")
+    @Produces(MediaType.TEXT_HTML)
+    public Response getGroupById(@PathParam("groupid") long groupId) {
+        return groupService.getGroupById(groupId);
+    }
+
+    @PermitAll
+    @GET
+    @Path("/{groupname}")
+    @Produces(MediaType.TEXT_HTML)
+    public Response getGroupByName(@PathParam("groupname") String groupName) {
+        return groupService.getGroupByName(groupName);
     }
 
     @PermitAll
@@ -39,20 +55,12 @@ public class RestGroupController {
         return groupService.updateGroup(groupBean);
     }
 
-    /*@PermitAll
-    @DELETE
-    @Path("/delete/{groupNameOrId}")
-    @Produces(MediaType.TEXT_HTML)
-    public Response deleteGroup(@PathParam("groupNameOrId") Object groupNameOrId) {
-        return groupService.deleteGroup(groupNameOrId);
-    }*/
-
     @PermitAll
     @DELETE
-    @Path("/delete-by-id/{groupid}")
+    @Path("/{groupid}")
     @Produces(MediaType.TEXT_HTML)
-    public Response deleteGroupById(@PathParam("groupid") long id) {
-        return groupService.deleteGroupById(id);
+    public Response deleteGroupById(@PathParam("groupid") long groupId) {
+        return groupService.deleteGroupById(groupId);
     }
 
     @PermitAll
@@ -61,13 +69,5 @@ public class RestGroupController {
     @Produces(MediaType.TEXT_HTML)
     public Response deleteGroupByName(@PathParam("groupname") String groupname) {
         return groupService.deleteGroupByName(groupname);
-    }
-
-    @PermitAll
-    @GET
-    @Path("/{groupid}")
-    @Produces(MediaType.TEXT_HTML)
-    public Response getGroupById(@PathParam("groupid") long id) {
-        return groupService.getGroupById(id);
     }
 }

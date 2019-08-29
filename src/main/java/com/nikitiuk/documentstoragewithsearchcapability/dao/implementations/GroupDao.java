@@ -5,7 +5,9 @@ import com.nikitiuk.documentstoragewithsearchcapability.entities.DocBean;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.DocGroupPermissions;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.GroupBean;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.UserBean;
+import com.nikitiuk.documentstoragewithsearchcapability.exceptions.AlreadyExistsException;
 import com.nikitiuk.documentstoragewithsearchcapability.utils.HibernateUtil;
+import javassist.NotFoundException;
 import org.hibernate.Hibernate;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
@@ -93,7 +95,7 @@ public class GroupDao extends GenericHibernateDao<GroupBean> {
     }
 
     @Override
-    public GroupBean getOneById(long id) {
+    public GroupBean getById(long id) {
         Transaction transaction = null;
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             transaction = session.beginTransaction();
@@ -113,24 +115,25 @@ public class GroupDao extends GenericHibernateDao<GroupBean> {
         }
     }
 
-    public void saveGroup(GroupBean groupBean) {
+    public GroupBean saveGroup(GroupBean groupBean) throws Exception {
         try {
             if (exists(groupBean)) {
-                throw new Exception("Such Group Already Exists");
+                throw new AlreadyExistsException("Such Group Already Exists");
             }
             boolean requiresMerge = true;
-            save(groupBean, requiresMerge);
+            return save(groupBean, requiresMerge);
         } catch (Exception e) {
             logger.error("Error at GroupDao saveGroup: ", e);
+            throw e;
         }
     }
 
-    public void updateGroup(GroupBean groupBean) {
+    public GroupBean updateGroup(GroupBean groupBean) throws Exception {
         try {
             boolean requiresMerge = true;
             GroupBean updatedGroup = getGroupByName(groupBean.getName());
             if (updatedGroup == null) {
-                throw new Exception("Group not found");
+                throw new NotFoundException("Group not found");
             }
             if (updatedGroup.getUsers().containsAll(groupBean.getUsers())) {
                 requiresMerge = false;
@@ -141,9 +144,10 @@ public class GroupDao extends GenericHibernateDao<GroupBean> {
             initializeConnections(updatedGroup);
                 /*Hibernate.initialize(updatedGroup.getUsers());
                 Hibernate.initialize(updatedGroup.getDocumentsPermissions());*/
-            save(updatedGroup, requiresMerge);
+            return save(updatedGroup, requiresMerge);
         } catch (Exception e) {
             logger.error("Error at GroupDao updateAndSaveGroup: ", e);
+            throw e;
         }
     }
 
@@ -182,7 +186,7 @@ public class GroupDao extends GenericHibernateDao<GroupBean> {
         return false;*/
     }
 
-    private void save(GroupBean group, boolean requiresMerge) throws Exception {
+    private GroupBean save(GroupBean group, boolean requiresMerge) throws Exception {
         Transaction transaction = null;
         try {
             if (group.getUsers() != null) {
@@ -198,6 +202,7 @@ public class GroupDao extends GenericHibernateDao<GroupBean> {
                 session.merge(group);
             }
             transaction.commit();
+            return group;
         } catch (Exception e) {
             if (transaction != null) {
                 transaction.rollback();
@@ -224,6 +229,9 @@ public class GroupDao extends GenericHibernateDao<GroupBean> {
 
     private Set<UserBean> checkUsersAndReturnMatched(GroupBean group) throws Exception {
         Set<UserBean> checkedUsers = new HashSet<>();
+        if (group == null) {
+            throw new Exception("No GroupBean was passed to check.");
+        }
         UserDao userDao = new UserDao();
         for (UserBean userBean : userDao.getUsers()) {
             if (group.getUsers().contains(userBean)) {          //checks equality with hashCode()

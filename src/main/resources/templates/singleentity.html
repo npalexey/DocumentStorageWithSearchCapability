@@ -1,0 +1,63 @@
+<!DOCTYPE html SYSTEM "http://www.thymeleaf.org/dtd/xhtml1-strict-thymeleaf-4.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Done</title>
+</head>
+<body>
+    <th:block th:unless="${entity} == null">
+        <table>
+            <tbody>
+            <tr><td><span th:text="|${entityType} ${action}.|">Action info</span></td></tr>
+            </tbody>
+        </table>
+        <table>
+            <tbody>
+            <tr th:if="${entityType} == 'Document'">
+                <td><span th:utext="|Id: ${entity.id} |">Document id</span></td>
+                <td><span th:utext="|, Document Path: ${entity.path} |">Document Path</span></td>
+                <td><a href="content" th:href="@{~/DocumentStorageWithSearchCapability/rest/doc/{name}/content(name=${entity.name})}">Get Content</a></td>
+                <td><a href="download" th:href="@{~/DocumentStorageWithSearchCapability/rest/doc/{name}(name=${entity.name})}">Download</a></td>
+            </tr>
+            <tr th:if="${entityType} == 'User'">
+                <td><span th:utext="|Id: ${entity.id} |">User id</span></td>
+                <td><span th:utext="|, Name: ${entity.name} |">User name</span></td>
+                <td>
+                    <span th:if="${entity.password} == null" th:utext="|, No Password|">User password</span>
+                    <span th:unless="${entity.password} == null" th:utext="|, Password: ${entity.password}|">User password</span>
+                </td>
+                <th:block th:unless="${entity.groups.empty}">
+                <td><span th:utext="|, Groups: |">Groups</span></td>
+                <td><th:block th:each="group : ${entity.groups}"><span th:utext="|${group.name}   |">Group name</span></th:block></td>
+                </th:block>
+                <td th:if="${entity.groups.empty}"><span th:utext="|, No Groups|"></span></td>
+            </tr>
+            <tr th:if="${entityType} == 'Group'">
+                <td><span th:utext="|Id: ${entry.id} |">Group id</span></td>
+                <td><span th:utext="|, Name: ${entity.name} |">Group name</span></td>
+                <th:block th:unless="${entity.documentsPermissions.empty}">
+                    <td><span th:utext="|, Docs: |">Group's Docs</span></td>
+                    <td><th:block th:each="docPermissions : ${entity.documentsPermissions}"><span th:utext="|[Id: ${docPermissions.document.id}, ${docPermissions.permissions}]  |">Permissions</span></th:block></td>
+                </th:block>
+                <td th:if="${entity.documentsPermissions.empty}"><span th:utext="|, No Document Permissions |"></span></td>
+                <th:block th:unless="${entity.users.empty}">
+                    <td><span th:utext="|, Users: |">Group's Users</span></td>
+                    <td><th:block th:each="user : ${entity.users}"><span th:utext="|${user.name} |">User</span></th:block></td>
+                </th:block>
+                <td th:if="${entity.users.empty}"><span th:utext=", No Users"></span></td>
+            </tr>
+            <tr th:if="${entityType} == 'DocGroupPermissions'">
+                <td><span th:utext="|Id: ${entity.id} |">Permissions id</span></td>
+                <td><span th:utext="|, Permissions: ${entity.permissions}|">Permissions</span></td>
+            </tr>
+            </tbody>
+        </table>
+    </th:block>
+    <table th:if="${entity} == null">
+        <tbody>
+        <tr><td><span th:text="|No ${entityType} was ${action}.|">Action info</span></td></tr>
+        </tbody>
+    </table>
+</body>
+</html>
