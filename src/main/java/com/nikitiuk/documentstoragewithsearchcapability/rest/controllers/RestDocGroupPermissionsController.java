@@ -1,6 +1,6 @@
 package com.nikitiuk.documentstoragewithsearchcapability.rest.controllers;
 
-import com.nikitiuk.documentstoragewithsearchcapability.entities.helpers.requests.DocGroupPermissionsRequest;
+import com.nikitiuk.documentstoragewithsearchcapability.rest.entities.DocGroupPermissionsRequest;
 import com.nikitiuk.documentstoragewithsearchcapability.rest.services.RestDocGroupPermissionsService;
 
 import javax.annotation.security.RolesAllowed;
@@ -16,15 +16,22 @@ public class RestDocGroupPermissionsController {
 
     @GET
     @Produces(MediaType.TEXT_HTML)
-    public Response showAllGroupPermissionsForDocuments() {
-        return restDocGroupPermissionsService.showAllGroupPermissionsForDocuments();
+    public Response getAllGroupPermissionsForDocuments() {
+        return restDocGroupPermissionsService.getAllGroupPermissionsForDocuments();
     }
 
     @GET
-    @Path("/{groupid}")
+    @Path("/get-for-group/{groupid}")
     @Produces(MediaType.TEXT_HTML)
-    public Response showPermissionsForDocumentsByGroupId(@PathParam("groupid") long groupid) {
-        return restDocGroupPermissionsService.showPermissionsForDocumentsByGroupId(groupid);
+    public Response getPermissionsForDocumentsByGroupId(@PathParam("groupid") long groupId) {
+        return restDocGroupPermissionsService.getPermissionsForDocumentsByGroupId(groupId);
+    }
+
+    @GET
+    @Path("/get-for-document/{docid}")
+    @Produces(MediaType.TEXT_HTML)
+    public Response getPermissionsForDocumentByDocId(@PathParam("docid") long docId) {
+        return restDocGroupPermissionsService.getPermissionsForDocumentByDocId(docId);
     }
 
     @PUT

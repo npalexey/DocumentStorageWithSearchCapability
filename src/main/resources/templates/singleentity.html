@@ -34,7 +34,7 @@
                 <td th:if="${entity.groups.empty}"><span th:utext="|, No Groups|"></span></td>
             </tr>
             <tr th:if="${entityType} == 'Group'">
-                <td><span th:utext="|Id: ${entry.id} |">Group id</span></td>
+                <td><span th:utext="|Id: ${entity.id} |">Group id</span></td>
                 <td><span th:utext="|, Name: ${entity.name} |">Group name</span></td>
                 <th:block th:unless="${entity.documentsPermissions.empty}">
                     <td><span th:utext="|, Docs: |">Group's Docs</span></td>
@@ -45,7 +45,7 @@
                     <td><span th:utext="|, Users: |">Group's Users</span></td>
                     <td><th:block th:each="user : ${entity.users}"><span th:utext="|${user.name} |">User</span></th:block></td>
                 </th:block>
-                <td th:if="${entity.users.empty}"><span th:utext=", No Users"></span></td>
+                <td th:if="${entity.users.empty}"><span th:utext="|, No Users|"></span></td>
             </tr>
             <tr th:if="${entityType} == 'DocGroupPermissions'">
                 <td><span th:utext="|Id: ${entity.id} |">Permissions id</span></td>

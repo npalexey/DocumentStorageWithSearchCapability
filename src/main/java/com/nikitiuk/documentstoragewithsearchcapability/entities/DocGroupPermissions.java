@@ -35,6 +35,13 @@ public class DocGroupPermissions {
         this.id = new DocGroupPermissionsId(group.getId(), document.getId());
     }
 
+    public DocGroupPermissions(GroupBean group, DocBean document, Permissions permissions) {
+        this.group = group;
+        this.document = document;
+        this.id = new DocGroupPermissionsId(group.getId(), document.getId());
+        this.permissions = permissions;
+    }
+
     public DocGroupPermissionsId getId() {
         return id;
     }

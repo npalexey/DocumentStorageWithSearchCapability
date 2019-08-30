@@ -18,7 +18,6 @@ public class UserDao extends GenericHibernateDao<UserBean> {
 
     private static final Logger logger = LoggerFactory.getLogger(UserDao.class);
     private static List<UserBean> userList = new ArrayList<>();
-    private GroupDao groupDao = new GroupDao();
 
     private static void getUserListForPopulate() {
         userList.add(new UserBean("Admin", "adminpswrd"));
@@ -43,12 +42,9 @@ public class UserDao extends GenericHibernateDao<UserBean> {
             for (UserBean userBean : userList) {
                 Transaction transaction = null;
                 try {
-                    // start a transaction
                     transaction = session.beginTransaction();
-                    // save the user object
                     session.saveOrUpdate(userBean);
                     Hibernate.initialize(userBean.getGroups());
-                    // commit transaction
                     transaction.commit();
                 } catch (Exception e) {
                     if (transaction != null) {
@@ -115,7 +111,6 @@ public class UserDao extends GenericHibernateDao<UserBean> {
 
     public UserBean updateUser(UserBean userBean) throws Exception{
         try {
-            //if(getUserByName(userBean.getName()))
             UserBean updatedUser = getUserByName(userBean.getName());
             if (updatedUser == null) {
                 throw new NotFoundException("User not found.");
@@ -150,15 +145,6 @@ public class UserDao extends GenericHibernateDao<UserBean> {
         return session.createQuery(
                 "SELECT 1 FROM UserBean WHERE EXISTS (SELECT 1 FROM UserBean WHERE name = '"+ user.getName() +"')")
                 .uniqueResult() != null;
-        /*List<UserBean> beanList = session.createQuery("FROM UserBean", UserBean.class).list();
-        if (!beanList.isEmpty()) {
-            for (UserBean userBean : beanList) {
-                if (userBean.equals(user)) {
-                    return true;
-                }
-            }
-        }
-        return false;*/
     }
 
     private UserBean save(UserBean user) throws Exception {
@@ -167,12 +153,9 @@ public class UserDao extends GenericHibernateDao<UserBean> {
             user.setId(null);
             user.setGroups(checkGroupsAndReturnMatched(user));
             Session session = HibernateUtil.getSessionFactory().openSession();
-            // start a transaction
             transaction = session.beginTransaction();
-            // save the user object
             session.saveOrUpdate(user);
             Hibernate.initialize(user.getGroups());
-            // commit transaction
             transaction.commit();
             return user;
         } catch (Exception e) {
@@ -184,15 +167,29 @@ public class UserDao extends GenericHibernateDao<UserBean> {
     }
 
     private Set<GroupBean> checkGroupsAndReturnMatched(UserBean user) throws Exception {
-        Set<GroupBean> checkedGroups = new HashSet<>();
         if (user == null) {
             throw new Exception("No UserBean was passed to check.");
         }
-        for (GroupBean groupBean : groupDao.getGroups()) {
-            if (user.getGroups().contains(groupBean)) {          //checks equality with hashCode()
-                checkedGroups.add(groupBean);
-            }
+        Set<GroupBean> checkedGroups = new HashSet<>();
+        if (user.getGroups() == null || user.getGroups().isEmpty()){
+            return checkedGroups;
         }
-        return checkedGroups;
+        Transaction transaction = null;
+        try{
+            Session session = HibernateUtil.getSessionFactory().openSession();
+            Set<String> groupNames = new HashSet<>();
+            for(GroupBean groupBean : user.getGroups()){
+                groupNames.add(groupBean.getName());
+            }
+            transaction = session.beginTransaction();
+            checkedGroups.addAll(session.createQuery("FROM GroupBean WHERE name IN (:groupNames)", GroupBean.class).setParameterList("groupNames", groupNames).list());
+            transaction.commit();
+            return checkedGroups;
+        } catch (Exception e) {
+            if (transaction != null) {
+                transaction.rollback();
+            }
+            throw e;
+        }
     }
 }

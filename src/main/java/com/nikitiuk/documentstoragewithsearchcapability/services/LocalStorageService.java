@@ -23,7 +23,7 @@ public class LocalStorageService {
 
     private static final String PATH = "/home/npalexey/workenv/DOWNLOADED/";
 
-    public static List<DocBean> listDocumentsInPath() throws IOException {
+    public List<DocBean> listDocumentsInPath() throws IOException {
         List<DocBean> docBeanList = new ArrayList<>();
         List<String> collectedDocuments = collectDocumentsInPath();
         if (!collectedDocuments.isEmpty()) {
@@ -34,7 +34,7 @@ public class LocalStorageService {
         return docBeanList;
     }
 
-    public static List<String> collectDocumentsInPath() throws IOException {
+    private List<String> collectDocumentsInPath() throws IOException {
         Stream<Path> walk = Files.walk(Paths.get(PATH));
         Set<String> allowedFormats = Stream.of("doc", "docx", "pdf", "txt", "html", "xml")
                 .collect(Collectors.toCollection(HashSet::new));
@@ -43,7 +43,7 @@ public class LocalStorageService {
                 .collect(Collectors.toList());
     }
 
-    public static List<String> documentContentGetter(String filename) throws IOException {
+    public List<String> documentContentGetter(String filename) throws IOException {
         if (filename.endsWith(".pdf")) {
             return pdfContentGetter(filename);
         } else {
@@ -51,7 +51,7 @@ public class LocalStorageService {
         }
     }
 
-    private static List<String> pdfContentGetter(String filename) throws IOException {
+    private List<String> pdfContentGetter(String filename) throws IOException {
         List<String> docContent = new ArrayList<>();
         PDDocument document = PDDocument.load(new File(PATH + filename));
         if (!document.isEncrypted()) {
@@ -65,14 +65,14 @@ public class LocalStorageService {
         return docContent;
     }
 
-    private static List<String> otherTypesContentGetter(String filename) throws IOException {
+    private List<String> otherTypesContentGetter(String filename) throws IOException {
         List<String> docContent = new ArrayList<>();
         Stream<String> stream = Files.lines(Paths.get(PATH + filename), StandardCharsets.UTF_8);
         stream.forEach(s -> docContent.add(s.replace(" ", "&nbsp;") + "<br />"));
         return docContent;
     }
 
-    public static StreamingOutput fileDownloader(String filename) throws Exception {
+    public StreamingOutput fileDownloader(String filename) throws Exception {
         return output -> {
             Path path = Paths.get(PATH + filename);
             byte[] data = Files.readAllBytes(path);
@@ -81,7 +81,7 @@ public class LocalStorageService {
         };
     }
 
-    public static void fileUploader(InputStream fileInputStream, String parentID) throws IOException {
+    public void fileUploader(InputStream fileInputStream, String parentID) throws IOException {
         int read;
         byte[] bytes = new byte[1024];
         OutputStream out = new FileOutputStream(new File(PATH + parentID));//fileMetaData.getFileName()
@@ -92,7 +92,7 @@ public class LocalStorageService {
         out.close();
     }
 
-    public static String fileUpdater(InputStream fileInputStream, String docID) throws IOException {
+    public String fileUpdater(InputStream fileInputStream, String docID) throws IOException {
         File tempFile = new File(PATH + docID);
         if (tempFile.exists()) {
             fileUploader(fileInputStream, docID);
@@ -100,7 +100,7 @@ public class LocalStorageService {
         return tempFile.getName();
     }
 
-    public static void fileDeleter(String docID) throws IOException {
+    public void fileDeleter(String docID) throws IOException {
         FileUtils.touch(new File(PATH + docID));
         File fileToDelete = FileUtils.getFile(PATH + docID);
         FileUtils.deleteQuietly(fileToDelete);

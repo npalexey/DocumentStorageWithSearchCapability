@@ -4,6 +4,7 @@ import com.nikitiuk.documentstoragewithsearchcapability.entities.GroupBean;
 import com.nikitiuk.documentstoragewithsearchcapability.rest.services.RestGroupService;
 
 import javax.annotation.security.PermitAll;
+import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -31,13 +32,13 @@ public class RestGroupController {
 
     @PermitAll
     @GET
-    @Path("/{groupname}")
+    @Path("/get-by-name/{groupname}")
     @Produces(MediaType.TEXT_HTML)
     public Response getGroupByName(@PathParam("groupname") String groupName) {
         return groupService.getGroupByName(groupName);
     }
 
-    @PermitAll
+    @RolesAllowed({ "ADMINS" })
     @POST
     @Path("/new")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -46,7 +47,7 @@ public class RestGroupController {
         return groupService.createGroup(groupBean);
     }
 
-    @PermitAll
+    @RolesAllowed({ "ADMINS" })
     @PUT
     @Path("/update")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -55,7 +56,7 @@ public class RestGroupController {
         return groupService.updateGroup(groupBean);
     }
 
-    @PermitAll
+    @RolesAllowed({ "ADMINS" })
     @DELETE
     @Path("/{groupid}")
     @Produces(MediaType.TEXT_HTML)
@@ -63,7 +64,7 @@ public class RestGroupController {
         return groupService.deleteGroupById(groupId);
     }
 
-    @PermitAll
+    @RolesAllowed({ "ADMINS" })
     @DELETE
     @Path("/delete-by-name/{groupname}")
     @Produces(MediaType.TEXT_HTML)

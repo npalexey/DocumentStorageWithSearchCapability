@@ -2,12 +2,13 @@ package com.nikitiuk.documentstoragewithsearchcapability.rest.services;
 
 import com.nikitiuk.documentstoragewithsearchcapability.dao.implementations.GroupDao;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.GroupBean;
-import com.nikitiuk.documentstoragewithsearchcapability.exceptions.NoValidDataFromJsonException;
+import com.nikitiuk.documentstoragewithsearchcapability.exceptions.NoValidDataFromSourceException;
+import com.nikitiuk.documentstoragewithsearchcapability.rest.services.helpers.InspectorService;
+import com.nikitiuk.documentstoragewithsearchcapability.rest.services.helpers.ResponseService;
 import org.apache.commons.lang3.StringUtils;
 import org.thymeleaf.context.Context;
 
 import javax.ws.rs.core.Response;
-import java.util.ArrayList;
 import java.util.List;
 
 public class RestGroupService {
@@ -19,7 +20,7 @@ public class RestGroupService {
         try {
             groupBeanList = groupDao.getGroups();
         } catch (Exception e) {
-            return ResponseService.errorResponse(Response.Status.NOT_FOUND, "Error while producing list of groups.");
+            return ResponseService.errorResponse(Response.Status.NOT_FOUND, "Error while producing list of groups. " + e.getMessage());
         }
         final Context ctx = new Context();
         ctx.setVariable("entityName", "Group");
@@ -30,7 +31,7 @@ public class RestGroupService {
     public Response getGroupById(Long id) {
         GroupBean groupById;
         try {
-            checkIfIdIsNull(id);
+            InspectorService.checkIfIdIsNull(id);
             groupById = groupDao.getById(id);
         } catch (Exception e) {
             return ResponseService.errorResponse(Response.Status.NOT_FOUND, "Error while getting group by id. " + e.getMessage());
@@ -44,8 +45,8 @@ public class RestGroupService {
 
     public Response getGroupByName(String groupName) {
         GroupBean groupByName;
-        try{
-            checkIfNameIsBlank(groupName);
+        try {
+            InspectorService.checkIfNameIsBlank(groupName);
             groupByName = groupDao.getGroupByName(groupName);
         } catch (Exception e) {
             return ResponseService.errorResponse(Response.Status.NOT_FOUND, "Error while getting group by name. " + e.getMessage());
@@ -89,7 +90,7 @@ public class RestGroupService {
 
     public Response deleteGroupById(Long groupId) {
         try {
-            checkIfIdIsNull(groupId);
+            InspectorService.checkIfIdIsNull(groupId);
             groupDao.deleteById(groupId);
         } catch (Exception e) {
             return ResponseService.errorResponse(Response.Status.NOT_FOUND, "Error while deleting group. " + e.getMessage());
@@ -99,7 +100,7 @@ public class RestGroupService {
 
     public Response deleteGroupByName(String groupName) {
         try {
-            checkIfNameIsBlank(groupName);
+            InspectorService.checkIfNameIsBlank(groupName);
             groupDao.deleteGroupByName(groupName);
         } catch (Exception e) {
             return ResponseService.errorResponse(Response.Status.NOT_FOUND, "Error while deleting group. " + e.getMessage());
@@ -107,22 +108,9 @@ public class RestGroupService {
         return ResponseService.okResponseSimple("Group deleted successfully");
     }
 
-    private void checkOnCreateOrUpdateForNulls(GroupBean groupBean) throws NoValidDataFromJsonException{
-        if(groupBean == null || StringUtils.isBlank(groupBean.getName())){
-            throw new NoValidDataFromJsonException("No valid data was passed.");
-        }
-    }
-
-    private void checkIfIdIsNull(Long id) throws NoValidDataFromJsonException {
-        if(id == null) {
-            throw new NoValidDataFromJsonException("No id was passed.");
-        }
-    }
-
-
-    private void checkIfNameIsBlank(String name) throws NoValidDataFromJsonException {
-        if(StringUtils.isBlank(name)){
-            throw new NoValidDataFromJsonException("No valid name was passed.");
+    private void checkOnCreateOrUpdateForNulls(GroupBean groupBean) throws NoValidDataFromSourceException {
+        if (groupBean == null || StringUtils.isBlank(groupBean.getName())) {
+            throw new NoValidDataFromSourceException("No valid data was passed.");
         }
     }
 }

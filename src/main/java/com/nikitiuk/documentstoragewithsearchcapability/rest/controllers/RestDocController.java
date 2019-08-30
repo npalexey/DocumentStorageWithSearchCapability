@@ -3,8 +3,6 @@ package com.nikitiuk.documentstoragewithsearchcapability.rest.controllers;
 import com.nikitiuk.documentstoragewithsearchcapability.filters.SecurityContextImplementation;
 import com.nikitiuk.documentstoragewithsearchcapability.rest.services.RestDocService;
 import org.glassfish.jersey.media.multipart.FormDataParam;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.annotation.security.PermitAll;
 import javax.ws.rs.*;
@@ -12,7 +10,6 @@ import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.SecurityContext;
 import java.io.InputStream;
 
 @PermitAll
@@ -24,60 +21,93 @@ public class RestDocController {
     @PermitAll
     @GET
     @Produces(MediaType.TEXT_HTML)
-    public Response showFilesInDoc(@Context ContainerRequestContext context) {
+    public Response getDocuments(@Context ContainerRequestContext context) {
         SecurityContextImplementation securityContextImplementation = (SecurityContextImplementation) context.getSecurityContext();
-        return docService.showFilesInDoc(securityContextImplementation);
+        return docService.getDocuments(securityContextImplementation);
     }
 
     @PermitAll
     @GET
-    @Path("/{filename}/content")
-    @Produces(MediaType.TEXT_HTML)
-    public Response showContentOfFile(@PathParam("filename") String filename) {
-        return docService.showContentOfFile(filename);
-    }
-
-    @PermitAll
-    @GET
-    @Path("/{filename}")
+    @Path("{docid}")
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
-    public Response downloadFile(@PathParam("filename") String filename) {
-        return docService.downloadFile(filename);
+    public Response downloadDocumentById(@PathParam("docid") long docId) {
+        return docService.downloadDocumentById(docId);
+    }
+
+    @PermitAll
+    @GET
+    @Path("/get-by-name/{docname}")
+    @Produces(MediaType.APPLICATION_OCTET_STREAM)
+    public Response downloadDocumentByName(@PathParam("docname") String docName) {
+        return docService.downloadDocument(docName);
+    }
+
+    @PermitAll
+    @GET
+    @Path("/{docid}/content")
+    @Produces(MediaType.TEXT_HTML)
+    public Response getContentOfDocumentById(@PathParam("docid") long docId) {
+        return docService.getContentOfDocumentById(docId);
+    }
+
+    @PermitAll
+    @GET
+    @Path("/get-by-name/{docname}/content")
+    @Produces(MediaType.TEXT_HTML)
+    public Response getContentOfDocumentByName(@PathParam("docname") String docName) {
+        return docService.getContentOfDocument(docName);
     }
 
     @PermitAll
     @POST
-    @Path("/{parentid}")
+    @Path("/{designatedname}")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
-    public Response uploadFile(@FormDataParam("file") InputStream fileInputStream,
+    public Response uploadDocument(@FormDataParam("file") InputStream fileInputStream,
                                //@FormDataParam("file") FormDataContentDisposition fileMetaData,
-                               @PathParam("parentid") String parentID) {
-        return docService.uploadFile(fileInputStream, parentID);
+                               @PathParam("designatedname") String designatedName) {
+        return docService.uploadDocument(fileInputStream, designatedName);
     }
 
     @PermitAll
     @POST
     @Path("/search")
     @Produces(MediaType.TEXT_HTML)
-    public Response searchInEveryFileWithStringQuery(@DefaultValue("") @QueryParam("query") String query, @Context ContainerRequestContext context) {
+    public Response searchInEveryDocumentWithStringQuery(@DefaultValue("") @QueryParam("query") String query, @Context ContainerRequestContext context) {
         SecurityContextImplementation securityContextImplementation = (SecurityContextImplementation) context.getSecurityContext();
-        return docService.searchInEveryFileWithStringQuery(query, securityContextImplementation);
+        return docService.searchInEveryDocumentWithStringQuery(query, securityContextImplementation);
     }
 
     @PermitAll
     @PUT
-    @Path("/{documentid}")
+    @Path("/{docid}")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
-    public Response updateDocument(@PathParam("documentid") String docID,
+    public Response updateDocumentById(@PathParam("docid") long docId,
                                    @FormDataParam("file") InputStream fileInputStream) {
-        return docService.updateDocument(docID, fileInputStream);
+        return docService.updateDocumentById(docId, fileInputStream);
+    }
+
+    @PermitAll
+    @PUT
+    @Path("/update-by-name/{docname}")
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    public Response updateDocumentByName(@PathParam("docname") String docName,
+                                   @FormDataParam("file") InputStream fileInputStream) {
+        return docService.updateDocument(docName, fileInputStream);
     }
 
     @PermitAll
     @DELETE
-    @Path("/{documentid}")
+    @Path("/{docid}")
     @Produces(MediaType.TEXT_HTML)
-    public Response deleteDocument(@PathParam("documentid") String docID) {
-        return docService.deleteDocument(docID);
+    public Response deleteDocumentById(@PathParam("docid") long docId) {
+        return docService.deleteDocumentById(docId);
+    }
+
+    @PermitAll
+    @DELETE
+    @Path("/delete-by-name/{docname}")
+    @Produces(MediaType.TEXT_HTML)
+    public Response deleteDocumentByName(@PathParam("docname") String docName) {
+        return docService.deleteDocument(docName);
     }
 }

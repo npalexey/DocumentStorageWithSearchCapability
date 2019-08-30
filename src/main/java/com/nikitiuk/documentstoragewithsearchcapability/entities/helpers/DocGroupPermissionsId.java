@@ -42,7 +42,7 @@ public class DocGroupPermissionsId implements Serializable {
 
     @Override
     public String toString(){
-        return "GroupId = " + groupId + ", DocumentId = " + documentId;
+        return "GroupId = " + groupId + " , DocumentId = " + documentId;
     }
 
     @Override

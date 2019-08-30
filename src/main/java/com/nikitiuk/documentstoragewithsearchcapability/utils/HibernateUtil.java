@@ -77,7 +77,7 @@ public class HibernateUtil {
         new DocGroupPermissionsDao();*/
         GroupDao.populateTableWithGroups();
         UserDao.populateTableWithUsers();
-        DocDao.populateTableWithDocs(LocalStorageService.listDocumentsInPath());
+        DocDao.populateTableWithDocs(new LocalStorageService().listDocumentsInPath());
         DocGroupPermissionsDao.populateTableWithDocGroupPermissions();
     }
 

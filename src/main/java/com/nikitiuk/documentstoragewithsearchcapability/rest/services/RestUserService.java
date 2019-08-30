@@ -2,7 +2,9 @@ package com.nikitiuk.documentstoragewithsearchcapability.rest.services;
 
 import com.nikitiuk.documentstoragewithsearchcapability.dao.implementations.UserDao;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.UserBean;
-import com.nikitiuk.documentstoragewithsearchcapability.exceptions.NoValidDataFromJsonException;
+import com.nikitiuk.documentstoragewithsearchcapability.exceptions.NoValidDataFromSourceException;
+import com.nikitiuk.documentstoragewithsearchcapability.rest.services.helpers.InspectorService;
+import com.nikitiuk.documentstoragewithsearchcapability.rest.services.helpers.ResponseService;
 import org.apache.commons.lang3.StringUtils;
 import org.thymeleaf.context.Context;
 
@@ -18,7 +20,7 @@ public class RestUserService {
         try {
             userBeanList = userDao.getUsers();
         } catch (Exception e) {
-            return ResponseService.errorResponse(Response.Status.NOT_FOUND, "Error while producing list of users.");
+            return ResponseService.errorResponse(Response.Status.NOT_FOUND, "Error while producing list of users. " + e.getMessage());
         }
         final Context ctx = new Context();
         ctx.setVariable("entityName", "User");
@@ -29,7 +31,7 @@ public class RestUserService {
     public Response getUserById(Long userId) {
         UserBean userById;
         try {
-            checkIfIdIsNull(userId);
+            InspectorService.checkIfIdIsNull(userId);
             userById = userDao.getById(userId);
         } catch (Exception e) {
             return ResponseService.errorResponse(Response.Status.NOT_FOUND, "Error while getting user by id. " + e.getMessage());
@@ -44,7 +46,7 @@ public class RestUserService {
     public Response getUserByName(String username){
         UserBean userByName;
         try{
-            checkIfNameIsBlank(username);
+            InspectorService.checkIfNameIsBlank(username);
             userByName = userDao.getUserByName(username);
         } catch (Exception e) {
             return ResponseService.errorResponse(Response.Status.NOT_FOUND, "Error while getting user by name. " + e.getMessage());
@@ -88,7 +90,7 @@ public class RestUserService {
 
     public Response deleteUserById(Long userId) {
         try {
-            checkIfIdIsNull(userId);
+            InspectorService.checkIfIdIsNull(userId);
             userDao.deleteById(userId);
         } catch (Exception e) {
             return ResponseService.errorResponse(Response.Status.NOT_FOUND, "Error while deleting user. " + e.getMessage());
@@ -98,7 +100,7 @@ public class RestUserService {
 
     public Response deleteUserByName(String username) {
         try {
-            checkIfNameIsBlank(username);
+            InspectorService.checkIfNameIsBlank(username);
             userDao.deleteUserByName(username);
         } catch (Exception e) {
             return ResponseService.errorResponse(Response.Status.NOT_FOUND, "Error while deleting user. " + e.getMessage());
@@ -106,21 +108,9 @@ public class RestUserService {
         return ResponseService.okResponseSimple("User deleted successfully");
     }
 
-    private void checkOnCreateOrUpdateForNulls(UserBean userBean) throws NoValidDataFromJsonException{
+    private void checkOnCreateOrUpdateForNulls(UserBean userBean) throws NoValidDataFromSourceException {
         if(userBean == null || StringUtils.isBlank(userBean.getName())){
-            throw new NoValidDataFromJsonException("No valid data was passed.");
-        }
-    }
-
-    private void checkIfIdIsNull(Long id) throws NoValidDataFromJsonException {
-        if(id == null) {
-            throw new NoValidDataFromJsonException("No id was passed.");
-        }
-    }
-
-    private void checkIfNameIsBlank(String name) throws NoValidDataFromJsonException {
-        if(StringUtils.isBlank(name)){
-            throw new NoValidDataFromJsonException("No valid name was passed.");
+            throw new NoValidDataFromSourceException("No valid data was passed.");
         }
     }
 }

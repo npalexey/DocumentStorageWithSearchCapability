@@ -3,7 +3,7 @@ package com.nikitiuk.documentstoragewithsearchcapability.filters;
 import com.nikitiuk.documentstoragewithsearchcapability.dao.implementations.UserDao;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.GroupBean;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.UserBean;
-import com.nikitiuk.documentstoragewithsearchcapability.rest.services.ResponseService;
+import com.nikitiuk.documentstoragewithsearchcapability.rest.services.helpers.ResponseService;
 import org.glassfish.jersey.internal.util.Base64;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
@@ -98,6 +98,10 @@ public class AuthenticationFilter implements ContainerRequestFilter {
     public void setContextIfNoAnnotationsArePresent(final String usernameAndPassword, ContainerRequestContext requestContext){
         final String[] decipheredUsernameAndPassword = decipherBasicAuth(usernameAndPassword);
         UserBean user = userDao.getUserByName(decipheredUsernameAndPassword[0]);
+        if(user == null) {
+            requestContext.abortWith(ResponseService.errorResponse(Response.Status.UNAUTHORIZED, "You cannot access this resource"));
+            return;
+        }
         Hibernate.initialize(user.getGroups());
         if (!user.getPassword().equals(decipheredUsernameAndPassword[1])) {
             requestContext.abortWith(ResponseService.errorResponse(Response.Status.UNAUTHORIZED, "You cannot access this resource"));

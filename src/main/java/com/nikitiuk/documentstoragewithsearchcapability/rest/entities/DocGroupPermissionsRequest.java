@@ -1,4 +1,4 @@
-package com.nikitiuk.documentstoragewithsearchcapability.entities.helpers.requests;
+package com.nikitiuk.documentstoragewithsearchcapability.rest.entities;
 
 public class DocGroupPermissionsRequest {
 

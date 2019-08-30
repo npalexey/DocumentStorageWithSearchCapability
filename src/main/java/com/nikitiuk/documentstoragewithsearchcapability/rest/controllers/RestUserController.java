@@ -4,6 +4,7 @@ import com.nikitiuk.documentstoragewithsearchcapability.entities.UserBean;
 import com.nikitiuk.documentstoragewithsearchcapability.rest.services.RestUserService;
 
 import javax.annotation.security.PermitAll;
+import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -37,7 +38,7 @@ public class RestUserController {
         return userService.getUserByName(username);
     }
 
-    @PermitAll
+    @RolesAllowed({ "ADMINS" })
     @POST
     @Path("/new")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -46,7 +47,7 @@ public class RestUserController {
         return userService.createUser(userBean);
     }
 
-    @PermitAll
+    @RolesAllowed({ "ADMINS" })
     @PUT
     @Path("/update")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -55,7 +56,7 @@ public class RestUserController {
         return userService.updateUser(userBean);
     }
 
-    @PermitAll
+    @RolesAllowed({ "ADMINS" })
     @DELETE
     @Path("/{userid}")
     @Produces(MediaType.TEXT_HTML)
@@ -63,7 +64,7 @@ public class RestUserController {
         return userService.deleteUserById(userId);
     }
 
-    @PermitAll
+    @RolesAllowed({ "ADMINS" })
     @DELETE
     @Path("/delete-by-name/{username}")
     @Produces(MediaType.TEXT_HTML)

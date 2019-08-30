@@ -41,6 +41,9 @@ public class SolrService {
     public static StringBuilder searchAndReturnDocsAndHighlightedText(String queryString, List<DocBean> docBeanList) throws IOException, SolrServerException {
         SolrClient client = new HttpSolrClient.Builder("http://localhost:8983/solr/mycoll").build();
         SolrQuery query = new SolrQuery();
+        if(docBeanList.isEmpty()) {
+            return new StringBuilder("You Don't Have Rights For Any Document.");
+        }
         Iterator<DocBean> iterator = docBeanList.iterator();
         StringBuilder contentBuilder = new StringBuilder();
         if(iterator.hasNext()){
@@ -79,7 +82,7 @@ public class SolrService {
         SolrDocumentList documents = response.getResults();
         StringBuilder contentBuilder = new StringBuilder();
         contentBuilder
-                .append("\nQuery request: ").append(queryString)
+                .append("Query request: ").append(queryString)
                 .append("\nFound ").append(documents.getNumFound()).append(" document(s)");
         for(Map.Entry<String, Map<String, List<String>>> entry: hitHighlightedMap.entrySet()){
             contentBuilder.append("\n\n\n").append("-------------------------------------------------")
