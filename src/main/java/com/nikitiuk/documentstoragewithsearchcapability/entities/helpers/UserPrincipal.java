@@ -8,16 +8,40 @@ import java.util.Set;
 
 public class UserPrincipal implements Principal {
 
+    private Long id;
     private String name;
     private Set<GroupBean> groups;
 
-    /**
-     * Returns the name of this principal.
-     *
-     * @return the name of this principal.
-     */
+    public UserPrincipal(String name) {
+        this.name = name;
+    }
+
+    public UserPrincipal() {
+
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public Set<GroupBean> getGroups() {
+        return groups;
+    }
+
+    public void setGroups(Set<GroupBean> groups) {
+        this.groups = groups;
+    }
+
     @Override
     public String getName() {
-        return null;
+        return name;
     }
 }

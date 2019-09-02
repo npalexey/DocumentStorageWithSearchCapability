@@ -7,9 +7,11 @@ import com.nikitiuk.documentstoragewithsearchcapability.filters.SecurityContextI
 import com.nikitiuk.documentstoragewithsearchcapability.rest.services.helpers.InspectorService;
 import com.nikitiuk.documentstoragewithsearchcapability.rest.services.helpers.ResponseService;
 import com.nikitiuk.documentstoragewithsearchcapability.services.LocalStorageService;
+import com.nikitiuk.documentstoragewithsearchcapability.services.SearchResultsModifier;
 import com.nikitiuk.documentstoragewithsearchcapability.services.SolrService;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.solr.client.solrj.SolrServerException;
+import org.apache.solr.client.solrj.response.QueryResponse;
 import org.thymeleaf.context.Context;
 
 import javax.ws.rs.WebApplicationException;
@@ -119,13 +121,14 @@ public class RestDocService {
     }
 
     public Response searchInEveryDocumentWithStringQuery(String query, SecurityContextImplementation securityContext) {
-        StringBuilder contentBuilder = new StringBuilder(/*"Nothing was found"*/);
+        StringBuilder contentBuilder = new StringBuilder();
         try {
             if (StringUtils.isBlank(query)) {
                 throw new NoValidDataFromSourceException("Query is blank.");
             }
-            List<DocBean> docBeanList = docDao.getDocumentsForUser(securityContext.getUser());
-            contentBuilder.append(SolrService.searchAndReturnDocsAndHighlightedText(query, docBeanList))/*.delete(0, 17)*/;
+            List<DocBean> permittedDocs = docDao.getDocumentsForUser(securityContext.getUser());
+            QueryResponse response = SolrService.searchInDocumentsByQuery(query);
+            contentBuilder.append(SearchResultsModifier.getSearchResultForPermittedDocs(response, query, permittedDocs));
         } catch (IOException | SolrServerException | NoValidDataFromSourceException e) {
             return ResponseService.errorResponse(Response.Status.NOT_FOUND, "Error while searching for: " + query
                     + ". " + e.getMessage());
@@ -150,7 +153,7 @@ public class RestDocService {
         try {
             InspectorService.checkIfNameIsBlank(docName);
             docNameForContentTypeCheck = localStorageService.fileUpdater(fileInputStream, docName);
-            updatedDocument = docDao.getDocByName(docName);
+            updatedDocument = docDao.getDocByPath(PATH + docName);
         } catch (IOException | NoValidDataFromSourceException e) {
             return ResponseService.errorResponse(Response.Status.NOT_FOUND, "Error while updating document: " + docName
                     + ". " + e.getMessage());
@@ -190,7 +193,7 @@ public class RestDocService {
         }
         Runnable deleteTask = () -> {
             try {
-                SolrService.deleteDocumentFromSolrIndex(docName);
+                SolrService.deleteDocumentFromSolrIndex(PATH + docName);
             } catch (IOException | SolrServerException e) {
                 throw new WebApplicationException("Error while deleting document from index. Please, try again.");
             }

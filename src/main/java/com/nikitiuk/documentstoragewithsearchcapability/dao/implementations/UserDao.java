@@ -102,6 +102,7 @@ public class UserDao extends GenericHibernateDao<UserBean> {
             if (exists(userBean)) {
                 throw new AlreadyExistsException("Such user already exists.");
             }
+            userBean.setId(null);
             return save(userBean);
         } catch (Exception e) {
             logger.error("Error at UserDao saveUser: ", e);
@@ -150,7 +151,6 @@ public class UserDao extends GenericHibernateDao<UserBean> {
     private UserBean save(UserBean user) throws Exception {
         Transaction transaction = null;
         try {
-            user.setId(null);
             user.setGroups(checkGroupsAndReturnMatched(user));
             Session session = HibernateUtil.getSessionFactory().openSession();
             transaction = session.beginTransaction();
