@@ -1,14 +1,9 @@
 package com.nikitiuk.documentstoragewithsearchcapability.utils;
 
-import com.nikitiuk.documentstoragewithsearchcapability.dao.implementations.DocDao;
-import com.nikitiuk.documentstoragewithsearchcapability.dao.implementations.DocGroupPermissionsDao;
-import com.nikitiuk.documentstoragewithsearchcapability.dao.implementations.GroupDao;
-import com.nikitiuk.documentstoragewithsearchcapability.dao.implementations.UserDao;
-import com.nikitiuk.documentstoragewithsearchcapability.entities.DocBean;
-import com.nikitiuk.documentstoragewithsearchcapability.entities.DocGroupPermissions;
-import com.nikitiuk.documentstoragewithsearchcapability.entities.GroupBean;
-import com.nikitiuk.documentstoragewithsearchcapability.entities.UserBean;
+import com.nikitiuk.documentstoragewithsearchcapability.dao.implementations.*;
+import com.nikitiuk.documentstoragewithsearchcapability.entities.*;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.helpers.DocGroupPermissionsId;
+import com.nikitiuk.documentstoragewithsearchcapability.entities.helpers.FolderGroupPermissionsId;
 import com.nikitiuk.documentstoragewithsearchcapability.services.LocalStorageService;
 import org.hibernate.SessionFactory;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
@@ -24,6 +19,7 @@ public class HibernateUtil {
 
     private static final Logger logger = LoggerFactory.getLogger(HibernateUtil.class);
     private static SessionFactory sessionFactory;
+    private static LocalStorageService localStorageService;
 
     public static SessionFactory getSessionFactory() {
         if (sessionFactory == null) {
@@ -50,18 +46,17 @@ public class HibernateUtil {
                 //settings.put(Environment.STORAGE_ENGINE, "");
                 configuration.setProperties(settings);
                 configuration.addAnnotatedClass(DocBean.class);
+                configuration.addAnnotatedClass(FolderBean.class);
                 configuration.addAnnotatedClass(GroupBean.class);
                 configuration.addAnnotatedClass(UserBean.class);
                 configuration.addAnnotatedClass(DocGroupPermissions.class);
                 configuration.addAnnotatedClass(DocGroupPermissionsId.class);
-                /*configuration.addAnnotatedClass(User.class);
-                configuration.addAnnotatedClass(Group.class);
-                configuration.addAnnotatedClass(Resource.class);
-                configuration.addAnnotatedClass(ResourcePermission.class);
-                configuration.addAnnotatedClass(GroupResourceId.class);*/
+                configuration.addAnnotatedClass(FolderGroupPermissions.class);
+                configuration.addAnnotatedClass(FolderGroupPermissionsId.class);
                 ServiceRegistry serviceRegistry = new StandardServiceRegistryBuilder()
                         .applySettings(configuration.getProperties()).build();
                 sessionFactory = configuration.buildSessionFactory(serviceRegistry);
+                localStorageService = new LocalStorageService();
                 populateTables();
             } catch (Exception e) {
                 logger.error("Exception caught while creating Session Factory. " + e);
@@ -73,7 +68,9 @@ public class HibernateUtil {
     private static void populateTables() throws Exception {
         GroupDao.populateTableWithGroups();
         UserDao.populateTableWithUsers();
-        DocDao.populateTableWithDocs(new LocalStorageService().listDocumentsInPath());
+        FolderDao.populateTableWithFolders(localStorageService.listFoldersInPath());
+        DocDao.populateTableWithDocs(localStorageService.listDocumentsInPath());
+        FolderGroupPermissionsDao.populateTableWithFolderGroupPermissions();
         DocGroupPermissionsDao.populateTableWithDocGroupPermissions();
     }
 

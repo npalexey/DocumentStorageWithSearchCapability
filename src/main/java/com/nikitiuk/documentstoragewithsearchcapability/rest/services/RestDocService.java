@@ -1,6 +1,7 @@
 package com.nikitiuk.documentstoragewithsearchcapability.rest.services;
 
 import com.nikitiuk.documentstoragewithsearchcapability.dao.implementations.DocDao;
+import com.nikitiuk.documentstoragewithsearchcapability.dao.implementations.FolderDao;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.DocBean;
 import com.nikitiuk.documentstoragewithsearchcapability.exceptions.NoValidDataFromSourceException;
 import com.nikitiuk.documentstoragewithsearchcapability.filters.SecurityContextImplementation;
@@ -12,6 +13,8 @@ import com.nikitiuk.documentstoragewithsearchcapability.services.SolrService;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.response.QueryResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.thymeleaf.context.Context;
 
 import javax.ws.rs.WebApplicationException;
@@ -29,9 +32,10 @@ import java.util.concurrent.Executors;
 public class RestDocService {
 
     private static final String PATH = "/home/npalexey/workenv/DOWNLOADED/";
+    private static final Logger logger = LoggerFactory.getLogger(RestDocService.class);
     private static ExecutorService executorService = Executors.newSingleThreadExecutor();
-
     private DocDao docDao = new DocDao();
+    private FolderDao folderDao = new FolderDao();
     private LocalStorageService localStorageService = new LocalStorageService();
 
     public Response getDocuments(SecurityContextImplementation securityContext) {
@@ -49,65 +53,71 @@ public class RestDocService {
 
     public Response getContentOfDocumentById(Long documentId) {
         DocBean documentToGetContentOf = docDao.getById(documentId);
-        if(documentToGetContentOf == null) {
+        if (documentToGetContentOf == null) {
             return ResponseService.errorResponse(Response.Status.NOT_FOUND, "Error occurred while getting content of the document by id: " + documentId
                     + ". No document with such id.");
         }
-        return getContentOfDocument(documentToGetContentOf.getName());
+        return getContentOfDocument(documentToGetContentOf.getPath());
     }
 
-    public Response getContentOfDocument(String docName) {
+    public Response getContentOfDocument(String documentPath) {
         List<String> docContent;
         try {
-            InspectorService.checkIfNameIsBlank(docName);
-            docContent = new ArrayList<>(localStorageService.documentContentGetter(docName));
+            InspectorService.checkIfStringDataIsBlank(documentPath);
+            docContent = new ArrayList<>(localStorageService.documentContentGetter(documentPath));
         } catch (Exception e) {
-            return ResponseService.errorResponse(Response.Status.NOT_FOUND, "Error while getting content of: " + docName
+            return ResponseService.errorResponse(Response.Status.NOT_FOUND, "Error while getting content of: " + documentPath
                     + ". " + e.getMessage());
         }
         final Context ctx = new Context();
         ctx.setVariable("docContent", docContent);
-        ctx.setVariable("fileName", docName);
+        ctx.setVariable("filePath", documentPath);
         return ResponseService.okResponseWithContext("content", ctx);
     }
 
     public Response downloadDocumentById(Long documentId) {
         DocBean documentToDownload = docDao.getById(documentId);
-        if(documentToDownload == null) {
+        if (documentToDownload == null) {
             return ResponseService.errorResponse(Response.Status.NOT_FOUND, "Error occurred while downloading the document by id: " + documentId
                     + ". No document with such id.");
         }
-        return downloadDocument(documentToDownload.getName());
+        return downloadDocumentByPath(documentToDownload.getPath());
     }
 
-    public Response downloadDocument(String docName) {
+    public Response downloadDocumentByPath(String documentPath) {
         StreamingOutput fileStream;
         try {
-            InspectorService.checkIfNameIsBlank(docName);
-            fileStream = localStorageService.fileDownloader(docName);
+            InspectorService.checkIfStringDataIsBlank(documentPath);
+            fileStream = localStorageService.fileDownloader(documentPath);
         } catch (Exception e) {
-            return ResponseService.errorResponse(Response.Status.NOT_FOUND, "Error while downloading document: " + docName
+            return ResponseService.errorResponse(Response.Status.NOT_FOUND, "Error while downloading document: " + documentPath
                     + ". " + e.getMessage());
         }
-        return ResponseService.okResponseForFile(fileStream, docName);
+        return ResponseService.okResponseForFile(fileStream, documentPath);
     }
 
     public Response uploadDocument(InputStream fileInputStream,
                                    //FormDataContentDisposition fileMetaData,
-                                   String designatedName) {
+                                   String designatedName, Long parentFolderId) {
         DocBean createdDoc;
+        String folderPath;
         try {
-            InspectorService.checkIfNameIsBlank(designatedName);
-            localStorageService.fileUploader(fileInputStream, designatedName);
-            createdDoc = docDao.saveDocument(new DocBean(designatedName, PATH + designatedName));
+            InspectorService.checkIfStringDataIsBlank(designatedName);
+            if (parentFolderId == null || parentFolderId == 0) {
+                folderPath = PATH;
+            } else {
+                folderPath = folderDao.getById(parentFolderId).getPath();
+            }
+            localStorageService.fileUploader(fileInputStream, folderPath + designatedName);
+            createdDoc = docDao.saveDocument(new DocBean(designatedName, folderPath + designatedName));
         } catch (Exception e) {
             return ResponseService.errorResponse(Response.Status.NOT_FOUND, "Error while uploading document: " + designatedName
                     + ". " + e.getMessage());
         }
         Runnable addTask = () -> {
             try {
-                SolrService.indexDocumentWithSolr(designatedName,
-                        URLConnection.guessContentTypeFromName(new File(PATH + designatedName).getName()));
+                SolrService.indexDocumentWithSolr(folderPath + designatedName,
+                        URLConnection.guessContentTypeFromName(new File(folderPath + designatedName).getName()));
             } catch (IOException | SolrServerException e) {
                 throw new WebApplicationException("Error while indexing document. Please, try again.");
             }
@@ -140,27 +150,27 @@ public class RestDocService {
 
     public Response updateDocumentById(Long documentId, InputStream fileInputStream) {
         DocBean documentToUpdate = docDao.getById(documentId);
-        if(documentToUpdate == null) {
+        if (documentToUpdate == null) {
             return ResponseService.errorResponse(Response.Status.NOT_FOUND, "Error occurred while updating the document by id: " + documentId
                     + ". No document with such id.");
         }
-        return updateDocument(documentToUpdate.getName(), fileInputStream);
+        return updateDocumentByPath(documentToUpdate.getPath(), fileInputStream);
     }
 
-    public Response updateDocument(String docName, InputStream fileInputStream) {
+    public Response updateDocumentByPath(String documentPath, InputStream fileInputStream) {
         String docNameForContentTypeCheck;
         DocBean updatedDocument;
         try {
-            InspectorService.checkIfNameIsBlank(docName);
-            docNameForContentTypeCheck = localStorageService.fileUpdater(fileInputStream, docName);
-            updatedDocument = docDao.getDocByPath(PATH + docName);
+            InspectorService.checkIfStringDataIsBlank(documentPath);
+            docNameForContentTypeCheck = localStorageService.fileUpdater(fileInputStream, documentPath);
+            updatedDocument = docDao.getDocByPath(documentPath);
         } catch (IOException | NoValidDataFromSourceException e) {
-            return ResponseService.errorResponse(Response.Status.NOT_FOUND, "Error while updating document: " + docName
+            return ResponseService.errorResponse(Response.Status.NOT_FOUND, "Error while updating document: " + documentPath
                     + ". " + e.getMessage());
         }
         Runnable putTask = () -> {
             try {
-                SolrService.indexDocumentWithSolr(docName, URLConnection.guessContentTypeFromName(docNameForContentTypeCheck));
+                SolrService.indexDocumentWithSolr(documentPath, URLConnection.guessContentTypeFromName(docNameForContentTypeCheck));
             } catch (IOException | SolrServerException e) {
                 throw new WebApplicationException("Error while indexing document. Please, try again.");
             }
@@ -175,30 +185,30 @@ public class RestDocService {
 
     public Response deleteDocumentById(Long documentId) {
         DocBean documentToDelete = docDao.getById(documentId);
-        if(documentToDelete == null) {
+        if (documentToDelete == null) {
             return ResponseService.errorResponse(Response.Status.NOT_FOUND, "Error occurred while deleting the document by id: " + documentId
                     + ". No document with such id.");
         }
-        return deleteDocument(documentToDelete.getName());
+        return deleteDocument(documentToDelete.getPath());
     }
 
-    public Response deleteDocument(String docName) {
+    public Response deleteDocument(String documentPath) {
         try {
-            InspectorService.checkIfNameIsBlank(docName);
-            localStorageService.fileDeleter(docName);
-            docDao.deleteDocument(new DocBean(docName, PATH + docName));
+            InspectorService.checkIfStringDataIsBlank(documentPath);
+            localStorageService.fileDeleter(documentPath);
+            docDao.deleteDocument(new DocBean(documentPath, documentPath));
         } catch (IOException | NoValidDataFromSourceException e) {
-            return ResponseService.errorResponse(Response.Status.NOT_FOUND, "Error occurred while deleting the document: " + docName
+            return ResponseService.errorResponse(Response.Status.NOT_FOUND, "Error occurred while deleting the document: " + documentPath
                     + ". " + e.getMessage());
         }
         Runnable deleteTask = () -> {
             try {
-                SolrService.deleteDocumentFromSolrIndex(PATH + docName);
+                SolrService.deleteDocumentFromSolrIndex(documentPath);
             } catch (IOException | SolrServerException e) {
                 throw new WebApplicationException("Error while deleting document from index. Please, try again.");
             }
         };
         executorService.execute(deleteTask);
-        return ResponseService.okResponseSimple("Document deleted successfully.");
+        return ResponseService.okResponseSimple("Document: '" + documentPath + "' deleted successfully.");
     }
 }

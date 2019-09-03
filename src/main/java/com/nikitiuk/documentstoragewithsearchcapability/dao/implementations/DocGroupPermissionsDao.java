@@ -50,12 +50,8 @@ public class DocGroupPermissionsDao extends GenericHibernateDao<DocGroupPermissi
             for (DocGroupPermissions docGroupPermissions : docGroupPermissionsList) {
                 Transaction transaction = null;
                 try {
-                    // start a transaction
                     transaction = session.beginTransaction();
-                    // save the group object
                     session.saveOrUpdate(docGroupPermissions);
-                    //Hibernate.initialize(groupBean.getUsers());
-                    // commit transaction
                     transaction.commit();
                 } catch (Exception e) {
                     logger.error("Error at DocGroupPermissionsDao populate: ", e);
@@ -95,7 +91,7 @@ public class DocGroupPermissionsDao extends GenericHibernateDao<DocGroupPermissi
             }
             transaction.commit();
         } catch (Exception e) {
-            logger.error("Error at DocGroupPermissionsDao getGroupPermissionsForDocuments: ", e);
+            logger.error("Error at DocGroupPermissionsDao getPermissionsForDocumentsForGroup: ", e);
             if (transaction != null) {
                 transaction.rollback();
             }
@@ -150,7 +146,7 @@ public class DocGroupPermissionsDao extends GenericHibernateDao<DocGroupPermissi
             transaction.commit();
             return quantityOfDeletedPermissions;
         } catch (Exception e) {
-            logger.error("Error at DocGroupPermissionsDao deleteAllPermissionsForGroup: ", e);
+            logger.error("Error at DocGroupPermissionsDao deletePermissionsForDocumentForGroup: ", e);
             if (transaction != null) {
                 transaction.rollback();
             }
@@ -168,7 +164,7 @@ public class DocGroupPermissionsDao extends GenericHibernateDao<DocGroupPermissi
             transaction.commit();
             return quantityOfDeletedPermissions;
         } catch (Exception e) {
-            logger.error("Error at DocGroupPermissionsDao deleteAllPermissionsForGroup: ", e);
+            logger.error("Error at DocGroupPermissionsDao deleteAllPermissionsForDocumentExceptAdmin: ", e);
             if (transaction != null) {
                 transaction.rollback();
             }
@@ -186,7 +182,7 @@ public class DocGroupPermissionsDao extends GenericHibernateDao<DocGroupPermissi
             transaction.commit();
             return quantityOfDeletedPermissions;
         } catch (Exception e) {
-            logger.error("Error at DocGroupPermissionsDao deleteAllPermissionsForGroup: ", e);
+            logger.error("Error at DocGroupPermissionsDao deleteAllPermissionsForDocument: ", e);
             if (transaction != null) {
                 transaction.rollback();
             }
@@ -226,12 +222,13 @@ public class DocGroupPermissionsDao extends GenericHibernateDao<DocGroupPermissi
                 GroupBean groupBean = session.load(GroupBean.class, groupId);
                 setDocGroupPermissions = createNewPermissions(docBean, groupBean, permission);
                 session.saveOrUpdate(setDocGroupPermissions);
+                //groupBean.updateDocument(docBean, permission);
             }
             transaction.commit();
             return setDocGroupPermissions;
         } catch (Exception e) {
             logger.error("Error at DocGroupPermissionsDao set " + permission + " ForDocumentForGroup, where " +
-                    "DocId = " + docId + " and GroupId = " + groupId, e);
+                    "DocId = " + docId + " and GroupId = " + groupId + ": ", e);
             if (transaction != null) {
                 transaction.rollback();
             }

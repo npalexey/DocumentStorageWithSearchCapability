@@ -12,7 +12,7 @@ public class InspectorService {
         }
     }
 
-    public static void checkIfNameIsBlank(String name) throws NoValidDataFromSourceException {
+    public static void checkIfStringDataIsBlank(String name) throws NoValidDataFromSourceException {
         if(StringUtils.isBlank(name)){
             throw new NoValidDataFromSourceException("No valid name was passed.");
         }

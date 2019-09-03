@@ -46,7 +46,7 @@ public class RestUserService {
     public Response getUserByName(String username){
         UserBean userByName;
         try{
-            InspectorService.checkIfNameIsBlank(username);
+            InspectorService.checkIfStringDataIsBlank(username);
             userByName = userDao.getUserByName(username);
         } catch (Exception e) {
             return ResponseService.errorResponse(Response.Status.NOT_FOUND, "Error while getting user by name. " + e.getMessage());
@@ -100,7 +100,7 @@ public class RestUserService {
 
     public Response deleteUserByName(String username) {
         try {
-            InspectorService.checkIfNameIsBlank(username);
+            InspectorService.checkIfStringDataIsBlank(username);
             userDao.deleteUserByName(username);
         } catch (Exception e) {
             return ResponseService.errorResponse(Response.Status.NOT_FOUND, "Error while deleting user. " + e.getMessage());

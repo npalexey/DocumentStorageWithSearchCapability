@@ -24,10 +24,10 @@ public class ResponseService {
         return Response.ok(info).build();
     }
 
-    public static Response okResponseForFile(StreamingOutput fileStream, String filename) {
+    public static Response okResponseForFile(StreamingOutput fileStream, String filePath) {
         return Response
                 .ok(fileStream, MediaType.APPLICATION_OCTET_STREAM)
-                .header("content-disposition", "attachment; filename = " + filename)
+                .header("content-disposition", "attachment; filepath = " + filePath)
                 .build();
     }
 }

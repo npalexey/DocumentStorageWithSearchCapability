@@ -63,6 +63,7 @@ public class AuthenticationFilter implements ContainerRequestFilter {
                 //block access
                 requestContext.abortWith(ResponseService.errorResponse(Response.Status.UNAUTHORIZED, "You cannot access this resource"));
             }
+            setDefaultContext(requestContext);
             return;
         }
 
@@ -95,7 +96,14 @@ public class AuthenticationFilter implements ContainerRequestFilter {
         }
     }
 
-    public void setContextIfNoAnnotationsArePresent(final String usernameAndPassword, ContainerRequestContext requestContext){
+    private void setDefaultContext(ContainerRequestContext requestContext) {
+        UserBean user = userDao.getUserByName("Guest");
+        Hibernate.initialize(user.getGroups());
+        String scheme = requestContext.getUriInfo().getRequestUri().getScheme();
+        requestContext.setSecurityContext(new SecurityContextImplementation(user, scheme));
+    }
+
+    private void setContextIfNoAnnotationsArePresent(final String usernameAndPassword, ContainerRequestContext requestContext){
         final String[] decipheredUsernameAndPassword = decipherBasicAuth(usernameAndPassword);
         UserBean user = userDao.getUserByName(decipheredUsernameAndPassword[0]);
         if(user == null) {

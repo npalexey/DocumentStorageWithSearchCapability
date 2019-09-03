@@ -18,19 +18,19 @@ import java.util.List;
 
 public class SolrService {
 
-    public static void indexDocumentWithSolr(String docName, String contentType) throws IOException, SolrServerException {
+    public static void indexDocumentWithSolr(String documentPath, String contentType) throws IOException, SolrServerException {
         SolrClient client = new HttpSolrClient.Builder("http://localhost:8983/solr/mycoll").build();
         ContentStreamUpdateRequest req = new ContentStreamUpdateRequest("/update/extract");
-        req.addFile(new File("/home/npalexey/workenv/DOWNLOADED/" + docName), contentType); //application/octet-stream text/plain pdf
-        req.setParam("literal.docpath", "/home/npalexey/workenv/DOWNLOADED/" + docName);
-        req.setParam("literal.docname", docName);
+        req.addFile(new File(documentPath), contentType); //application/octet-stream text/plain pdf
+        req.setParam("literal.docpath", documentPath);
+        req.setParam("literal.docname", documentPath.substring(documentPath.lastIndexOf("/") + 1));
         req.setAction(AbstractUpdateRequest.ACTION.COMMIT, true, true);
         client.request(req);
     }
 
-    public static void deleteDocumentFromSolrIndex(String docPath) throws IOException, SolrServerException {
+    public static void deleteDocumentFromSolrIndex(String documentPath) throws IOException, SolrServerException {
         SolrClient client = new HttpSolrClient.Builder("http://localhost:8983/solr/mycoll").build();
-        client.deleteByQuery("docpath:" + docPath);
+        client.deleteByQuery("docpath:" + documentPath);
         client.commit();
     }
 

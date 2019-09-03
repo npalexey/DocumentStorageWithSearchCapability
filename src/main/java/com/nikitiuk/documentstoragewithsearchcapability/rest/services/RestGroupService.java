@@ -46,7 +46,7 @@ public class RestGroupService {
     public Response getGroupByName(String groupName) {
         GroupBean groupByName;
         try {
-            InspectorService.checkIfNameIsBlank(groupName);
+            InspectorService.checkIfStringDataIsBlank(groupName);
             groupByName = groupDao.getGroupByName(groupName);
         } catch (Exception e) {
             return ResponseService.errorResponse(Response.Status.NOT_FOUND, "Error while getting group by name. " + e.getMessage());
@@ -100,7 +100,7 @@ public class RestGroupService {
 
     public Response deleteGroupByName(String groupName) {
         try {
-            InspectorService.checkIfNameIsBlank(groupName);
+            InspectorService.checkIfStringDataIsBlank(groupName);
             groupDao.deleteGroupByName(groupName);
         } catch (Exception e) {
             return ResponseService.errorResponse(Response.Status.NOT_FOUND, "Error while deleting group. " + e.getMessage());

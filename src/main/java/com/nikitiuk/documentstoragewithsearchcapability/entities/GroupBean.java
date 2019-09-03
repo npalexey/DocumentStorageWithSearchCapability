@@ -1,7 +1,6 @@
 package com.nikitiuk.documentstoragewithsearchcapability.entities;
 
 import com.nikitiuk.documentstoragewithsearchcapability.entities.helpers.Permissions;
-import org.hibernate.Hibernate;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.*;
 
@@ -23,7 +22,7 @@ import java.util.Set;
 )
 public class GroupBean implements Serializable {
 
-    @ManyToMany(mappedBy = "groups", cascade = {CascadeType.PERSIST, CascadeType.MERGE})//, fetch = FetchType.LAZY)
+    @ManyToMany(mappedBy = "groups", cascade = { CascadeType.PERSIST, CascadeType.MERGE })//, fetch = FetchType.LAZY)
     //@OrderBy("name ASC")
     @OnDelete(action = OnDeleteAction.CASCADE)
     Set<UserBean> users = new HashSet<>();
@@ -34,6 +33,13 @@ public class GroupBean implements Serializable {
             orphanRemoval = true
     )
     private Set<DocGroupPermissions> documentsPermissions = new HashSet<>();
+
+    @OneToMany(
+            mappedBy = "group",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    private Set<FolderGroupPermissions> foldersPermissions = new HashSet<>();
 
     @Id
     @GeneratedValue(generator = "native")
@@ -59,7 +65,7 @@ public class GroupBean implements Serializable {
 
     public void setUsers(Set<UserBean> users) {
         this.users = users;
-        for (UserBean user : users){
+        for (UserBean user : users) {
             user.getGroups().add(this);
         }
     }
@@ -70,6 +76,14 @@ public class GroupBean implements Serializable {
 
     public void setDocumentsPermissions(Set<DocGroupPermissions> documentsPermissions) {
         this.documentsPermissions = documentsPermissions;
+    }
+
+    public Set<FolderGroupPermissions> getFoldersPermissions() {
+        return foldersPermissions;
+    }
+
+    public void setFoldersPermissions(Set<FolderGroupPermissions> foldersPermissions) {
+        this.foldersPermissions = foldersPermissions;
     }
 
     public Long getId() {
@@ -119,6 +133,37 @@ public class GroupBean implements Serializable {
         }
     }
 
+    public void addFolder(FolderBean folder, Permissions permissions) {
+        if (checkIfGroupHasFolder(folder)) {
+            return;
+        }
+        FolderGroupPermissions folderGroupPermissions = new FolderGroupPermissions(this, folder);
+        folderGroupPermissions.setPermissions(permissions);
+        foldersPermissions.add(folderGroupPermissions);
+    }
+
+    public void updateFolder(FolderBean folder, Permissions permissions) {
+        for (FolderGroupPermissions folderGroupPermissions : foldersPermissions) {
+            if (folderGroupPermissions.getGroup().equals(this) &&
+                    folderGroupPermissions.getFolder().equals(folder)) {
+                folderGroupPermissions.setPermissions(permissions);
+            }
+        }
+    }
+
+    public void removeFolder(FolderBean folder) {
+        for (Iterator<FolderGroupPermissions> iterator = foldersPermissions.iterator();
+             iterator.hasNext(); ) {
+            FolderGroupPermissions folderGroupPermissions = iterator.next();
+            if (folderGroupPermissions.getGroup().equals(this) &&
+                    folderGroupPermissions.getFolder().equals(folder)) {
+                iterator.remove();
+                folderGroupPermissions.setGroup(null);
+                folderGroupPermissions.setFolder(null);
+            }
+        }
+    }
+
     public void addUser(UserBean user) {
         this.users.add(user);
         user.getGroups().add(this);
@@ -139,9 +184,19 @@ public class GroupBean implements Serializable {
         return false;
     }
 
+    public boolean checkIfGroupHasFolder(FolderBean folder) {
+        for (FolderGroupPermissions folderGroupPermissions : foldersPermissions) {
+            if (folderGroupPermissions.getGroup().equals(this) &&
+                    folderGroupPermissions.getFolder().equals(folder)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     @Override
     public String toString() {
-        return "Group [gourp_id=" + id + ", group_name=" + name + ", group_permissions=" + documentsPermissions.toString() + "]";
+        return "Group [gourp_id=" + id + ", group_name=" + name + ", document_permissions=" + documentsPermissions.toString() + ", folder_permissions=" + foldersPermissions.toString() + "]";
     }
 
     @Override

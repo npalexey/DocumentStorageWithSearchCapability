@@ -36,10 +36,11 @@ public class RestDocController {
 
     @PermitAll
     @GET
-    @Path("/get-by-name/{docname}")
+    @Path("/by-path")
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
-    public Response downloadDocumentByName(@PathParam("docname") String docName) {
-        return docService.downloadDocument(docName);
+    public Response downloadDocumentByPath(@FormDataParam("documentPath") String documentPath) {
+        return docService.downloadDocumentByPath(documentPath);
     }
 
     @PermitAll
@@ -52,20 +53,22 @@ public class RestDocController {
 
     @PermitAll
     @GET
-    @Path("/get-by-name/{docname}/content")
+    @Path("/by-path/content")
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.TEXT_HTML)
-    public Response getContentOfDocumentByName(@PathParam("docname") String docName) {
-        return docService.getContentOfDocument(docName);
+    public Response getContentOfDocumentByPath(@FormDataParam("documentPath") String documentPath) {
+        return docService.getContentOfDocument(documentPath);
     }
 
     @PermitAll
     @POST
-    @Path("/{designatedname}")
+    @Path("/{parentid}")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     public Response uploadDocument(@FormDataParam("file") InputStream fileInputStream,
+                               @FormDataParam("designatedName") String designatedName,
                                //@FormDataParam("file") FormDataContentDisposition fileMetaData,
-                               @PathParam("designatedname") String designatedName) {
-        return docService.uploadDocument(fileInputStream, designatedName);
+                               @PathParam("parentid") long parentFolderId) {
+        return docService.uploadDocument(fileInputStream, designatedName, parentFolderId);
     }
 
     @PermitAll
@@ -88,11 +91,11 @@ public class RestDocController {
 
     @PermitAll
     @PUT
-    @Path("/update-by-name/{docname}")
+    @Path("/by-path/")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
-    public Response updateDocumentByName(@PathParam("docname") String docName,
-                                   @FormDataParam("file") InputStream fileInputStream) {
-        return docService.updateDocument(docName, fileInputStream);
+    public Response updateDocumentByPath(@FormDataParam("documentPath") String documentPath,
+                                         @FormDataParam("file") InputStream fileInputStream) {
+        return docService.updateDocumentByPath(documentPath, fileInputStream);
     }
 
     @PermitAll
@@ -105,9 +108,9 @@ public class RestDocController {
 
     @PermitAll
     @DELETE
-    @Path("/delete-by-name/{docname}")
+    @Path("/by-path/")
     @Produces(MediaType.TEXT_HTML)
-    public Response deleteDocumentByName(@PathParam("docname") String docName) {
-        return docService.deleteDocument(docName);
+    public Response deleteDocumentByName(@FormDataParam("documentPath") String documentPath) {
+        return docService.deleteDocument(documentPath);
     }
 }

@@ -1,10 +1,7 @@
 package com.nikitiuk.documentstoragewithsearchcapability.dao.implementations;
 
 import com.nikitiuk.documentstoragewithsearchcapability.dao.GenericHibernateDao;
-import com.nikitiuk.documentstoragewithsearchcapability.entities.DocBean;
-import com.nikitiuk.documentstoragewithsearchcapability.entities.DocGroupPermissions;
-import com.nikitiuk.documentstoragewithsearchcapability.entities.GroupBean;
-import com.nikitiuk.documentstoragewithsearchcapability.entities.UserBean;
+import com.nikitiuk.documentstoragewithsearchcapability.entities.*;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.helpers.Permissions;
 import com.nikitiuk.documentstoragewithsearchcapability.exceptions.AlreadyExistsException;
 import com.nikitiuk.documentstoragewithsearchcapability.utils.HibernateUtil;
@@ -131,6 +128,7 @@ public class GroupDao extends GenericHibernateDao<GroupBean> {
             }
             updatedGroup.setUsers(groupBean.getUsers());
             updatedGroup.setDocumentsPermissions(groupBean.getDocumentsPermissions());
+            updatedGroup.setFoldersPermissions(groupBean.getFoldersPermissions());
             initializeConnections(updatedGroup);
             return save(updatedGroup, requiresMerge);
         } catch (Exception e) {
@@ -170,6 +168,7 @@ public class GroupDao extends GenericHibernateDao<GroupBean> {
         try {
             group.setUsers(getExistingUsers(group));
             group.setDocumentsPermissions(getPermissionsForExistingDocs(group));
+            group.setFoldersPermissions(getPermissionsForExistingFolders(group));
             Session session = HibernateUtil.getSessionFactory().openSession();
             transaction = session.beginTransaction();
             session.saveOrUpdate(group);
@@ -191,14 +190,14 @@ public class GroupDao extends GenericHibernateDao<GroupBean> {
             throw new Exception("No GroupBean was passed to check.");
         }
         Set<UserBean> checkedUsers = new HashSet<>();
-        if(group.getUsers() == null || group.getUsers().isEmpty()){
+        if (group.getUsers() == null || group.getUsers().isEmpty()) {
             return checkedUsers;
         }
         Transaction transaction = null;
-        try{
+        try {
             Session session = HibernateUtil.getSessionFactory().openSession();
             Set<String> userNames = new HashSet<>();
-            for(UserBean userBean : group.getUsers()){
+            for (UserBean userBean : group.getUsers()) {
                 userNames.add(userBean.getName());
             }
             transaction = session.beginTransaction();
@@ -217,44 +216,96 @@ public class GroupDao extends GenericHibernateDao<GroupBean> {
         if (group == null) {
             throw new Exception("No GroupBean was passed to check.");
         }
-        Set<DocGroupPermissions> docGroupPermissionsSet = new HashSet<>();
-        if(group.getDocumentsPermissions() == null || group.getDocumentsPermissions().isEmpty()){
-            return docGroupPermissionsSet;
+        Set<DocGroupPermissions> docGroupPermissionsToSet = new HashSet<>();
+        Set<DocGroupPermissions> docGroupPermissionsToCheck = group.getDocumentsPermissions();
+        if (docGroupPermissionsToCheck == null || docGroupPermissionsToCheck.isEmpty()) {
+            return docGroupPermissionsToSet;
         }
         Map<String, Permissions> docPathsAndPermissions = new HashMap<>();
         Map<Long, Permissions> docIdsAndPermissions = new HashMap<>();
-        for (DocGroupPermissions docGroupPermissions : group.getDocumentsPermissions()) {
-            if(docGroupPermissions.getPermissions() != null) {
-                if(docGroupPermissions.getDocument().getId() != null) {
+        for (DocGroupPermissions docGroupPermissions : docGroupPermissionsToCheck) {
+            if (docGroupPermissions.getPermissions() != null) {
+                if (docGroupPermissions.getDocument().getId() != null) {
                     docIdsAndPermissions.put(docGroupPermissions.getDocument().getId(), docGroupPermissions.getPermissions());
                 } else if (docGroupPermissions.getDocument().getPath() != null) {
                     docPathsAndPermissions.put(docGroupPermissions.getDocument().getPath(), docGroupPermissions.getPermissions());
                 }
             }
         }
-        if(docPathsAndPermissions.isEmpty() && docIdsAndPermissions.isEmpty()){
-            return docGroupPermissionsSet;
+        if (docPathsAndPermissions.isEmpty() && docIdsAndPermissions.isEmpty()) {
+            return docGroupPermissionsToSet;
         }
         Transaction transaction = null;
-        try{
+        try {
             Session session = HibernateUtil.getSessionFactory().openSession();
             transaction = session.beginTransaction();
-            if(!docPathsAndPermissions.isEmpty()){
+            if (!docPathsAndPermissions.isEmpty()) {
                 Set<DocBean> checkedDocsWithPath = new HashSet<>(session.createQuery("FROM DocBean WHERE path IN (:docPaths)", DocBean.class)
                         .setParameterList("docPaths", docPathsAndPermissions.keySet()).list());
-                for(DocBean docBean : checkedDocsWithPath) {
-                    docGroupPermissionsSet.add(new DocGroupPermissions(group, docBean, docPathsAndPermissions.get(docBean.getPath())));
+                for (DocBean docBean : checkedDocsWithPath) {
+                    docGroupPermissionsToSet.add(new DocGroupPermissions(group, docBean, docPathsAndPermissions.get(docBean.getPath())));
                 }
             }
-            if(!docIdsAndPermissions.isEmpty()){
+            if (!docIdsAndPermissions.isEmpty()) {
                 Set<DocBean> checkedDocsWithIds = new HashSet<>(session.createQuery("FROM DocBean WHERE id IN (:ids)", DocBean.class)
                         .setParameterList("ids", docIdsAndPermissions.keySet()).list());
-                for(DocBean docBean : checkedDocsWithIds) {
-                    docGroupPermissionsSet.add(new DocGroupPermissions(group, docBean, docIdsAndPermissions.get(docBean.getId())));
+                for (DocBean docBean : checkedDocsWithIds) {
+                    docGroupPermissionsToSet.add(new DocGroupPermissions(group, docBean, docIdsAndPermissions.get(docBean.getId())));
                 }
             }
             transaction.commit();
-            return docGroupPermissionsSet;
+            return docGroupPermissionsToSet;
+        } catch (Exception e) {
+            if (transaction != null) {
+                transaction.rollback();
+            }
+            throw e;
+        }
+    }
+
+    private Set<FolderGroupPermissions> getPermissionsForExistingFolders(GroupBean group) throws Exception {
+        if (group == null) {
+            throw new Exception("No GroupBean was passed to check.");
+        }
+        Set<FolderGroupPermissions> folderGroupPermissionsToSet = new HashSet<>();
+        Set<FolderGroupPermissions> folderGroupPermissionsToCheck = group.getFoldersPermissions();
+        if (folderGroupPermissionsToCheck == null || folderGroupPermissionsToCheck.isEmpty()) {
+            return folderGroupPermissionsToSet;
+        }
+        Map<String, Permissions> folderPathsAndPermissions = new HashMap<>();
+        Map<Long, Permissions> folderIdsAndPermissions = new HashMap<>();
+        for (FolderGroupPermissions folderGroupPermissions : folderGroupPermissionsToCheck) {
+            if (folderGroupPermissions.getPermissions() != null) {
+                if (folderGroupPermissions.getFolder().getId() != null) {
+                    folderIdsAndPermissions.put(folderGroupPermissions.getFolder().getId(), folderGroupPermissions.getPermissions());
+                } else if (folderGroupPermissions.getFolder().getPath() != null) {
+                    folderPathsAndPermissions.put(folderGroupPermissions.getFolder().getPath(), folderGroupPermissions.getPermissions());
+                }
+            }
+        }
+        if (folderPathsAndPermissions.isEmpty() && folderIdsAndPermissions.isEmpty()) {
+            return folderGroupPermissionsToSet;
+        }
+        Transaction transaction = null;
+        try {
+            Session session = HibernateUtil.getSessionFactory().openSession();
+            transaction = session.beginTransaction();
+            if (!folderPathsAndPermissions.isEmpty()) {
+                Set<FolderBean> checkedFoldersWithPath = new HashSet<>(session.createQuery("FROM FolderBean WHERE path IN (:folderPaths)", FolderBean.class)
+                        .setParameterList("folderPaths", folderPathsAndPermissions.keySet()).list());
+                for (FolderBean folderBean : checkedFoldersWithPath) {
+                    folderGroupPermissionsToSet.add(new FolderGroupPermissions(group, folderBean, folderPathsAndPermissions.get(folderBean.getPath())));
+                }
+            }
+            if (!folderIdsAndPermissions.isEmpty()) {
+                Set<FolderBean> checkedFoldersWithIds = new HashSet<>(session.createQuery("FROM FolderBean WHERE id IN (:ids)", FolderBean.class)
+                        .setParameterList("ids", folderIdsAndPermissions.keySet()).list());
+                for (FolderBean folderBean : checkedFoldersWithIds) {
+                    folderGroupPermissionsToSet.add(new FolderGroupPermissions(group, folderBean, folderIdsAndPermissions.get(folderBean.getId())));
+                }
+            }
+            transaction.commit();
+            return folderGroupPermissionsToSet;
         } catch (Exception e) {
             if (transaction != null) {
                 transaction.rollback();
@@ -267,6 +318,9 @@ public class GroupDao extends GenericHibernateDao<GroupBean> {
         Hibernate.initialize(group.getUsers());
         for (DocGroupPermissions docGroupPermissions : group.getDocumentsPermissions()) {
             Hibernate.initialize(docGroupPermissions);
+        }
+        for (FolderGroupPermissions folderGroupPermissions : group.getFoldersPermissions()) {
+            Hibernate.initialize(folderGroupPermissions);
         }
     }
 }
