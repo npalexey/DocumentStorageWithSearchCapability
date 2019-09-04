@@ -2,6 +2,7 @@ package com.nikitiuk.documentstoragewithsearchcapability.rest.controllers;
 
 import com.nikitiuk.documentstoragewithsearchcapability.entities.GroupBean;
 import com.nikitiuk.documentstoragewithsearchcapability.rest.services.RestGroupService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
@@ -9,6 +10,7 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+@Tag(name = "Group Controller")
 @PermitAll
 @Path("/group")
 public class RestGroupController {
@@ -32,7 +34,7 @@ public class RestGroupController {
 
     @PermitAll
     @GET
-    @Path("/get-by-name/{groupname}")
+    @Path("/by-name/{groupname}")
     @Produces(MediaType.TEXT_HTML)
     public Response getGroupByName(@PathParam("groupname") String groupName) {
         return groupService.getGroupByName(groupName);
@@ -40,7 +42,6 @@ public class RestGroupController {
 
     @RolesAllowed({ "ADMINS" })
     @POST
-    @Path("/new")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.TEXT_HTML)
     public Response createGroup(GroupBean groupBean) {
@@ -49,7 +50,6 @@ public class RestGroupController {
 
     @RolesAllowed({ "ADMINS" })
     @PUT
-    @Path("/update")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.TEXT_HTML)
     public Response updateGroup(GroupBean groupBean) {
@@ -66,7 +66,7 @@ public class RestGroupController {
 
     @RolesAllowed({ "ADMINS" })
     @DELETE
-    @Path("/delete-by-name/{groupname}")
+    @Path("/by-name/{groupname}")
     @Produces(MediaType.TEXT_HTML)
     public Response deleteGroupByName(@PathParam("groupname") String groupname) {
         return groupService.deleteGroupByName(groupname);

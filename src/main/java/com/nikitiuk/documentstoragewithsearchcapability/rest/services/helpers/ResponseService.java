@@ -1,11 +1,11 @@
 package com.nikitiuk.documentstoragewithsearchcapability.rest.services.helpers;
 
+import com.nikitiuk.documentstoragewithsearchcapability.rest.entities.DocumentDownloaderResponseBuilder;
 import com.nikitiuk.documentstoragewithsearchcapability.utils.ThymeleafUtil;
 import org.thymeleaf.context.Context;
 
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.StreamingOutput;
 
 public class ResponseService {
 
@@ -24,10 +24,11 @@ public class ResponseService {
         return Response.ok(info).build();
     }
 
-    public static Response okResponseForFile(StreamingOutput fileStream, String filePath) {
+    public static Response okResponseForFile(DocumentDownloaderResponseBuilder documentDownloaderResponseBuilder) {
         return Response
-                .ok(fileStream, MediaType.APPLICATION_OCTET_STREAM)
-                .header("content-disposition", "attachment; filepath = " + filePath)
+                .ok(documentDownloaderResponseBuilder.getFileStream(), MediaType.APPLICATION_OCTET_STREAM)
+                .header("content-disposition", "attachment; filename = " + documentDownloaderResponseBuilder.getDocumentPath()
+                        .substring(documentDownloaderResponseBuilder.getDocumentPath().lastIndexOf("/") + 1))
                 .build();
     }
 }

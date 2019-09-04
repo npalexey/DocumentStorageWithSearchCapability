@@ -10,6 +10,8 @@ import org.apache.solr.client.solrj.request.CoreAdminRequest;
 import org.apache.solr.client.solrj.response.CoreAdminResponse;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.params.CoreAdminParams;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -17,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SolrService {
+    private static final Logger logger = LoggerFactory.getLogger(SolrService.class);
 
     public static void indexDocumentWithSolr(String documentPath, String contentType) throws IOException, SolrServerException {
         SolrClient client = new HttpSolrClient.Builder("http://localhost:8983/solr/mycoll").build();
@@ -30,6 +33,7 @@ public class SolrService {
 
     public static void deleteDocumentFromSolrIndex(String documentPath) throws IOException, SolrServerException {
         SolrClient client = new HttpSolrClient.Builder("http://localhost:8983/solr/mycoll").build();
+        logger.info(documentPath);
         client.deleteByQuery("docpath:" + documentPath);
         client.commit();
     }

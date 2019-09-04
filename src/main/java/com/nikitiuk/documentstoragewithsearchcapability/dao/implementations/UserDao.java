@@ -84,6 +84,10 @@ public class UserDao extends GenericHibernateDao<UserBean> {
                     + userName + "'", UserBean.class).uniqueResult();
             if(userBean != null) {
                 Hibernate.initialize(userBean.getGroups());
+                for(GroupBean groupBean : userBean.getGroups()){
+                    Hibernate.initialize(groupBean.getDocumentsPermissions());
+                    Hibernate.initialize(groupBean.getFoldersPermissions());
+                }
             }
             transaction.commit();
             session.close();

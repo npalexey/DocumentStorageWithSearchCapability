@@ -2,12 +2,14 @@ package com.nikitiuk.documentstoragewithsearchcapability.rest.controllers;
 
 import com.nikitiuk.documentstoragewithsearchcapability.rest.entities.DocGroupPermissionsRequest;
 import com.nikitiuk.documentstoragewithsearchcapability.rest.services.RestDocGroupPermissionsService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+@Tag(name = "Document Permissions Controller")
 @RolesAllowed({ "ADMINS" })
 @Path("/permissions")
 public class RestDocGroupPermissionsController {
@@ -21,16 +23,16 @@ public class RestDocGroupPermissionsController {
     }
 
     @GET
-    @Path("/get-for-group/{groupid}")
+    @Path("/for-group/{groupid}")
     @Produces(MediaType.TEXT_HTML)
     public Response getPermissionsForDocumentsByGroupId(@PathParam("groupid") long groupId) {
         return restDocGroupPermissionsService.getPermissionsForDocumentsByGroupId(groupId);
     }
 
     @GET
-    @Path("/get-for-document/{docid}")
+    @Path("/for-document/{documentid}")
     @Produces(MediaType.TEXT_HTML)
-    public Response getPermissionsForDocumentByDocId(@PathParam("docid") long docId) {
+    public Response getPermissionsForDocumentByDocId(@PathParam("documentid") long docId) {
         return restDocGroupPermissionsService.getPermissionsForDocumentByDocId(docId);
     }
 
@@ -51,21 +53,21 @@ public class RestDocGroupPermissionsController {
     }
 
     @DELETE
-    @Path("/delete-all-for-group/{groupid}")
+    @Path("/for-group/{groupid}")
     @Produces(MediaType.TEXT_HTML)
     public Response deleteAllPermissionsForGroup(@PathParam("groupid") long groupid) {
         return restDocGroupPermissionsService.deleteAllPermissionsForGroup(groupid);
     }
 
     @DELETE
-    @Path("/delete-all-for-document/{documentid}")
+    @Path("/for-document/{documentid}")
     @Produces(MediaType.TEXT_HTML)
     public Response deleteAllPermissionsForDocument(@PathParam("documentid") long documentid) {
         return restDocGroupPermissionsService.deleteAllPermissionsForDocumentExceptAdmin(documentid);
     }
 
     @DELETE
-    @Path("/delete-for-document-for-group/")
+    @Path("/for-document-for-group/")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.TEXT_HTML)
     public Response deletePermissionsForDocumentForGroup(DocGroupPermissionsRequest requestObj) {

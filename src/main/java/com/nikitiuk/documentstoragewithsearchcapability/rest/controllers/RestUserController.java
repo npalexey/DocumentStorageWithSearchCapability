@@ -2,6 +2,7 @@ package com.nikitiuk.documentstoragewithsearchcapability.rest.controllers;
 
 import com.nikitiuk.documentstoragewithsearchcapability.entities.UserBean;
 import com.nikitiuk.documentstoragewithsearchcapability.rest.services.RestUserService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
@@ -9,6 +10,7 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+@Tag(name = "User Controller")
 @PermitAll
 @Path("/user")
 public class RestUserController {
@@ -32,7 +34,7 @@ public class RestUserController {
 
     @PermitAll
     @GET
-    @Path("/get-by-name/{username}")
+    @Path("/by-name/{username}")
     @Produces(MediaType.TEXT_HTML)
     public Response getUserByName(@PathParam("username") String username) {
         return userService.getUserByName(username);
@@ -40,7 +42,6 @@ public class RestUserController {
 
     @RolesAllowed({ "ADMINS" })
     @POST
-    @Path("/new")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.TEXT_HTML)
     public Response createUser(UserBean userBean) {
@@ -49,7 +50,6 @@ public class RestUserController {
 
     @RolesAllowed({ "ADMINS" })
     @PUT
-    @Path("/update")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.TEXT_HTML)
     public Response updateUser(UserBean userBean) {
@@ -66,7 +66,7 @@ public class RestUserController {
 
     @RolesAllowed({ "ADMINS" })
     @DELETE
-    @Path("/delete-by-name/{username}")
+    @Path("/by-name/{username}")
     @Produces(MediaType.TEXT_HTML)
     public Response deleteUserByName(@PathParam("username") String username) {
         return userService.deleteUserByName(username);

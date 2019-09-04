@@ -2,6 +2,7 @@ package com.nikitiuk.documentstoragewithsearchcapability.dao.implementations;
 
 import com.nikitiuk.documentstoragewithsearchcapability.dao.GenericHibernateDao;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.DocBean;
+import com.nikitiuk.documentstoragewithsearchcapability.entities.FolderBean;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.GroupBean;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.UserBean;
 import com.nikitiuk.documentstoragewithsearchcapability.exceptions.AlreadyExistsException;
@@ -94,15 +95,35 @@ public class DocDao extends GenericHibernateDao<DocBean> {
         if (userBean.getGroups() == null || userBean.getGroups().isEmpty()) {
             return docBeanList;
         }
-        List<Long> groupIds = new ArrayList<>();
-        for (GroupBean groupBean : userBean.getGroups()) {
-            groupIds.add(groupBean.getId());
-        }
+        List<Long> groupIds = getGroupsIdsOfUser(userBean);
         Transaction transaction = null;
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             transaction = session.beginTransaction();
             docBeanList = session.createQuery("SELECT DISTINCT doc FROM DocBean doc INNER JOIN DocGroupPermissions permissions ON doc.id = permissions.document.id " +
                     "WHERE permissions.group.id IN (:ids)", DocBean.class).setParameterList("ids", groupIds).list();
+            transaction.commit();
+        } catch (Exception e) {
+            logger.error("Error at DocDao getDocumentsForUser: ", e);
+            if (transaction != null) {
+                transaction.rollback();
+            }
+        }
+        return docBeanList;
+    }
+
+    public List<DocBean> getDocumentsForUserInFolder(UserBean userBean, FolderBean folderBean) {
+        List<DocBean> docBeanList = new ArrayList<>();
+        Hibernate.initialize(userBean.getGroups());
+        if(folderBean == null || folderBean.getPath() == null
+                || userBean.getGroups() == null || userBean.getGroups().isEmpty()) {
+            return docBeanList;
+        }
+        List<Long> groupIds = getGroupsIdsOfUser(userBean);
+        Transaction transaction = null;
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            transaction = session.beginTransaction();
+            docBeanList = session.createQuery("SELECT DISTINCT doc FROM DocBean doc INNER JOIN DocGroupPermissions permissions ON doc.id = permissions.document.id " +
+                    "WHERE permissions.group.id IN (:ids) AND doc.path LIKE '" + folderBean.getPath() + "%'", DocBean.class).setParameterList("ids", groupIds).list();
             transaction.commit();
         } catch (Exception e) {
             logger.error("Error at DocDao getDocumentsForUser: ", e);
@@ -150,5 +171,13 @@ public class DocDao extends GenericHibernateDao<DocBean> {
             }
             throw e;
         }
+    }
+
+    private List<Long> getGroupsIdsOfUser(UserBean userBean) {
+        List<Long> groupIds = new ArrayList<>();
+        for (GroupBean groupBean : userBean.getGroups()) {
+            groupIds.add(groupBean.getId());
+        }
+        return groupIds;
     }
 }
