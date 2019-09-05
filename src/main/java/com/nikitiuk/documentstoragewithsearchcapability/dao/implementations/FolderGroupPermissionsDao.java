@@ -222,6 +222,7 @@ public class FolderGroupPermissionsDao extends GenericHibernateDao<FolderGroupPe
                 GroupBean groupBean = session.load(GroupBean.class, groupId);
                 setFolderGroupPermissions = createNewPermissions(folderBean, groupBean, permission);
                 session.saveOrUpdate(setFolderGroupPermissions);
+                session.merge(groupBean);
                 //groupBean.updateFolder(folderBean, permission);
             }
             transaction.commit();

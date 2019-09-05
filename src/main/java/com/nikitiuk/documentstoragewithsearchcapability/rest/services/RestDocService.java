@@ -1,9 +1,11 @@
 package com.nikitiuk.documentstoragewithsearchcapability.rest.services;
 
 import com.nikitiuk.documentstoragewithsearchcapability.dao.implementations.DocDao;
+import com.nikitiuk.documentstoragewithsearchcapability.dao.implementations.DocGroupPermissionsDao;
 import com.nikitiuk.documentstoragewithsearchcapability.dao.implementations.FolderDao;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.DocBean;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.FolderBean;
+import com.nikitiuk.documentstoragewithsearchcapability.entities.GroupBean;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.helpers.Permissions;
 import com.nikitiuk.documentstoragewithsearchcapability.exceptions.NoValidDataFromSourceException;
 import com.nikitiuk.documentstoragewithsearchcapability.filters.SecurityContextImplementation;
@@ -25,16 +27,17 @@ import java.io.InputStream;
 import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class RestDocService {
 
-    private static final String PATH = "/home/npalexey/workenv/DOWNLOADED/";
     private static final Logger logger = LoggerFactory.getLogger(RestDocService.class);
     private static ExecutorService executorService = Executors.newSingleThreadExecutor();
     private DocDao docDao = new DocDao();
     private FolderDao folderDao = new FolderDao();
+    private DocGroupPermissionsDao docGroupPermissionsDao = new DocGroupPermissionsDao();
     private LocalStorageService localStorageService = new LocalStorageService();
 
     public List<DocBean> getDocuments(SecurityContextImplementation securityContext) throws Exception {
@@ -86,15 +89,23 @@ public class RestDocService {
 
         String folderPath;
         InspectorService.checkIfStringDataIsBlank(designatedName);
+        Set<GroupBean> allowedGroups = null;
         if (parentFolderId == null || parentFolderId == 0) {
-            folderPath = PATH;
+            FolderBean folderBean = folderDao.getById(1);
+            folderPath = folderBean.getPath();
+            allowedGroups = InspectorService.checkIfUserHasRightsForFolder(securityContext.getUser(), folderBean, Permissions.WRITE);
         } else {
             FolderBean folderBean = folderDao.getById(parentFolderId);
             folderPath = folderBean.getPath();
-            InspectorService.checkIfUserHasRightsForFolder(securityContext.getUser(), folderBean, Permissions.WRITE);
+            allowedGroups = InspectorService.checkIfUserHasRightsForFolder(securityContext.getUser(), folderBean, Permissions.WRITE);
         }
         localStorageService.fileUploader(fileInputStream, folderPath + designatedName);
         DocBean createdDoc = docDao.saveDocument(new DocBean(designatedName, folderPath + designatedName));
+        if(!allowedGroups.isEmpty()){
+            for(GroupBean groupBean : allowedGroups){
+                docGroupPermissionsDao.setWriteForDocumentForGroup(createdDoc, groupBean);
+            }
+        }
         Runnable addTask = () -> {
             try {
                 SolrService.indexDocumentWithSolr(folderPath + designatedName,
@@ -160,7 +171,6 @@ public class RestDocService {
         docDao.deleteDocument(docBeanToDelete);
         Runnable deleteTask = () -> {
             try {
-                logger.info(documentPath);
                 SolrService.deleteDocumentFromSolrIndex(documentPath);
             } catch (IOException | SolrServerException e) {
                 throw new WebApplicationException("Error while deleting document from index. Please, try again.");

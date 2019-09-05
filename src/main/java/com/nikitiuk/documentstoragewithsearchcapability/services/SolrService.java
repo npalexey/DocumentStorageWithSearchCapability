@@ -33,15 +33,14 @@ public class SolrService {
 
     public static void deleteDocumentFromSolrIndex(String documentPath) throws IOException, SolrServerException {
         SolrClient client = new HttpSolrClient.Builder("http://localhost:8983/solr/mycoll").build();
-        logger.info(documentPath);
-        client.deleteByQuery("docpath:" + documentPath);
+        client.deleteByQuery(String.format("docpath:\"%s\"", documentPath));
         client.commit();
     }
 
     public static QueryResponse searchInDocumentsByQuery(String queryString) throws IOException, SolrServerException {
         SolrClient client = new HttpSolrClient.Builder("http://localhost:8983/solr/mycoll").build();
         SolrQuery query = new SolrQuery();
-        query.setQuery("\"" + queryString + "\"");
+        query.setQuery(String.format("\"%s\"", queryString));
         query.setHighlight(true);
         //query.setParam("hl", "on");                                    //same as .setHighlight(true);
         query.setParam("hl.method", "original");          //default original, other: unified, fastVector

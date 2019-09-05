@@ -219,9 +219,13 @@ public class DocGroupPermissionsDao extends GenericHibernateDao<DocGroupPermissi
                 setDocGroupPermissions = docGroupPermissions;
             } else {
                 DocBean docBean = session.load(DocBean.class, docId);
+                //Hibernate.initialize(docBean);
                 GroupBean groupBean = session.load(GroupBean.class, groupId);
+                //Hibernate.initialize(groupBean);
+                //Hibernate.initialize(groupBean.getDocumentsPermissions());
                 setDocGroupPermissions = createNewPermissions(docBean, groupBean, permission);
                 session.saveOrUpdate(setDocGroupPermissions);
+                session.merge(groupBean);
                 //groupBean.updateDocument(docBean, permission);
             }
             transaction.commit();
