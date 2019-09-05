@@ -76,6 +76,25 @@ public class UserDao extends GenericHibernateDao<UserBean> {
         }
     }
 
+    @Override
+    public UserBean getById(Long id) {
+        Transaction transaction = null;
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            transaction = session.beginTransaction();
+            UserBean userBean = session.get(UserBean.class, id);
+            Hibernate.initialize(userBean.getGroups());
+            transaction.commit();
+            session.close();
+            return userBean;
+        } catch (Exception e) {
+            logger.error("Error at UserDao getById: ", e);
+            if (transaction != null) {
+                transaction.rollback();
+            }
+            throw e;
+        }
+    }
+
     public UserBean getUserByName(String userName) {
         Transaction transaction = null;
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {

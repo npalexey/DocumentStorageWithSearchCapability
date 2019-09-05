@@ -41,7 +41,7 @@ public class GenericHibernateDao<T> {
         }
     }
 
-    public T getById(long id) {
+    public T getById(Long id) {
         return executeFunction((session) -> session.get(clazz, id));
     }
 
@@ -69,7 +69,7 @@ public class GenericHibernateDao<T> {
         return (T) getCurrentSession().merge(entity);
     }*/
 
-    public void deleteById(long entityId) {
+    public void deleteById(Long entityId) {
         executeFunction((session) -> {
             T entity = session.load(clazz, entityId);
             session.delete(entity);

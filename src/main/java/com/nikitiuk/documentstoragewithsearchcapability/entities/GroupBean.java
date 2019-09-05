@@ -1,6 +1,6 @@
 package com.nikitiuk.documentstoragewithsearchcapability.entities;
 
-import com.nikitiuk.documentstoragewithsearchcapability.entities.helpers.Permissions;
+import com.nikitiuk.documentstoragewithsearchcapability.entities.helpers.enums.Permissions;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.*;
 

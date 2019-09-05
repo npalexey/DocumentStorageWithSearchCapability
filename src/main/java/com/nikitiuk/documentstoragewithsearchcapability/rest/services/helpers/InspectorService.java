@@ -1,7 +1,7 @@
 package com.nikitiuk.documentstoragewithsearchcapability.rest.services.helpers;
 
 import com.nikitiuk.documentstoragewithsearchcapability.entities.*;
-import com.nikitiuk.documentstoragewithsearchcapability.entities.helpers.Permissions;
+import com.nikitiuk.documentstoragewithsearchcapability.entities.helpers.enums.Permissions;
 import com.nikitiuk.documentstoragewithsearchcapability.exceptions.NoRightsForActionException;
 import com.nikitiuk.documentstoragewithsearchcapability.exceptions.NoValidDataFromSourceException;
 import com.nikitiuk.documentstoragewithsearchcapability.rest.services.RestDocService;

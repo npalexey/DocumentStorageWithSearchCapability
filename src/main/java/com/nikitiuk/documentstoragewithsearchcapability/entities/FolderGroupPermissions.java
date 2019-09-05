@@ -1,7 +1,7 @@
 package com.nikitiuk.documentstoragewithsearchcapability.entities;
 
 import com.nikitiuk.documentstoragewithsearchcapability.entities.helpers.FolderGroupPermissionsId;
-import com.nikitiuk.documentstoragewithsearchcapability.entities.helpers.Permissions;
+import com.nikitiuk.documentstoragewithsearchcapability.entities.helpers.enums.Permissions;
 
 import javax.persistence.*;
 import java.util.Objects;

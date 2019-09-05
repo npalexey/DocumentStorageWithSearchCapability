@@ -12,7 +12,7 @@ import javax.ws.rs.core.Response;
 
 @Tag(name = "Group Controller")
 @PermitAll
-@Path("/group")
+@Path("/groups")
 public class RestGroupController {
 
     private RestGroupService groupService = new RestGroupService();
@@ -30,14 +30,6 @@ public class RestGroupController {
     @Produces(MediaType.TEXT_HTML)
     public Response getGroupById(@PathParam("groupid") long groupId) {
         return groupService.getGroupById(groupId);
-    }
-
-    @PermitAll
-    @GET
-    @Path("/by-name/{groupname}")
-    @Produces(MediaType.TEXT_HTML)
-    public Response getGroupByName(@PathParam("groupname") String groupName) {
-        return groupService.getGroupByName(groupName);
     }
 
     @RolesAllowed({ "ADMINS" })
@@ -62,13 +54,5 @@ public class RestGroupController {
     @Produces(MediaType.TEXT_HTML)
     public Response deleteGroupById(@PathParam("groupid") long groupId) {
         return groupService.deleteGroupById(groupId);
-    }
-
-    @RolesAllowed({ "ADMINS" })
-    @DELETE
-    @Path("/by-name/{groupname}")
-    @Produces(MediaType.TEXT_HTML)
-    public Response deleteGroupByName(@PathParam("groupname") String groupname) {
-        return groupService.deleteGroupByName(groupname);
     }
 }

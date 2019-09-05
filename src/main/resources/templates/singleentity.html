@@ -14,13 +14,13 @@
         </table>
         <table>
             <tbody>
-            <tr th:if="${entityType} == 'Document'">
+            <tr th:if="${entityType.name()} == 'DOCUMENT'">
                 <td><span th:utext="|Id: ${entity.id} |">Document id</span></td>
                 <td><span th:utext="|, Document Path: ${entity.path} |">Document Path</span></td>
                 <td><a href="content" th:href="@{~/DocumentStorageWithSearchCapability/rest/doc/{name}/content(name=${entity.name})}">Get Content</a></td>
                 <td><a href="download" th:href="@{~/DocumentStorageWithSearchCapability/rest/doc/{name}(name=${entity.name})}">Download</a></td>
             </tr>
-            <tr th:if="${entityType} == 'User'">
+            <tr th:if="${entityType.name()} == 'USER'">
                 <td><span th:utext="|Id: ${entity.id} |">User id</span></td>
                 <td><span th:utext="|, Name: ${entity.name} |">User name</span></td>
                 <td>
@@ -33,7 +33,7 @@
                 </th:block>
                 <td th:if="${entity.groups.empty}"><span th:utext="|, No Groups|"></span></td>
             </tr>
-            <tr th:if="${entityType} == 'Group'">
+            <tr th:if="${entityType.name()} == 'GROUP'">
                 <td><span th:utext="|Id: ${entity.id} |">Group id</span></td>
                 <td><span th:utext="|, Name: ${entity.name} |">Group name</span></td>
                 <th:block th:unless="${entity.documentsPermissions.empty}">
@@ -52,11 +52,11 @@
                 </th:block>
                 <td th:if="${entity.users.empty}"><span th:utext="|, No Users|"></span></td>
             </tr>
-            <tr th:if="${entityType} == 'DocGroupPermissions'">
+            <tr th:if="${entityType.name()} == 'DOC_GROUP_PERMISSIONS'">
                 <td><span th:utext="|Id: ${entity.id} |">Permissions id</span></td>
                 <td><span th:utext="|, Permissions: ${entity.permissions}|">Permissions</span></td>
             </tr>
-            <tr th:if="${entityType} == 'FolderGroupPermissions'">
+            <tr th:if="${entityType.name()} == 'FOLDER_GROUP_PERMISSIONS'">
                 <td><span th:utext="|Id: ${entity.id} |">Permissions id</span></td>
                 <td><span th:utext="|, Permissions: ${entity.permissions}|">Permissions</span></td>
             </tr>

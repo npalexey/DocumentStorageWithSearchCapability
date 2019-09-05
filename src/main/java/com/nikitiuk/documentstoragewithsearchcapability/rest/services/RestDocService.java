@@ -6,7 +6,7 @@ import com.nikitiuk.documentstoragewithsearchcapability.dao.implementations.Fold
 import com.nikitiuk.documentstoragewithsearchcapability.entities.DocBean;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.FolderBean;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.GroupBean;
-import com.nikitiuk.documentstoragewithsearchcapability.entities.helpers.Permissions;
+import com.nikitiuk.documentstoragewithsearchcapability.entities.helpers.enums.Permissions;
 import com.nikitiuk.documentstoragewithsearchcapability.exceptions.NoValidDataFromSourceException;
 import com.nikitiuk.documentstoragewithsearchcapability.filters.SecurityContextImplementation;
 import com.nikitiuk.documentstoragewithsearchcapability.rest.entities.DocumentDownloaderResponseBuilder;
@@ -91,7 +91,7 @@ public class RestDocService {
         InspectorService.checkIfStringDataIsBlank(designatedName);
         Set<GroupBean> allowedGroups = null;
         if (parentFolderId == null || parentFolderId == 0) {
-            FolderBean folderBean = folderDao.getById(1);
+            FolderBean folderBean = folderDao.getById(1L);
             folderPath = folderBean.getPath();
             allowedGroups = InspectorService.checkIfUserHasRightsForFolder(securityContext.getUser(), folderBean, Permissions.WRITE);
         } else {
@@ -101,8 +101,8 @@ public class RestDocService {
         }
         localStorageService.fileUploader(fileInputStream, folderPath + designatedName);
         DocBean createdDoc = docDao.saveDocument(new DocBean(designatedName, folderPath + designatedName));
-        if(!allowedGroups.isEmpty()){
-            for(GroupBean groupBean : allowedGroups){
+        if (!allowedGroups.isEmpty()) {
+            for (GroupBean groupBean : allowedGroups) {
                 docGroupPermissionsDao.setWriteForDocumentForGroup(createdDoc, groupBean);
             }
         }

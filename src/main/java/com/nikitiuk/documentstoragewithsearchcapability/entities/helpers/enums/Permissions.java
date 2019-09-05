@@ -1,9 +1,10 @@
-package com.nikitiuk.documentstoragewithsearchcapability.entities.helpers;
+package com.nikitiuk.documentstoragewithsearchcapability.entities.helpers.enums;
 
 public enum Permissions {
+
     WRITE, READ;
 
-    public static boolean contains(String string) {
+    public static Boolean contains(String string) {
         for(Permissions permissions : Permissions.values()){
             if (string.equals(permissions.name())){
                 return true;

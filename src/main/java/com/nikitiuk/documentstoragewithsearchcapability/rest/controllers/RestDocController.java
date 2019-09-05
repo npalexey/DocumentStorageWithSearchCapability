@@ -6,6 +6,8 @@ import com.nikitiuk.documentstoragewithsearchcapability.rest.entities.DocumentDo
 import com.nikitiuk.documentstoragewithsearchcapability.rest.services.RestDocService;
 import com.nikitiuk.documentstoragewithsearchcapability.rest.services.helpers.ResponseService;
 import com.nikitiuk.documentstoragewithsearchcapability.rest.services.helpers.ThymeleafResponseService;
+import com.nikitiuk.documentstoragewithsearchcapability.rest.services.helpers.enums.Actions;
+import com.nikitiuk.documentstoragewithsearchcapability.rest.services.helpers.enums.EntityTypes;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.slf4j.Logger;
@@ -22,7 +24,7 @@ import java.util.List;
 
 @Tag(name = "Document Controller")
 @PermitAll
-@Path("/doc")
+@Path("/docs")
 public class RestDocController {
 
     private static final Logger logger = LoggerFactory.getLogger(RestDocController.class);
@@ -35,7 +37,7 @@ public class RestDocController {
         try {
             List<DocBean> docBeanList = docService.getDocuments(
                     (SecurityContextImplementation) context.getSecurityContext());
-            return ThymeleafResponseService.visualiseDocumentsInStorage(docBeanList);
+            return ThymeleafResponseService.visualiseEntitiesInStorage(EntityTypes.DOCUMENT, docBeanList);
         } catch (Exception e) {
             logger.error("Error at RestDocController getDocuments.", e);
             return ResponseService.errorResponse(Response.Status.NOT_FOUND,
@@ -52,7 +54,7 @@ public class RestDocController {
         try {
             List<DocBean> docBeanList = docService.getDocumentsInFolder(
                     (SecurityContextImplementation) context.getSecurityContext(), folderId);
-            return ThymeleafResponseService.visualiseDocumentsInStorage(docBeanList);
+            return ThymeleafResponseService.visualiseEntitiesInStorage(EntityTypes.DOCUMENT, docBeanList);
         } catch (Exception e) {
             logger.error("Error at RestDocController getDocumentsInFolder.", e);
             return ResponseService.errorResponse(Response.Status.NOT_FOUND,
@@ -108,7 +110,7 @@ public class RestDocController {
         try {
             DocBean uploadedDocument = docService.uploadDocument(fileInputStream,
                     (SecurityContextImplementation) context.getSecurityContext(), designatedName, parentFolderId);
-            return ThymeleafResponseService.visualiseUploadedDocument(uploadedDocument);
+            return ThymeleafResponseService.visualiseSingleEntity(EntityTypes.DOCUMENT, uploadedDocument, Actions.UPLOADED);
         } catch (Exception e) {
             logger.error("Error at RestDocController uploadDocument.", e);
             return ResponseService.errorResponse(Response.Status.NOT_FOUND,
@@ -143,7 +145,7 @@ public class RestDocController {
         try {
             DocBean updatedDocument = docService.updateDocumentById(
                     (SecurityContextImplementation) context.getSecurityContext(), documentId, fileInputStream);
-            return ThymeleafResponseService.visualiseUpdatedDocument(updatedDocument);
+            return ThymeleafResponseService.visualiseSingleEntity(EntityTypes.DOCUMENT, updatedDocument, Actions.UPDATED);
         } catch (Exception e) {
             logger.error("Error at RestDocController updateDocumentById.", e);
             return ResponseService.errorResponse(Response.Status.NOT_FOUND,
@@ -167,76 +169,6 @@ public class RestDocController {
             return ResponseService.errorResponse(Response.Status.NOT_FOUND,
                     String.format("Error occurred while deleting the document by id: %d. %s",
                             documentId, e.getMessage()));
-        }
-    }
-
-    @PermitAll
-    @GET
-    @Path("/by-path")
-    @Consumes(MediaType.MULTIPART_FORM_DATA)
-    @Produces(MediaType.APPLICATION_OCTET_STREAM)
-    public Response downloadDocumentByPath(@Context ContainerRequestContext context,
-                                           @FormDataParam("documentPath") String documentPath) {
-        try {
-            DocumentDownloaderResponseBuilder documentDownloaderResponseBuilder = docService.downloadDocumentByPath(
-                    (SecurityContextImplementation) context.getSecurityContext(), documentPath);
-            return ResponseService.okResponseForFile(documentDownloaderResponseBuilder);
-        } catch (Exception e) {
-            logger.error("Error at RestDocController downloadDocumentByPath.", e);
-            return ResponseService.errorResponse(Response.Status.NOT_FOUND,
-                    String.format("Error while downloading document: %s. %s", documentPath, e.getMessage()));
-        }
-    }
-
-    @PermitAll
-    @GET
-    @Path("/by-path/content")
-    @Consumes(MediaType.MULTIPART_FORM_DATA)
-    @Produces(MediaType.TEXT_HTML)
-    public Response getContentOfDocumentByPath(@FormDataParam("documentPath") String documentPath,
-                                               @Context ContainerRequestContext context) {
-        try {
-            List<String> documentContent = docService.getContentOfDocument(
-                    (SecurityContextImplementation) context.getSecurityContext(), documentPath);
-            return ThymeleafResponseService.visualiseDocumentContent(documentContent);
-        } catch (Exception e) {
-            logger.error("Error at RestDocController getContentOfDocumentByPath.", e);
-            return ResponseService.errorResponse(Response.Status.NOT_FOUND,
-                    String.format("Error while getting content of: %s. %s", documentPath, e.getMessage()));
-        }
-    }
-
-    @PermitAll
-    @PUT
-    @Path("/by-path/")
-    @Consumes(MediaType.MULTIPART_FORM_DATA)
-    public Response updateDocumentByPath(@Context ContainerRequestContext context,
-                                         @FormDataParam("documentPath") String documentPath,
-                                         @FormDataParam("file") InputStream fileInputStream) {
-        try {
-            DocBean updatedDocument = docService.updateDocumentByPath(
-                    (SecurityContextImplementation) context.getSecurityContext(), documentPath, fileInputStream);
-            return ThymeleafResponseService.visualiseUpdatedDocument(updatedDocument);
-        } catch (Exception e) {
-            logger.error("Error at RestDocController updateDocumentByPath.", e);
-            return ResponseService.errorResponse(Response.Status.NOT_FOUND,
-                    String.format("Error while updating document: %s. %s", documentPath, e.getMessage()));
-        }
-    }
-    @PermitAll
-    @DELETE
-    @Path("/by-path/")
-    @Produces(MediaType.TEXT_HTML)
-    public Response deleteDocumentByName(@Context ContainerRequestContext context,
-                                         @FormDataParam("documentPath") String documentPath) {
-        try {
-            String deletedDocumentPath = docService.deleteDocument(
-                    (SecurityContextImplementation) context.getSecurityContext(), documentPath);
-            return ResponseService.okResponseSimple(String.format("Document: '%s' deleted successfully.", deletedDocumentPath));
-        } catch (Exception e) {
-            logger.error("Error at RestDocController deleteDocumentByName.", e);
-            return ResponseService.errorResponse(Response.Status.NOT_FOUND,
-                    String.format("Error occurred while deleting the document: %s. %s", documentPath, e.getMessage()));
         }
     }
 }

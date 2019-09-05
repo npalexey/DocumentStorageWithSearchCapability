@@ -4,7 +4,7 @@ import com.nikitiuk.documentstoragewithsearchcapability.dao.GenericHibernateDao;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.DocBean;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.DocGroupPermissions;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.GroupBean;
-import com.nikitiuk.documentstoragewithsearchcapability.entities.helpers.Permissions;
+import com.nikitiuk.documentstoragewithsearchcapability.entities.helpers.enums.Permissions;
 import com.nikitiuk.documentstoragewithsearchcapability.utils.HibernateUtil;
 import org.hibernate.Hibernate;
 import org.hibernate.Session;

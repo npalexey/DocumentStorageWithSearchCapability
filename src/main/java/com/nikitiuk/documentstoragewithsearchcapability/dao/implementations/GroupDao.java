@@ -2,7 +2,7 @@ package com.nikitiuk.documentstoragewithsearchcapability.dao.implementations;
 
 import com.nikitiuk.documentstoragewithsearchcapability.dao.GenericHibernateDao;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.*;
-import com.nikitiuk.documentstoragewithsearchcapability.entities.helpers.Permissions;
+import com.nikitiuk.documentstoragewithsearchcapability.entities.helpers.enums.Permissions;
 import com.nikitiuk.documentstoragewithsearchcapability.exceptions.AlreadyExistsException;
 import com.nikitiuk.documentstoragewithsearchcapability.utils.HibernateUtil;
 import javassist.NotFoundException;
@@ -84,7 +84,7 @@ public class GroupDao extends GenericHibernateDao<GroupBean> {
     }
 
     @Override
-    public GroupBean getById(long id) {
+    public GroupBean getById(Long id) {
         Transaction transaction = null;
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             transaction = session.beginTransaction();
@@ -94,7 +94,7 @@ public class GroupDao extends GenericHibernateDao<GroupBean> {
             session.close();
             return groupBean;
         } catch (Exception e) {
-            logger.error("Error at GroupDao getOneById: ", e);
+            logger.error("Error at GroupDao getById: ", e);
             if (transaction != null) {
                 transaction.rollback();
             }
