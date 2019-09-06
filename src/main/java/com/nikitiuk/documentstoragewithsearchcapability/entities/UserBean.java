@@ -81,16 +81,6 @@ public class UserBean implements Principal {
         this.name = name;
     }
 
-    public void addGroup(GroupBean group) {
-        this.groups.add(group);
-        group.getUsers().add(this);
-    }
-
-    public void removeGroup(GroupBean group) {
-        this.groups.remove(group);
-        group.getUsers().remove(this);
-    }
-
     @Override
     public String   toString() {
         List<String> groupNames = new ArrayList<>();

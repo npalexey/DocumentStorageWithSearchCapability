@@ -4,6 +4,9 @@
 
 <web-app>
     <display-name>Document Storage</display-name>
+    <listener>
+        <listener-class>com.nikitiuk.documentstoragewithsearchcapability.starter.ApplicationListener</listener-class>
+    </listener>
     <servlet>
         <servlet-name>Document Storage</servlet-name>
         <!-- For Jersey 1.x -->
@@ -46,6 +49,6 @@
     </servlet-mapping>
     <welcome-file-list>
         <welcome-file>index.html</welcome-file>
-        <!--<welcome-file></welcome-file>-->
+        <welcome-file>index.jsp</welcome-file>
     </welcome-file-list>
 </web-app>

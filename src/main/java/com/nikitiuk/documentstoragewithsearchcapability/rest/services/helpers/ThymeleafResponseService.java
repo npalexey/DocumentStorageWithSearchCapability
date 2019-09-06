@@ -21,6 +21,9 @@ public class ThymeleafResponseService {
         ctx.setVariable("entityType", entityType);
         ctx.setVariable("entity", entity);
         ctx.setVariable("action", action);
+        if(action == Actions.CREATED || action == Actions.UPLOADED) {
+            return ResponseService.createdResponse("singleentity", ctx);
+        }
         return ResponseService.okResponseWithContext("singleentity", ctx);
     }
 

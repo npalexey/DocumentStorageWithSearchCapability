@@ -48,7 +48,7 @@ public class RestUserController {
             UserBean singleUser = userService.getSingleUser(userId);
             return ThymeleafResponseService.visualiseSingleEntity(EntityTypes.USER, singleUser, Actions.FOUND);
         } catch (Exception e) {
-            logger.error("Error at RestUserController getSingleUser.", e);
+            logger.error(String.format("Error at RestUserController getSingleUser, id: %d", userId), e);
             return ResponseService.errorResponse(Response.Status.NOT_FOUND,
                     String.format("Error while getting user by id: %d. %s", userId, e.getMessage()));
         }
@@ -64,7 +64,8 @@ public class RestUserController {
             return ThymeleafResponseService.visualiseSingleEntity(EntityTypes.USER, createdUser, Actions.CREATED);
         } catch (Exception e) {
             logger.error("Error at RestUserController createUser.", e);
-            return ResponseService.errorResponse(Response.Status.NOT_FOUND, String.format("Error while creating user. %s", e.getMessage()));
+            return ResponseService.errorResponse(Response.Status.NOT_FOUND,
+                    String.format("Error while creating user. %s", e.getMessage()));
         }
     }
 
@@ -77,7 +78,9 @@ public class RestUserController {
             UserBean updatedUser = userService.updateUser(userBean);
             return ThymeleafResponseService.visualiseSingleEntity(EntityTypes.USER, updatedUser, Actions.UPDATED);
         } catch (Exception e) {
-            return ResponseService.errorResponse(Response.Status.NOT_FOUND, String.format("Error while updating user. %s", e.getMessage()));
+            logger.error("Error at RestUserController updateUser.", e);
+            return ResponseService.errorResponse(Response.Status.NOT_FOUND,
+                    String.format("Error while updating user. %s", e.getMessage()));
         }
     }
 
@@ -90,8 +93,9 @@ public class RestUserController {
             userService.deleteUser(userId);
             return ResponseService.okResponseSimple(String.format("User with id: %d deleted successfully.", userId));
         } catch (Exception e) {
-            logger.error("Error at RestUserController deleteUser.", e);
-            return ResponseService.errorResponse(Response.Status.NOT_FOUND, String.format("Error while deleting user by id: %d. %s", userId, e.getMessage()));
+            logger.error(String.format("Error at RestUserController deleteUser, id: %d", userId), e);
+            return ResponseService.errorResponse(Response.Status.NOT_FOUND,
+                    String.format("Error while deleting user by id: %d. %s", userId, e.getMessage()));
         }
     }
 }

@@ -2,7 +2,7 @@ package com.nikitiuk.documentstoragewithsearchcapability.rest.services.helpers.e
 
 public enum Actions {
 
-    CREATED, UPDATED, FOUND, UPLOADED;
+    CREATED, UPDATED, FOUND, UPLOADED, SET;
 
     public static Boolean contains(String string) {
         for(Actions actions : Actions.values()){

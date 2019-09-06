@@ -111,28 +111,6 @@ public class GroupBean implements Serializable {
         documentsPermissions.add(docGroupPermissions);
     }
 
-    public void updateDocument(DocBean document, Permissions permissions) {
-        for (DocGroupPermissions docGroupPermissions : documentsPermissions) {
-            if (docGroupPermissions.getGroup().equals(this) &&
-                    docGroupPermissions.getDocument().equals(document)) {
-                docGroupPermissions.setPermissions(permissions);
-            }
-        }
-    }
-
-    public void removeDocument(DocBean document) {
-        for (Iterator<DocGroupPermissions> iterator = documentsPermissions.iterator();
-             iterator.hasNext(); ) {
-            DocGroupPermissions docGroupPermissions = iterator.next();
-            if (docGroupPermissions.getGroup().equals(this) &&
-                    docGroupPermissions.getDocument().equals(document)) {
-                iterator.remove();
-                docGroupPermissions.setGroup(null);
-                docGroupPermissions.setDocument(null);
-            }
-        }
-    }
-
     public void addFolder(FolderBean folder, Permissions permissions) {
         if (checkIfGroupHasFolder(folder)) {
             return;
@@ -140,38 +118,6 @@ public class GroupBean implements Serializable {
         FolderGroupPermissions folderGroupPermissions = new FolderGroupPermissions(this, folder);
         folderGroupPermissions.setPermissions(permissions);
         foldersPermissions.add(folderGroupPermissions);
-    }
-
-    public void updateFolder(FolderBean folder, Permissions permissions) {
-        for (FolderGroupPermissions folderGroupPermissions : foldersPermissions) {
-            if (folderGroupPermissions.getGroup().equals(this) &&
-                    folderGroupPermissions.getFolder().equals(folder)) {
-                folderGroupPermissions.setPermissions(permissions);
-            }
-        }
-    }
-
-    public void removeFolder(FolderBean folder) {
-        for (Iterator<FolderGroupPermissions> iterator = foldersPermissions.iterator();
-             iterator.hasNext(); ) {
-            FolderGroupPermissions folderGroupPermissions = iterator.next();
-            if (folderGroupPermissions.getGroup().equals(this) &&
-                    folderGroupPermissions.getFolder().equals(folder)) {
-                iterator.remove();
-                folderGroupPermissions.setGroup(null);
-                folderGroupPermissions.setFolder(null);
-            }
-        }
-    }
-
-    public void addUser(UserBean user) {
-        this.users.add(user);
-        user.getGroups().add(this);
-    }
-
-    public void removeUser(UserBean user) {
-        this.users.remove(user);
-        user.getGroups().remove(this);
     }
 
     public boolean checkIfGroupHasDocument(DocBean document) {

@@ -3,9 +3,9 @@ package com.nikitiuk.documentstoragewithsearchcapability.filters;
 import com.nikitiuk.documentstoragewithsearchcapability.dao.implementations.UserDao;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.GroupBean;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.UserBean;
+import com.nikitiuk.documentstoragewithsearchcapability.exceptions.NoValidDataFromSourceException;
 import com.nikitiuk.documentstoragewithsearchcapability.rest.services.helpers.ResponseService;
 import org.glassfish.jersey.internal.util.Base64;
-import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,8 +32,8 @@ import java.util.*;
 @Priority(Priorities.AUTHORIZATION)
 public class AuthenticationFilter implements ContainerRequestFilter {
 
-    private static final String AUTHORIZATION_PROPERTY = "Authorization";
-    private static final String AUTHENTICATION_SCHEME = "Basic";
+    private static final String AUTHORIZATION_PROPERTY = System.getProperty("current.authorization.property");
+    private static final String AUTHENTICATION_SCHEME = System.getProperty("current.authentication.scheme");
     private static final Logger logger = LoggerFactory.getLogger(AuthenticationFilter.class);
     private UserDao userDao = new UserDao();
 
@@ -44,9 +44,9 @@ public class AuthenticationFilter implements ContainerRequestFilter {
     public void filter(ContainerRequestContext requestContext) {
         Method method = resourceInfo.getResourceMethod();
 
-        //Access denied for all
         if (method.isAnnotationPresent(DenyAll.class)) {
-            requestContext.abortWith(ResponseService.errorResponse(Response.Status.FORBIDDEN, "Access blocked for all users!"));
+            requestContext.abortWith(ResponseService.errorResponse(
+                    Response.Status.FORBIDDEN, "Access blocked for all users!"));
             return;
         }
 
@@ -61,73 +61,73 @@ public class AuthenticationFilter implements ContainerRequestFilter {
             //Access allowed for all
             if(!method.isAnnotationPresent(PermitAll.class)) {
                 //block access
-                requestContext.abortWith(ResponseService.errorResponse(Response.Status.UNAUTHORIZED, "You cannot access this resource"));
+                requestContext.abortWith(ResponseService.errorResponse(
+                        Response.Status.UNAUTHORIZED, "You cannot access this resource"));
             }
             setDefaultContext(requestContext);
             return;
         }
 
         //Get encoded username and password
-        final String encodedUserPassword = authorization.get(0).replaceFirst(AUTHENTICATION_SCHEME + " ", "");
+        final String encodedUserPassword = authorization.get(0).replaceFirst(
+                AUTHENTICATION_SCHEME + " ", "");
 
         //Decode username and password
         String usernameAndPassword = new String(Base64.decode(encodedUserPassword.getBytes()));
 
-        //Split username and password tokens
-        /*final StringTokenizer tokenizer = new StringTokenizer(usernameAndPassword, ":");
-        final String username = tokenizer.nextToken();
-        final String password = tokenizer.nextToken();
-
-        //Verifying Username and password
-        logger.info("Username: " + username);
-        logger.info("Password: " + password);*/
-
         //Verify user access
-        if (method.isAnnotationPresent(RolesAllowed.class)) {
-            RolesAllowed rolesAnnotation = method.getAnnotation(RolesAllowed.class);
-            Set<String> rolesSet = new HashSet<>(Arrays.asList(rolesAnnotation.value()));
-
-            //Is user valid?
-            if (!isUserAllowed(usernameAndPassword, rolesSet, requestContext)) {
-                requestContext.abortWith(ResponseService.errorResponse(Response.Status.UNAUTHORIZED, "You cannot access this resource"));
+        try {
+            if (method.isAnnotationPresent(RolesAllowed.class)) {
+                RolesAllowed rolesAnnotation = method.getAnnotation(RolesAllowed.class);
+                Set<String> rolesSet = new HashSet<>(Arrays.asList(rolesAnnotation.value()));
+                //Is user valid?
+                if (!chekUserForValidityAndSetContextIfSo(usernameAndPassword, rolesSet, requestContext)) {
+                    requestContext.abortWith(ResponseService.errorResponse(
+                            Response.Status.UNAUTHORIZED, "You cannot access this resource"));
+                }
+            } else {
+                setContextIfNoAnnotationsArePresent(usernameAndPassword, requestContext);
             }
-        } else {
-            setContextIfNoAnnotationsArePresent(usernameAndPassword, requestContext);
+        } catch (Exception e) {
+        logger.error("Error at AuthenticationFilter setContextIfNoAnnotationsArePresent.", e);
+        requestContext.abortWith(ResponseService.errorResponse(Response.Status.UNAUTHORIZED,
+                String.format("You cannot access this resource. %s", e.getMessage())));
         }
     }
 
     private void setDefaultContext(ContainerRequestContext requestContext) {
         UserBean user = userDao.getUserByName("Guest");
-        Hibernate.initialize(user.getGroups());
         String scheme = requestContext.getUriInfo().getRequestUri().getScheme();
         requestContext.setSecurityContext(new SecurityContextImplementation(user, scheme));
     }
 
-    private void setContextIfNoAnnotationsArePresent(final String usernameAndPassword, ContainerRequestContext requestContext){
-        final String[] decipheredUsernameAndPassword = decipherBasicAuth(usernameAndPassword);
+    private void setContextIfNoAnnotationsArePresent(final String usernameAndPassword,
+                                                     ContainerRequestContext requestContext) throws Exception {
+
+        final String[] decipheredUsernameAndPassword = decoupleBasicAuth(usernameAndPassword);
         UserBean user = userDao.getUserByName(decipheredUsernameAndPassword[0]);
         if(user == null) {
-            requestContext.abortWith(ResponseService.errorResponse(Response.Status.UNAUTHORIZED, "You cannot access this resource"));
+            requestContext.abortWith(ResponseService.errorResponse(
+                    Response.Status.UNAUTHORIZED, "You cannot access this resource"));
             return;
         }
-        Hibernate.initialize(user.getGroups());
         if (!user.getPassword().equals(decipheredUsernameAndPassword[1])) {
-            requestContext.abortWith(ResponseService.errorResponse(Response.Status.UNAUTHORIZED, "You cannot access this resource"));
+            requestContext.abortWith(ResponseService.errorResponse(
+                    Response.Status.UNAUTHORIZED, "You cannot access this resource"));
             return;
         }
         String scheme = requestContext.getUriInfo().getRequestUri().getScheme();
         requestContext.setSecurityContext(new SecurityContextImplementation(user, scheme));
     }
 
-    private boolean isUserAllowed(final String usernameAndPassword, final Set<String> rolesSet, ContainerRequestContext requestContext) {
-        final StringTokenizer tokenizer = new StringTokenizer(usernameAndPassword, ":");
-        final String username = tokenizer.nextToken();
-        final String password = tokenizer.nextToken();
+    private boolean chekUserForValidityAndSetContextIfSo(final String usernameAndPassword,
+                                                         final Set<String> rolesSet, ContainerRequestContext requestContext) throws Exception {
+        final String [] decoupledUsernameAndPassword = decoupleBasicAuth(usernameAndPassword);
 
         //Step 1. Fetch password from database and match with password in argument
         //If both match then get the defined role for user from database and continue; else return [false]
-        UserBean user = userDao.getUserByName(username);
-        if (!user.getPassword().equals(password)) {
+        UserBean user = userDao.getUserByName(decoupledUsernameAndPassword[0]);
+        if (!user.getPassword().equals(decoupledUsernameAndPassword[1])) {
             return false;
         }
 
@@ -142,10 +142,11 @@ public class AuthenticationFilter implements ContainerRequestFilter {
         return false;
     }
 
-    public String[] decipherBasicAuth(final String usernameAndPassword){
-        final StringTokenizer tokenizer = new StringTokenizer(usernameAndPassword, ":");
-        final String username = tokenizer.nextToken();
-        final String password = tokenizer.nextToken();
-        return new String[] {username, password};
+    private String[] decoupleBasicAuth(final String usernameAndPassword) throws Exception {
+        final String[] decoupledUsernameAndPassword = usernameAndPassword.split(":", 2);
+        if(decoupledUsernameAndPassword.length != 2) {
+            throw new NoValidDataFromSourceException("Wrong syntax in username or password.");
+        }
+        return decoupledUsernameAndPassword;
     }
 }

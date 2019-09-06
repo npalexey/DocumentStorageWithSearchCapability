@@ -56,7 +56,7 @@ public class RestDocController {
                     (SecurityContextImplementation) context.getSecurityContext(), folderId);
             return ThymeleafResponseService.visualiseEntitiesInStorage(EntityTypes.DOCUMENT, docBeanList);
         } catch (Exception e) {
-            logger.error("Error at RestDocController getDocumentsInFolder.", e);
+            logger.error(String.format("Error at RestDocController getDocumentsInFolder, folderId: %d.", folderId), e);
             return ResponseService.errorResponse(Response.Status.NOT_FOUND,
                     String.format("Error while producing list of documents in folder. %s", e.getMessage()));
         }
@@ -65,15 +65,14 @@ public class RestDocController {
     @PermitAll
     @GET
     @Path("{documentid}")
-    @Produces(MediaType.APPLICATION_OCTET_STREAM)
-    public Response downloadDocumentById(@Context ContainerRequestContext context,
+    public Response downloadDocument(@Context ContainerRequestContext context,
                                          @PathParam("documentid") long documentId) {
         try {
             DocumentDownloaderResponseBuilder documentDownloaderResponseBuilder = docService.downloadDocumentById(
                     (SecurityContextImplementation) context.getSecurityContext(), documentId);
             return ResponseService.okResponseForFile(documentDownloaderResponseBuilder);
         } catch (Exception e) {
-            logger.error("Error at RestDocController downloadDocumentById.", e);
+            logger.error(String.format("Error at RestDocController downloadDocumentById, id: %d.", documentId), e);
             return ResponseService.errorResponse(Response.Status.NOT_FOUND,
                     String.format("Error occurred while downloading the document by id: %d. %s",
                             documentId, e.getMessage()));
@@ -84,14 +83,14 @@ public class RestDocController {
     @GET
     @Path("/{documentid}/content")
     @Produces(MediaType.TEXT_HTML)
-    public Response getContentOfDocumentById(@PathParam("documentid") long documentId,
+    public Response getContentOfDocument(@PathParam("documentid") long documentId,
                                              @Context ContainerRequestContext context) {
         try {
             List<String> documentContent = docService.getContentOfDocumentById(
                     (SecurityContextImplementation) context.getSecurityContext(), documentId);
             return ThymeleafResponseService.visualiseDocumentContent(documentContent);
         } catch (Exception e) {
-            logger.error("Error at RestDocController getContentOfDocumentById.", e);
+            logger.error(String.format("Error at RestDocController getContentOfDocumentById, id: %d.", documentId), e);
             return ResponseService.errorResponse(Response.Status.NOT_FOUND,
                     String.format("Error occurred while getting content of the document by id: %d. %s",
                             documentId, e.getMessage()));
@@ -110,9 +109,10 @@ public class RestDocController {
         try {
             DocBean uploadedDocument = docService.uploadDocument(fileInputStream,
                     (SecurityContextImplementation) context.getSecurityContext(), designatedName, parentFolderId);
-            return ThymeleafResponseService.visualiseSingleEntity(EntityTypes.DOCUMENT, uploadedDocument, Actions.UPLOADED);
+            return ThymeleafResponseService.visualiseSingleEntity(
+                    EntityTypes.DOCUMENT, uploadedDocument, Actions.UPLOADED);
         } catch (Exception e) {
-            logger.error("Error at RestDocController uploadDocument.", e);
+            logger.error(String.format("Error at RestDocController uploadDocument, parentId: %d.", parentFolderId), e);
             return ResponseService.errorResponse(Response.Status.NOT_FOUND,
                     String.format("Error while uploading document: %s. %s", designatedName, e.getMessage()));
         }
@@ -139,15 +139,16 @@ public class RestDocController {
     @PUT
     @Path("/{documentid}")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
-    public Response updateDocumentById(@Context ContainerRequestContext context,
+    public Response updateDocument(@Context ContainerRequestContext context,
                                        @PathParam("documentid") long documentId,
                                        @FormDataParam("file") InputStream fileInputStream) {
         try {
             DocBean updatedDocument = docService.updateDocumentById(
                     (SecurityContextImplementation) context.getSecurityContext(), documentId, fileInputStream);
-            return ThymeleafResponseService.visualiseSingleEntity(EntityTypes.DOCUMENT, updatedDocument, Actions.UPDATED);
+            return ThymeleafResponseService.visualiseSingleEntity(
+                    EntityTypes.DOCUMENT, updatedDocument, Actions.UPDATED);
         } catch (Exception e) {
-            logger.error("Error at RestDocController updateDocumentById.", e);
+            logger.error(String.format("Error at RestDocController updateDocumentById, id: %d.", documentId), e);
             return ResponseService.errorResponse(Response.Status.NOT_FOUND,
                     String.format("Error occurred while updating the document by id: %d. %s",
                             documentId, e.getMessage()));
@@ -158,14 +159,15 @@ public class RestDocController {
     @DELETE
     @Path("/{documentid}")
     @Produces(MediaType.TEXT_HTML)
-    public Response deleteDocumentById(@Context ContainerRequestContext context,
+    public Response deleteDocument(@Context ContainerRequestContext context,
                                        @PathParam("documentid") long documentId) {
         try {
             String deletedDocumentPath = docService.deleteDocumentById(
                     (SecurityContextImplementation) context.getSecurityContext(), documentId);
-            return ResponseService.okResponseSimple(String.format("Document: '%s' deleted successfully.", deletedDocumentPath));
+            return ResponseService.okResponseSimple(String.format(
+                    "Document: '%s' deleted successfully.", deletedDocumentPath));
         } catch (Exception e) {
-            logger.error("Error at RestDocController deleteDocumentById.", e);
+            logger.error(String.format("Error at RestDocController deleteDocumentById, id: %d", documentId), e);
             return ResponseService.errorResponse(Response.Status.NOT_FOUND,
                     String.format("Error occurred while deleting the document by id: %d. %s",
                             documentId, e.getMessage()));

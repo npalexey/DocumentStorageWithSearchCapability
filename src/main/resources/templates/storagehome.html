@@ -19,8 +19,8 @@
         <tr th:if="${entityType.name()} == 'DOCUMENT'" th:each="entry : ${inStorage}">
             <td><span th:utext="|Id: ${entry.id} |">Document id</span></td>
             <td><span th:utext="|, Path: ${entry.path} |">Document Path</span></td>
-            <td><a href="content" th:href="@{~/DocumentStorageWithSearchCapability/rest/doc/{docid}/content(docid=${entry.id})}">Get Content</a></td>
-            <td><a href="download" th:href="@{~/DocumentStorageWithSearchCapability/rest/doc/{docid}(docid=${entry.id})}">Download</a></td>
+            <td><a href="content" th:href="@{~/DocumentStorageWithSearchCapability/rest/docs/{docid}/content(docid=${entry.id})}">Get Content</a></td>
+            <td><a href="download" th:href="@{~/DocumentStorageWithSearchCapability/rest/docs/{docid}(docid=${entry.id})}">Download</a></td>
         </tr>
         <tr th:if="${entityType.name()} == 'USER'" th:each="entry : ${inStorage}">
             <td><span th:utext="|Id: ${entry.id} |">User name</span></td>

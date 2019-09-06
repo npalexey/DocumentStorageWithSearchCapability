@@ -19,7 +19,7 @@ import java.util.stream.Stream;
 
 public class LocalStorageService {
 
-    private static final String PATH = "/home/npalexey/workenv/DOWNLOADED/";
+    private static final String PATH = System.getProperty("local.path.to.storage"); /*"/home/npalexey/workenv/DOWNLOADED/"*/
 
     public List<DocBean> listDocumentsInPath() throws IOException {
         List<DocBean> docBeanList = new ArrayList<>();

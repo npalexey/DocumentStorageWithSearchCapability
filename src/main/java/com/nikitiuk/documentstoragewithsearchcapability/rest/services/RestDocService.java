@@ -74,13 +74,8 @@ public class RestDocService {
         if (documentToDownload == null) {
             throw new NoValidDataFromSourceException("No document with such id.");
         }
-        return downloadDocumentByPath(securityContext, documentToDownload.getPath());
-    }
-
-    public DocumentDownloaderResponseBuilder downloadDocumentByPath(SecurityContextImplementation securityContext, String documentPath) throws Exception {
-        InspectorService.checkIfStringDataIsBlank(documentPath);
-        InspectorService.checkIfUserHasRightsForDocument(securityContext.getUser(), docDao.getDocByPath(documentPath), Permissions.READ);
-        return new DocumentDownloaderResponseBuilder(localStorageService.fileDownloader(documentPath), documentPath);
+        InspectorService.checkIfUserHasRightsForDocument(securityContext.getUser(), documentToDownload, Permissions.READ);
+        return new DocumentDownloaderResponseBuilder(localStorageService.fileDownloader(documentToDownload.getPath()), documentToDownload.getName());
     }
 
     public DocBean uploadDocument(InputStream fileInputStream,

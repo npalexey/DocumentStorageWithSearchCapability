@@ -5,15 +5,15 @@ import javax.ws.rs.core.StreamingOutput;
 public class DocumentDownloaderResponseBuilder {
 
     private StreamingOutput fileStream;
-    private String documentPath;
+    private String documentName;
 
     public DocumentDownloaderResponseBuilder() {
 
     }
 
-    public DocumentDownloaderResponseBuilder(StreamingOutput fileStream, String documentPath) {
+    public DocumentDownloaderResponseBuilder(StreamingOutput fileStream, String documentName) {
         this.fileStream = fileStream;
-        this.documentPath = documentPath;
+        this.documentName = documentName;
     }
 
     public StreamingOutput getFileStream() {
@@ -24,11 +24,11 @@ public class DocumentDownloaderResponseBuilder {
         this.fileStream = fileStream;
     }
 
-    public String getDocumentPath() {
-        return documentPath;
+    public String getDocumentName() {
+        return documentName;
     }
 
-    public void setDocumentPath(String documentPath) {
-        this.documentPath = documentPath;
+    public void setDocumentName(String documentName) {
+        this.documentName = documentName;
     }
 }
