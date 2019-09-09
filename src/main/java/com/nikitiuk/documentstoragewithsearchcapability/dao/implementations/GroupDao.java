@@ -6,6 +6,7 @@ import com.nikitiuk.documentstoragewithsearchcapability.entities.helpers.enums.P
 import com.nikitiuk.documentstoragewithsearchcapability.exceptions.AlreadyExistsException;
 import com.nikitiuk.documentstoragewithsearchcapability.utils.HibernateUtil;
 import javassist.NotFoundException;
+import org.apache.commons.collections.CollectionUtils;
 import org.hibernate.Hibernate;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
@@ -17,29 +18,9 @@ import java.util.*;
 public class GroupDao extends GenericHibernateDao<GroupBean> {
 
     private static final Logger logger = LoggerFactory.getLogger(GroupDao.class);
-    static List<GroupBean> groupList = new ArrayList<>(Arrays.asList(new GroupBean("ADMINS"),
-            new GroupBean("USERS"), new GroupBean("GUESTS")));
 
     public GroupDao() {
         super(GroupBean.class);
-    }
-
-    public static void populateTableWithGroups() {
-        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
-            for (GroupBean groupBean : groupList) {
-                Transaction transaction = null;
-                try {
-                    transaction = session.beginTransaction();
-                    session.saveOrUpdate(groupBean);
-                    transaction.commit();
-                } catch (Exception e) {
-                    logger.error("Error at GroupDao populate: ", e);
-                    if (transaction != null) {
-                        transaction.rollback();
-                    }
-                }
-            }
-        }
     }
 
     public List<GroupBean> getGroups() {
@@ -48,8 +29,8 @@ public class GroupDao extends GenericHibernateDao<GroupBean> {
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             transaction = session.beginTransaction();
             groupBeanList = session.createQuery("FROM GroupBean", GroupBean.class).list();
-            for (GroupBean groupBean : groupBeanList) {
-                initializeConnections(groupBean);
+            if(CollectionUtils.isNotEmpty(groupBeanList)){
+                initializeConnectionsForList(groupBeanList);
             }
             transaction.commit();
             return groupBeanList;
@@ -127,8 +108,8 @@ public class GroupDao extends GenericHibernateDao<GroupBean> {
                 requiresMerge = false;
             }
             updatedGroup.setUsers(groupBean.getUsers());
-            updatedGroup.setDocumentsPermissions(groupBean.getDocumentsPermissions());
-            updatedGroup.setFoldersPermissions(groupBean.getFoldersPermissions());
+            /*updatedGroup.setDocumentsPermissions(groupBean.getDocumentsPermissions());*/
+            /*updatedGroup.setFoldersPermissions(groupBean.getFoldersPermissions());*/
             initializeConnections(updatedGroup);
             return save(updatedGroup, requiresMerge);
         } catch (Exception e) {
@@ -167,8 +148,8 @@ public class GroupDao extends GenericHibernateDao<GroupBean> {
         Transaction transaction = null;
         try {
             group.setUsers(getExistingUsers(group));
-            group.setDocumentsPermissions(getPermissionsForExistingDocs(group));
-            group.setFoldersPermissions(getPermissionsForExistingFolders(group));
+            /*group.setDocumentsPermissions(getPermissionsForExistingDocs(group));*/
+            /*group.setFoldersPermissions(getPermissionsForExistingFolders(group));*/
             Session session = HibernateUtil.getSessionFactory().openSession();
             transaction = session.beginTransaction();
             session.saveOrUpdate(group);
@@ -212,7 +193,7 @@ public class GroupDao extends GenericHibernateDao<GroupBean> {
         }
     }
 
-    private Set<DocGroupPermissions> getPermissionsForExistingDocs(GroupBean group) throws Exception {
+    /*private Set<DocGroupPermissions> getPermissionsForExistingDocs(GroupBean group) throws Exception {
         if (group == null) {
             throw new Exception("No GroupBean was passed to check.");
         }
@@ -261,9 +242,9 @@ public class GroupDao extends GenericHibernateDao<GroupBean> {
             }
             throw e;
         }
-    }
+    }*/
 
-    private Set<FolderGroupPermissions> getPermissionsForExistingFolders(GroupBean group) throws Exception {
+    /*private Set<FolderGroupPermissions> getPermissionsForExistingFolders(GroupBean group) throws Exception {
         if (group == null) {
             throw new Exception("No GroupBean was passed to check.");
         }
@@ -312,15 +293,21 @@ public class GroupDao extends GenericHibernateDao<GroupBean> {
             }
             throw e;
         }
+    }*/
+
+    private void initializeConnectionsForList(List<GroupBean> groupBeanList) {
+        for (GroupBean groupBean : groupBeanList) {
+            initializeConnections(groupBean);
+        }
     }
 
     private void initializeConnections(GroupBean group) {
         Hibernate.initialize(group.getUsers());
-        for (DocGroupPermissions docGroupPermissions : group.getDocumentsPermissions()) {
+        /*for (DocGroupPermissions docGroupPermissions : group.getDocumentsPermissions()) {
             Hibernate.initialize(docGroupPermissions);
-        }
-        for (FolderGroupPermissions folderGroupPermissions : group.getFoldersPermissions()) {
+        }*/
+        /*for (FolderGroupPermissions folderGroupPermissions : group.getFoldersPermissions()) {
             Hibernate.initialize(folderGroupPermissions);
-        }
+        }*/
     }
 }

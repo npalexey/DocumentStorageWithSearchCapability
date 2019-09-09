@@ -17,43 +17,9 @@ import java.util.*;
 public class UserDao extends GenericHibernateDao<UserBean> {
 
     private static final Logger logger = LoggerFactory.getLogger(UserDao.class);
-    private static List<UserBean> userList = new ArrayList<>();
-
-    private static void getUserListForPopulate() {
-        userList.add(new UserBean("Admin", "adminpswrd"));
-        userList.add(new UserBean("Employee", "employeepswrd"));
-        userList.add(new UserBean("Guest", "guestpswrd"));
-        Set<GroupBean> groupBeans0 = new HashSet<>(Collections.singletonList(GroupDao.groupList.get(2)));
-        userList.get(2).setGroups(groupBeans0);
-        Set<GroupBean> groupBeans1 = new HashSet<>(Arrays.asList(GroupDao.groupList.get(2), GroupDao.groupList.get(1)));
-        userList.get(1).setGroups(groupBeans1);
-        Set<GroupBean> groupBeans2 = new HashSet<>(Arrays.asList(GroupDao.groupList.get(2), GroupDao.groupList.get(1),
-                GroupDao.groupList.get(0)));
-        userList.get(0).setGroups(groupBeans2);
-    }
 
     public UserDao() {
         super(UserBean.class);
-    }
-
-    public static void populateTableWithUsers() {
-        getUserListForPopulate();
-        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
-            for (UserBean userBean : userList) {
-                Transaction transaction = null;
-                try {
-                    transaction = session.beginTransaction();
-                    session.saveOrUpdate(userBean);
-                    Hibernate.initialize(userBean.getGroups());
-                    transaction.commit();
-                } catch (Exception e) {
-                    if (transaction != null) {
-                        transaction.rollback();
-                    }
-                    logger.error("Error at UserDao populate: ", e);
-                }
-            }
-        }
     }
 
     public List<UserBean> getUsers() {
@@ -82,7 +48,9 @@ public class UserDao extends GenericHibernateDao<UserBean> {
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             transaction = session.beginTransaction();
             UserBean userBean = session.get(UserBean.class, id);
-            Hibernate.initialize(userBean.getGroups());
+            if(userBean != null) {
+                Hibernate.initialize(userBean.getGroups());
+            }
             transaction.commit();
             session.close();
             return userBean;
@@ -103,10 +71,10 @@ public class UserDao extends GenericHibernateDao<UserBean> {
                     + userName + "'", UserBean.class).uniqueResult();
             if(userBean != null) {
                 Hibernate.initialize(userBean.getGroups());
-                for(GroupBean groupBean : userBean.getGroups()){
+                /*for(GroupBean groupBean : userBean.getGroups()){
                     Hibernate.initialize(groupBean.getDocumentsPermissions());
                     Hibernate.initialize(groupBean.getFoldersPermissions());
-                }
+                }*/
             }
             transaction.commit();
             session.close();

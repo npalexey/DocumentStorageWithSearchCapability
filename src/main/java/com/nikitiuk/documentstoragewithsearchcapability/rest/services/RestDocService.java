@@ -14,17 +14,17 @@ import com.nikitiuk.documentstoragewithsearchcapability.rest.services.helpers.In
 import com.nikitiuk.documentstoragewithsearchcapability.services.LocalStorageService;
 import com.nikitiuk.documentstoragewithsearchcapability.services.SearchResultsModifier;
 import com.nikitiuk.documentstoragewithsearchcapability.services.SolrService;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.response.QueryResponse;
+import org.apache.tika.Tika;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.WebApplicationException;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -84,7 +84,8 @@ public class RestDocService {
 
         String folderPath;
         InspectorService.checkIfStringDataIsBlank(designatedName);
-        Set<GroupBean> allowedGroups = null;
+        final String trimmedDesignatedName = designatedName.trim();
+        Set<GroupBean> allowedGroups;
         if (parentFolderId == null || parentFolderId == 0) {
             FolderBean folderBean = folderDao.getById(1L);
             folderPath = folderBean.getPath();
@@ -94,23 +95,23 @@ public class RestDocService {
             folderPath = folderBean.getPath();
             allowedGroups = InspectorService.checkIfUserHasRightsForFolder(securityContext.getUser(), folderBean, Permissions.WRITE);
         }
-        localStorageService.fileUploader(fileInputStream, folderPath + designatedName);
-        DocBean createdDoc = docDao.saveDocument(new DocBean(designatedName, folderPath + designatedName));
-        if (!allowedGroups.isEmpty()) {
+        localStorageService.fileUploader(fileInputStream, folderPath + trimmedDesignatedName);
+        DocBean createdDoc = docDao.saveDocument(new DocBean(trimmedDesignatedName, folderPath + trimmedDesignatedName));
+        if (CollectionUtils.isNotEmpty(allowedGroups)) {
             for (GroupBean groupBean : allowedGroups) {
                 docGroupPermissionsDao.setWriteForDocumentForGroup(createdDoc, groupBean);
             }
         }
         Runnable addTask = () -> {
             try {
-                SolrService.indexDocumentWithSolr(folderPath + designatedName,
-                        URLConnection.guessContentTypeFromName(new File(folderPath + designatedName).getName()));
+                SolrService.indexDocumentWithSolr(folderPath + trimmedDesignatedName,
+                        new Tika().detect(trimmedDesignatedName)/*URLConnection.guessContentTypeFromName(new File(folderPath + trimmedDesignatedName).getName())*/);
             } catch (IOException | SolrServerException e) {
                 throw new WebApplicationException("Error while indexing document. Please, try again.");
             }
         };
         executorService.execute(addTask);
-        return createdDoc;
+        return docDao.getById(createdDoc.getId());
     }
 
     public String searchInEveryDocumentWithStringQuery(String query, SecurityContextImplementation securityContext) throws Exception {
@@ -140,7 +141,7 @@ public class RestDocService {
         String docNameForContentTypeCheck = localStorageService.fileUpdater(fileInputStream, documentPath);
         Runnable putTask = () -> {
             try {
-                SolrService.indexDocumentWithSolr(documentPath, URLConnection.guessContentTypeFromName(docNameForContentTypeCheck));
+                SolrService.indexDocumentWithSolr(documentPath, new Tika().detect(docNameForContentTypeCheck));
             } catch (IOException | SolrServerException e) {
                 throw new WebApplicationException("Error while indexing document. Please, try again.");
             }

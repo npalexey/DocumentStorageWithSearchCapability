@@ -1,5 +1,6 @@
 package com.nikitiuk.documentstoragewithsearchcapability.utils;
 
+import com.nikitiuk.documentstoragewithsearchcapability.dao.helpers.Populator;
 import com.nikitiuk.documentstoragewithsearchcapability.dao.implementations.*;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.*;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.helpers.DocGroupPermissionsId;
@@ -66,12 +67,12 @@ public class HibernateUtil {
     }
 
     private static void populateTables() throws Exception {
-        GroupDao.populateTableWithGroups();
-        UserDao.populateTableWithUsers();
-        FolderDao.populateTableWithFolders(localStorageService.listFoldersInPath());
-        DocDao.populateTableWithDocs(localStorageService.listDocumentsInPath());
-        FolderGroupPermissionsDao.populateTableWithFolderGroupPermissions();
-        DocGroupPermissionsDao.populateTableWithDocGroupPermissions();
+        Populator.populateTableWithGroups();
+        Populator.populateTableWithUsers();
+        Populator.populateTableWithFolders(localStorageService.listFoldersInPath());
+        Populator.populateTableWithDocs(localStorageService.listDocumentsInPath());
+        Populator.populateTableWithFolderGroupPermissions();
+        Populator.populateTableWithDocGroupPermissions();
     }
 
     public static void shutdown() {

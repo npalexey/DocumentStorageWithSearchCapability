@@ -1,12 +1,16 @@
 package com.nikitiuk.documentstoragewithsearchcapability.entities;
 
+import com.nikitiuk.documentstoragewithsearchcapability.entities.helpers.enums.Permissions;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.*;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.Table;
 import javax.persistence.*;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 
 @Entity
 @Table(name = "Documents")
@@ -28,6 +32,13 @@ public class DocBean {
     @NaturalId
     @Column(name = "document_path", unique = true, nullable = false)
     private String path;
+
+    @OneToMany(
+            mappedBy = "document",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    private Set<DocGroupPermissions> documentsPermissions = new HashSet<>();
 
     public DocBean(String name, String path) {
         this.name = name;
@@ -60,6 +71,33 @@ public class DocBean {
 
     public void setPath(String path) {
         this.path = path;
+    }
+
+    public Set<DocGroupPermissions> getDocumentsPermissions() {
+        return documentsPermissions;
+    }
+
+    public void setDocumentsPermissions(Set<DocGroupPermissions> documentsPermissions) {
+        this.documentsPermissions = documentsPermissions;
+    }
+
+    public void addGroup(GroupBean group, Permissions permissions) {
+        if (checkIfDocumentHasGroup(group)) {
+            return;
+        }
+        DocGroupPermissions docGroupPermissions = new DocGroupPermissions(group, this);
+        docGroupPermissions.setPermissions(permissions);
+        documentsPermissions.add(docGroupPermissions);
+    }
+
+    public boolean checkIfDocumentHasGroup(GroupBean group) {
+        for (DocGroupPermissions docGroupPermissions : documentsPermissions) {
+            if (docGroupPermissions.getDocument().equals(this) &&
+                    docGroupPermissions.getGroup().equals(group)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override

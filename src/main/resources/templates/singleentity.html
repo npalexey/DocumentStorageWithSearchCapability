@@ -19,6 +19,11 @@
                 <td><span th:utext="|, Document Path: ${entity.path} |">Document Path</span></td>
                 <td><a href="content" th:href="@{~/DocumentStorageWithSearchCapability/rest/doc/{name}/content(name=${entity.name})}">Get Content</a></td>
                 <td><a href="download" th:href="@{~/DocumentStorageWithSearchCapability/rest/doc/{name}(name=${entity.name})}">Download</a></td>
+                <th:block th:unless="${entity.documentsPermissions.empty}">
+                    <td><span th:utext="|, Groups: |">Doc's Groups</span></td>
+                    <td><th:block th:each="docPermissions : ${entity.documentsPermissions}"><span th:utext="|[Id: ${docPermissions.group.id}, ${docPermissions.permissions}]  |">Permissions</span></th:block></td>
+                </th:block>
+                <td th:if="${entity.documentsPermissions.empty}"><span th:utext="|, No Document Permissions |"></span></td>
             </tr>
             <tr th:if="${entityType.name()} == 'USER'">
                 <td><span th:utext="|Id: ${entity.id} |">User id</span></td>
@@ -36,16 +41,16 @@
             <tr th:if="${entityType.name()} == 'GROUP'">
                 <td><span th:utext="|Id: ${entity.id} |">Group id</span></td>
                 <td><span th:utext="|, Name: ${entity.name} |">Group name</span></td>
-                <th:block th:unless="${entity.documentsPermissions.empty}">
+                <!--<th:block th:unless="${entity.documentsPermissions.empty}">
                     <td><span th:utext="|, Docs: |">Group's Docs</span></td>
                     <td><th:block th:each="docPermissions : ${entity.documentsPermissions}"><span th:utext="|[Id: ${docPermissions.document.id}, ${docPermissions.permissions}]  |">Permissions</span></th:block></td>
                 </th:block>
-                <td th:if="${entity.documentsPermissions.empty}"><span th:utext="|, No Document Permissions |"></span></td>
-                <th:block th:unless="${entity.foldersPermissions.empty}">
+                <td th:if="${entity.documentsPermissions.empty}"><span th:utext="|, No Document Permissions |"></span></td>-->
+                <!--<th:block th:unless="${entity.foldersPermissions.empty}">
                     <td><span th:utext="|, Folders: |">Group's Folders</span></td>
                     <td><th:block th:each="folderPermissions : ${entity.foldersPermissions}"><span th:utext="|[Id: ${folderPermissions.folder.id}, ${folderPermissions.permissions}]  |">Permissions</span></th:block></td>
                 </th:block>
-                <td th:if="${entity.foldersPermissions.empty}"><span th:utext="|, No Folder Permissions |"></span></td>
+                <td th:if="${entity.foldersPermissions.empty}"><span th:utext="|, No Folder Permissions |"></span></td>-->
                 <th:block th:unless="${entity.users.empty}">
                     <td><span th:utext="|, Users: |">Group's Users</span></td>
                     <td><th:block th:each="user : ${entity.users}"><span th:utext="|${user.name} |">User</span></th:block></td>

@@ -81,6 +81,14 @@ public class UserBean implements Principal {
         this.name = name;
     }
 
+    public List<Long> getGroupsIds() {
+        List<Long> groupIds = new ArrayList<>();
+        for (GroupBean groupBean : this.getGroups()) {
+            groupIds.add(groupBean.getId());
+        }
+        return groupIds;
+    }
+
     @Override
     public String   toString() {
         List<String> groupNames = new ArrayList<>();

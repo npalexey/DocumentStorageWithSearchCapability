@@ -21,6 +21,8 @@
             <td><span th:utext="|, Path: ${entry.path} |">Document Path</span></td>
             <td><a href="content" th:href="@{~/DocumentStorageWithSearchCapability/rest/docs/{docid}/content(docid=${entry.id})}">Get Content</a></td>
             <td><a href="download" th:href="@{~/DocumentStorageWithSearchCapability/rest/docs/{docid}(docid=${entry.id})}">Download</a></td>
+            <td><span th:utext="|, Groups: |">Groups</span></td>
+            <td><th:block th:each="docPermissions : ${entry.documentsPermissions}"><span th:utext="|[Id: ${docPermissions.group.id}, ${docPermissions.permissions}]  |">Permissions</span></th:block></td>
         </tr>
         <tr th:if="${entityType.name()} == 'USER'" th:each="entry : ${inStorage}">
             <td><span th:utext="|Id: ${entry.id} |">User name</span></td>
@@ -32,8 +34,8 @@
         <tr th:if="${entityType.name()} == 'GROUP'" th:each="entry : ${inStorage}">
             <td><span th:utext="|${entry.name} |">Group name</span></td>
             <td><span th:utext="|, Id: ${entry.id} |">Group id</span></td>
-            <td><span th:utext="|, Docs: |">Docs</span></td>
-            <td><th:block th:each="docPermissions : ${entry.documentsPermissions}"><span th:utext="|[Id: ${docPermissions.document.id}, ${docPermissions.permissions}]  |">Permissions</span></th:block></td>
+            <!--<td><span th:utext="|, Docs: |">Docs</span></td>
+            <td><th:block th:each="docPermissions : ${entry.documentsPermissions}"><span th:utext="|[Id: ${docPermissions.document.id}, ${docPermissions.permissions}]  |">Permissions</span></th:block></td>-->
             <td><span th:utext="|, Users: |">Group's users</span></td>
             <td><th:block th:each="user : ${entry.users}"><span th:utext="|${user.name} |">Group's users</span></th:block></td>
             <!--<th:block th:each="user : ${entry.users}">

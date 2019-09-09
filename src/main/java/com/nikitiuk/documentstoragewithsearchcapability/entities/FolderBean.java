@@ -1,12 +1,16 @@
 package com.nikitiuk.documentstoragewithsearchcapability.entities;
 
+import com.nikitiuk.documentstoragewithsearchcapability.entities.helpers.enums.Permissions;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.*;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.Table;
 import javax.persistence.*;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 
 @Entity
 @Table(name = "Folders")
@@ -25,6 +29,13 @@ public class FolderBean {
     @NaturalId
     @Column(name = "folder_path", unique = true, nullable = false)
     private String path;
+
+    @OneToMany(
+            mappedBy = "folder",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    private Set<FolderGroupPermissions> foldersPermissions = new HashSet<>();
 
     public FolderBean() {
     }
@@ -47,6 +58,33 @@ public class FolderBean {
 
     public void setPath(String path) {
         this.path = path;
+    }
+
+    public Set<FolderGroupPermissions> getFoldersPermissions() {
+        return foldersPermissions;
+    }
+
+    public void setFoldersPermissions(Set<FolderGroupPermissions> foldersPermissions) {
+        this.foldersPermissions = foldersPermissions;
+    }
+
+    public void addGroup(GroupBean group, Permissions permissions) {
+        if (checkIfFolderHasGroup(group)) {
+            return;
+        }
+        FolderGroupPermissions folderGroupPermissions = new FolderGroupPermissions(group, this);
+        folderGroupPermissions.setPermissions(permissions);
+        foldersPermissions.add(folderGroupPermissions);
+    }
+
+    public boolean checkIfFolderHasGroup(GroupBean group) {
+        for (FolderGroupPermissions folderGroupPermissions : foldersPermissions) {
+            if (folderGroupPermissions.getFolder().equals(this) &&
+                    folderGroupPermissions.getGroup().equals(group)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override

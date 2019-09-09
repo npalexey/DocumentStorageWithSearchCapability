@@ -5,10 +5,14 @@ import com.nikitiuk.documentstoragewithsearchcapability.entities.DocBean;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.DocGroupPermissions;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.GroupBean;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.helpers.enums.Permissions;
+import com.nikitiuk.documentstoragewithsearchcapability.rest.services.helpers.InspectorService;
 import com.nikitiuk.documentstoragewithsearchcapability.utils.HibernateUtil;
+import javassist.NotFoundException;
+import org.apache.commons.collections.CollectionUtils;
 import org.hibernate.Hibernate;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
+import org.hibernate.resource.transaction.spi.TransactionStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,49 +22,9 @@ import java.util.List;
 public class DocGroupPermissionsDao extends GenericHibernateDao<DocGroupPermissions> {
 
     private static final Logger logger = LoggerFactory.getLogger(DocGroupPermissionsDao.class);
-    private static List<DocGroupPermissions> docGroupPermissionsList = new ArrayList<>();
 
     public DocGroupPermissionsDao() {
         super(DocGroupPermissions.class);
-    }
-
-    private static void getDocGroupPermissionsListForPopulate() {
-        DocDao docDao = new DocDao();
-        List<DocBean> docBeanList = docDao.getAllDocuments();
-        if (!docBeanList.isEmpty()) {
-            GroupDao groupDao = new GroupDao();
-            List<GroupBean> groupBeanList = groupDao.getGroups();
-            for (DocBean docBean : docBeanList) {
-                DocGroupPermissions docGroupPermissionsAdmin = new DocGroupPermissions(groupBeanList.get(0), docBean);
-                DocGroupPermissions docGroupPermissionsUser = new DocGroupPermissions(groupBeanList.get(1), docBean);
-                DocGroupPermissions docGroupPermissionsGuest = new DocGroupPermissions(groupBeanList.get(2), docBean);
-                docGroupPermissionsAdmin.setPermissions(Permissions.WRITE);
-                docGroupPermissionsUser.setPermissions(Permissions.READ);
-                docGroupPermissionsGuest.setPermissions(Permissions.READ);
-                docGroupPermissionsList.add(docGroupPermissionsAdmin);
-                docGroupPermissionsList.add(docGroupPermissionsUser);
-                docGroupPermissionsList.add(docGroupPermissionsGuest);
-            }
-        }
-    }
-
-    public static void populateTableWithDocGroupPermissions() {
-        getDocGroupPermissionsListForPopulate();
-        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
-            for (DocGroupPermissions docGroupPermissions : docGroupPermissionsList) {
-                Transaction transaction = null;
-                try {
-                    transaction = session.beginTransaction();
-                    session.saveOrUpdate(docGroupPermissions);
-                    transaction.commit();
-                } catch (Exception e) {
-                    logger.error("Error at DocGroupPermissionsDao populate: ", e);
-                    if (transaction != null) {
-                        transaction.rollback();
-                    }
-                }
-            }
-        }
     }
 
     public List<DocGroupPermissions> getAllDocGroupPermissions() {
@@ -69,7 +33,9 @@ public class DocGroupPermissionsDao extends GenericHibernateDao<DocGroupPermissi
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             transaction = session.beginTransaction();
             docGroupPermissionsList = session.createQuery("FROM DocGroupPermissions", DocGroupPermissions.class).list();
-            initializeList(docGroupPermissionsList);
+            if(CollectionUtils.isNotEmpty(docGroupPermissionsList)){
+                initializeConnectionsForList(docGroupPermissionsList);
+            }
             transaction.commit();
         } catch (Exception e) {
             logger.error("Error at DocGroupPermissionsDao getAllDocGroupPermissions: ", e);
@@ -86,8 +52,8 @@ public class DocGroupPermissionsDao extends GenericHibernateDao<DocGroupPermissi
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             transaction = session.beginTransaction();
             docGroupPermissionsList = session.createQuery("FROM DocGroupPermissions WHERE group = " + groupId, DocGroupPermissions.class).list();
-            if (docGroupPermissionsList != null) {
-                initializeList(docGroupPermissionsList);
+            if (CollectionUtils.isNotEmpty(docGroupPermissionsList)) {
+                initializeConnectionsForList(docGroupPermissionsList);
             }
             transaction.commit();
         } catch (Exception e) {
@@ -105,8 +71,8 @@ public class DocGroupPermissionsDao extends GenericHibernateDao<DocGroupPermissi
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             transaction = session.beginTransaction();
             docPermissionsList = session.createQuery("FROM DocGroupPermissions WHERE document = " + docId, DocGroupPermissions.class).list();
-            if (docPermissionsList != null) {
-                initializeList(docPermissionsList);
+            if (CollectionUtils.isNotEmpty(docPermissionsList)) {
+                initializeConnectionsForList(docPermissionsList);
             }
             transaction.commit();
         } catch (Exception e) {
@@ -218,22 +184,20 @@ public class DocGroupPermissionsDao extends GenericHibernateDao<DocGroupPermissi
                 session.merge(docGroupPermissions);
                 setDocGroupPermissions = docGroupPermissions;
             } else {
-                DocBean docBean = session.load(DocBean.class, docId);
-                //Hibernate.initialize(docBean);
-                GroupBean groupBean = session.load(GroupBean.class, groupId);
-                //Hibernate.initialize(groupBean);
-                //Hibernate.initialize(groupBean.getDocumentsPermissions());
+                DocBean docBean = session.get(DocBean.class, docId);
+                InspectorService.checkIfDocumentIsNull(docBean);
+                GroupBean groupBean = session.get(GroupBean.class, groupId);
+                InspectorService.checkIfGroupIsNull(groupBean);
                 setDocGroupPermissions = createNewPermissions(docBean, groupBean, permission);
                 session.saveOrUpdate(setDocGroupPermissions);
-                session.merge(groupBean);
-                //groupBean.updateDocument(docBean, permission);
+                session.merge(docBean);
             }
             transaction.commit();
             return setDocGroupPermissions;
         } catch (Exception e) {
             logger.error("Error at DocGroupPermissionsDao set " + permission + " ForDocumentForGroup, where " +
                     "DocId = " + docId + " and GroupId = " + groupId + ": ", e);
-            if (transaction != null) {
+            if (transaction != null && (transaction.getStatus() == TransactionStatus.FAILED_COMMIT || transaction.getStatus() == TransactionStatus.COMMITTING)) {
                 transaction.rollback();
             }
             throw e;
@@ -243,11 +207,11 @@ public class DocGroupPermissionsDao extends GenericHibernateDao<DocGroupPermissi
     private DocGroupPermissions createNewPermissions(DocBean docBean, GroupBean groupBean, Permissions permission) {
         DocGroupPermissions newDocGroupPermissions = new DocGroupPermissions(groupBean, docBean);
         newDocGroupPermissions.setPermissions(permission);
-        groupBean.addDocument(docBean, permission);
+        docBean.addGroup(groupBean, permission);
         return newDocGroupPermissions;
     }
 
-    private void initializeList(List<DocGroupPermissions> docGroupPermissionsList) {
+    private void initializeConnectionsForList(List<DocGroupPermissions> docGroupPermissionsList) {
         for (DocGroupPermissions docGroupPermissions : docGroupPermissionsList) {
             initializeConnections(docGroupPermissions);
         }

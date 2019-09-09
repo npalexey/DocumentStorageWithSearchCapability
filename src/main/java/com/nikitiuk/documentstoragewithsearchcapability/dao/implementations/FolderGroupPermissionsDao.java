@@ -5,10 +5,13 @@ import com.nikitiuk.documentstoragewithsearchcapability.entities.FolderBean;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.FolderGroupPermissions;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.GroupBean;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.helpers.enums.Permissions;
+import com.nikitiuk.documentstoragewithsearchcapability.rest.services.helpers.InspectorService;
 import com.nikitiuk.documentstoragewithsearchcapability.utils.HibernateUtil;
+import org.apache.commons.collections.CollectionUtils;
 import org.hibernate.Hibernate;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
+import org.hibernate.resource.transaction.spi.TransactionStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,49 +21,9 @@ import java.util.List;
 public class FolderGroupPermissionsDao extends GenericHibernateDao<FolderGroupPermissions> {
 
     private static final Logger logger = LoggerFactory.getLogger(FolderGroupPermissionsDao.class);
-    private static List<FolderGroupPermissions> folderGroupPermissionsList = new ArrayList<>();
 
     public FolderGroupPermissionsDao() {
         super(FolderGroupPermissions.class);
-    }
-
-    private static void getFolderGroupPermissionsListForPopulate() {
-        FolderDao folderDao = new FolderDao();
-        List<FolderBean> folderBeanList = folderDao.getAllFolders();
-        if (!folderBeanList.isEmpty()) {
-            GroupDao groupDao = new GroupDao();
-            List<GroupBean> groupBeanList = groupDao.getGroups();
-            for (FolderBean folderBean : folderBeanList) {
-                FolderGroupPermissions folderGroupPermissionsAdmin = new FolderGroupPermissions(groupBeanList.get(0), folderBean);
-                FolderGroupPermissions folderGroupPermissionsUser = new FolderGroupPermissions(groupBeanList.get(1), folderBean);
-                FolderGroupPermissions folderGroupPermissionsGuest = new FolderGroupPermissions(groupBeanList.get(2), folderBean);
-                folderGroupPermissionsAdmin.setPermissions(Permissions.WRITE);
-                folderGroupPermissionsUser.setPermissions(Permissions.READ);
-                folderGroupPermissionsGuest.setPermissions(Permissions.READ);
-                folderGroupPermissionsList.add(folderGroupPermissionsAdmin);
-                folderGroupPermissionsList.add(folderGroupPermissionsUser);
-                folderGroupPermissionsList.add(folderGroupPermissionsGuest);
-            }
-        }
-    }
-
-    public static void populateTableWithFolderGroupPermissions() {
-        getFolderGroupPermissionsListForPopulate();
-        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
-            for (FolderGroupPermissions folderGroupPermissions : folderGroupPermissionsList) {
-                Transaction transaction = null;
-                try {
-                    transaction = session.beginTransaction();
-                    session.saveOrUpdate(folderGroupPermissions);
-                    transaction.commit();
-                } catch (Exception e) {
-                    logger.error("Error at FolderGroupPermissionsDao populate: ", e);
-                    if (transaction != null) {
-                        transaction.rollback();
-                    }
-                }
-            }
-        }
     }
 
     public List<FolderGroupPermissions> getAllFolderGroupPermissions() {
@@ -69,7 +32,9 @@ public class FolderGroupPermissionsDao extends GenericHibernateDao<FolderGroupPe
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             transaction = session.beginTransaction();
             folderGroupPermissionsList = session.createQuery("FROM FolderGroupPermissions", FolderGroupPermissions.class).list();
-            initializeList(folderGroupPermissionsList);
+            if (CollectionUtils.isNotEmpty(folderGroupPermissionsList)) {
+                initializeList(folderGroupPermissionsList);
+            }
             transaction.commit();
         } catch (Exception e) {
             logger.error("Error at FolderGroupPermissionsDao getAllFolderGroupPermissions: ", e);
@@ -86,7 +51,7 @@ public class FolderGroupPermissionsDao extends GenericHibernateDao<FolderGroupPe
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             transaction = session.beginTransaction();
             folderGroupPermissionsList = session.createQuery("FROM FolderGroupPermissions WHERE group = " + groupId, FolderGroupPermissions.class).list();
-            if (folderGroupPermissionsList != null) {
+            if (CollectionUtils.isNotEmpty(folderGroupPermissionsList)) {
                 initializeList(folderGroupPermissionsList);
             }
             transaction.commit();
@@ -105,7 +70,7 @@ public class FolderGroupPermissionsDao extends GenericHibernateDao<FolderGroupPe
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             transaction = session.beginTransaction();
             folderPermissionsList = session.createQuery("FROM FolderGroupPermissions WHERE folder = " + folderId, FolderGroupPermissions.class).list();
-            if (folderPermissionsList != null) {
+            if (CollectionUtils.isNotEmpty(folderPermissionsList)) {
                 initializeList(folderPermissionsList);
             }
             transaction.commit();
@@ -147,7 +112,7 @@ public class FolderGroupPermissionsDao extends GenericHibernateDao<FolderGroupPe
             return quantityOfDeletedPermissions;
         } catch (Exception e) {
             logger.error("Error at DocGroupPermissionsDao deletePermissionsForFolderForGroup: ", e);
-            if (transaction != null) {
+            if (transaction != null && (transaction.getStatus() == TransactionStatus.FAILED_COMMIT || transaction.getStatus() == TransactionStatus.COMMITTING)) {
                 transaction.rollback();
             }
             throw e;
@@ -219,10 +184,12 @@ public class FolderGroupPermissionsDao extends GenericHibernateDao<FolderGroupPe
                 setFolderGroupPermissions = folderGroupPermissions;
             } else {
                 FolderBean folderBean = session.load(FolderBean.class, folderId);
+                InspectorService.checkIfFolderIsNull(folderBean);
                 GroupBean groupBean = session.load(GroupBean.class, groupId);
+                InspectorService.checkIfGroupIsNull(groupBean);
                 setFolderGroupPermissions = createNewPermissions(folderBean, groupBean, permission);
                 session.saveOrUpdate(setFolderGroupPermissions);
-                session.merge(groupBean);
+                session.merge(folderBean);
             }
             transaction.commit();
             return setFolderGroupPermissions;
@@ -239,7 +206,8 @@ public class FolderGroupPermissionsDao extends GenericHibernateDao<FolderGroupPe
     private FolderGroupPermissions createNewPermissions(FolderBean folderBean, GroupBean groupBean, Permissions permission) {
         FolderGroupPermissions newFolderGroupPermissions = new FolderGroupPermissions(groupBean, folderBean);
         newFolderGroupPermissions.setPermissions(permission);
-        groupBean.addFolder(folderBean, permission);
+        /*groupBean.addFolder(folderBean, permission);*/
+        folderBean.addGroup(groupBean, permission);
         return newFolderGroupPermissions;
     }
 
