@@ -8,9 +8,9 @@ import com.nikitiuk.documentstoragewithsearchcapability.entities.FolderBean;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.GroupBean;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.helpers.enums.Permissions;
 import com.nikitiuk.documentstoragewithsearchcapability.exceptions.NoValidDataFromSourceException;
-import com.nikitiuk.documentstoragewithsearchcapability.filters.SecurityContextImplementation;
 import com.nikitiuk.documentstoragewithsearchcapability.rest.entities.DocumentDownloaderResponseBuilder;
 import com.nikitiuk.documentstoragewithsearchcapability.rest.services.helpers.InspectorService;
+import com.nikitiuk.documentstoragewithsearchcapability.security.SecurityContextImplementation;
 import com.nikitiuk.documentstoragewithsearchcapability.services.LocalStorageService;
 import com.nikitiuk.documentstoragewithsearchcapability.services.SearchResultsModifier;
 import com.nikitiuk.documentstoragewithsearchcapability.services.SolrService;
@@ -41,72 +41,49 @@ public class RestDocService {
     private LocalStorageService localStorageService = new LocalStorageService();
 
     public List<DocBean> getDocuments(SecurityContextImplementation securityContext) throws Exception {
-        return docDao.getDocumentsForUser(securityContext.getUser());
+        return docDao.getDocumentsForUser(securityContext.getUserPrincipal());
     }
 
     public List<DocBean> getDocumentsInFolder(SecurityContextImplementation securityContext, Long folderId) throws Exception {
-        InspectorService.checkIfIdIsNull(folderId);
-        FolderBean folder = folderDao.getById(folderId);
-        return docDao.getDocumentsForUserInFolder(securityContext.getUser(), folder);
+        FolderBean folder = getFolderByGivenId(folderId);
+        return docDao.getDocumentsForUserInFolder(securityContext.getUserPrincipal(), folder);
     }
 
     public List<String> getContentOfDocumentById(SecurityContextImplementation securityContext, Long documentId) throws Exception {
         InspectorService.checkIfIdIsNull(documentId);
         DocBean documentToGetContentOf = docDao.getById(documentId);
-        if (documentToGetContentOf == null) {
-            throw new NoValidDataFromSourceException("No document with such id.");
-        }
-        return getContentOfDocument(securityContext, documentToGetContentOf.getPath());
-    }
-
-    public List<String> getContentOfDocument(SecurityContextImplementation securityContext, String documentPath) throws Exception {
-        InspectorService.checkIfStringDataIsBlank(documentPath);
-        InspectorService.checkIfUserHasRightsForDocument(securityContext.getUser(), docDao.getDocByPath(documentPath), Permissions.READ);
+        InspectorService.checkIfDocumentIsNull(documentToGetContentOf);
+        InspectorService.checkUserRightsForDocAndGetAllowedGroups(securityContext.getUserPrincipal(), documentToGetContentOf, Permissions.READ);
         List<String> docContent = new ArrayList<>();
-        docContent.add(documentPath);
-        docContent.addAll(localStorageService.documentContentGetter(documentPath));
+        docContent.add(String.format("Document id: %d, name: %s, path: %s",
+                documentToGetContentOf.getId(), documentToGetContentOf.getName(), documentToGetContentOf.getPath()));
+        docContent.addAll(localStorageService.documentContentGetter(documentToGetContentOf.getPath()));
         return docContent;
     }
 
     public DocumentDownloaderResponseBuilder downloadDocumentById(SecurityContextImplementation securityContext, Long documentId) throws Exception {
         InspectorService.checkIfIdIsNull(documentId);
         DocBean documentToDownload = docDao.getById(documentId);
-        if (documentToDownload == null) {
-            throw new NoValidDataFromSourceException("No document with such id.");
-        }
-        InspectorService.checkIfUserHasRightsForDocument(securityContext.getUser(), documentToDownload, Permissions.READ);
+        InspectorService.checkIfDocumentIsNull(documentToDownload);
+        InspectorService.checkUserRightsForDocAndGetAllowedGroups(securityContext.getUserPrincipal(), documentToDownload, Permissions.READ);
         return new DocumentDownloaderResponseBuilder(localStorageService.fileDownloader(documentToDownload.getPath()), documentToDownload.getName());
     }
 
-    public DocBean uploadDocument(InputStream fileInputStream,
-                                  SecurityContextImplementation securityContext,
+    public DocBean uploadDocument(SecurityContextImplementation securityContext, InputStream fileInputStream,
                                   String designatedName, Long parentFolderId) throws Exception {
-
-        String folderPath;
-        InspectorService.checkIfStringDataIsBlank(designatedName);
-        final String trimmedDesignatedName = designatedName.trim();
-        Set<GroupBean> allowedGroups;
-        if (parentFolderId == null || parentFolderId == 0) {
-            FolderBean folderBean = folderDao.getById(1L);
-            folderPath = folderBean.getPath();
-            allowedGroups = InspectorService.checkIfUserHasRightsForFolder(securityContext.getUser(), folderBean, Permissions.WRITE);
-        } else {
-            FolderBean folderBean = folderDao.getById(parentFolderId);
-            folderPath = folderBean.getPath();
-            allowedGroups = InspectorService.checkIfUserHasRightsForFolder(securityContext.getUser(), folderBean, Permissions.WRITE);
-        }
-        localStorageService.fileUploader(fileInputStream, folderPath + trimmedDesignatedName);
-        DocBean createdDoc = docDao.saveDocument(new DocBean(trimmedDesignatedName, folderPath + trimmedDesignatedName));
-        if (CollectionUtils.isNotEmpty(allowedGroups)) {
-            for (GroupBean groupBean : allowedGroups) {
-                docGroupPermissionsDao.setWriteForDocumentForGroup(createdDoc, groupBean);
-            }
-        }
+        InspectorService.checkIfInputStreamIsNull(fileInputStream);
+        final String trimmedDesignatedName = replaceSlashesInDesignatedNameAndTrim(designatedName);
+        InspectorService.checkIfStringDataIsBlank(trimmedDesignatedName);
+        FolderBean folderBean = getFolderByGivenId(parentFolderId);
+        Set<GroupBean> allowedGroups = InspectorService.checkUserRightsForFolderAndGetAllowedGroups(securityContext.getUserPrincipal(), folderBean, Permissions.WRITE);
+        localStorageService.fileUploader(fileInputStream, folderBean.getPath() + trimmedDesignatedName);
+        DocBean createdDoc = saveDocToDBAndAssignPermissionsForAllowedGroups(allowedGroups, folderBean.getPath(), trimmedDesignatedName);
         Runnable addTask = () -> {
             try {
-                SolrService.indexDocumentWithSolr(folderPath + trimmedDesignatedName,
-                        new Tika().detect(trimmedDesignatedName)/*URLConnection.guessContentTypeFromName(new File(folderPath + trimmedDesignatedName).getName())*/);
+                SolrService.indexDocumentWithSolr(folderBean.getPath() + trimmedDesignatedName,
+                        new Tika().detect(trimmedDesignatedName));
             } catch (IOException | SolrServerException e) {
+                logger.error("Error wile indexing with Solr.", e);
                 throw new WebApplicationException("Error while indexing document. Please, try again.");
             }
         };
@@ -119,60 +96,106 @@ public class RestDocService {
         if (StringUtils.isBlank(query)) {
             throw new NoValidDataFromSourceException("Query is blank.");
         }
-        List<DocBean> permittedDocs = docDao.getDocumentsForUser(securityContext.getUser());
+        List<DocBean> permittedDocs = docDao.getDocumentsForUser(securityContext.getUserPrincipal());
         QueryResponse response = SolrService.searchInDocumentsByQuery(query);
         contentBuilder.append(SearchResultsModifier.getSearchResultForPermittedDocs(response, query, permittedDocs));
         return contentBuilder.toString().replace("\n", "<br/>");
     }
 
-    public DocBean updateDocumentById(SecurityContextImplementation securityContext, Long documentId, InputStream fileInputStream) throws Exception {
+    public DocBean updateDocumentById(SecurityContextImplementation securityContext, InputStream fileInputStream,
+                                      Long documentId, String designatedName) throws Exception {
         InspectorService.checkIfIdIsNull(documentId);
         DocBean documentToUpdate = docDao.getById(documentId);
-        if (documentToUpdate == null) {
-            throw new NoValidDataFromSourceException("No document with such id");
+        InspectorService.checkIfDocumentIsNull(documentToUpdate);
+        InspectorService.checkUserRightsForDocAndGetAllowedGroups(securityContext.getUserPrincipal(), documentToUpdate, Permissions.WRITE);
+        String modifiedDesignatedName = replaceSlashesInDesignatedNameAndTrim(designatedName);
+        if (StringUtils.isBlank(modifiedDesignatedName) || modifiedDesignatedName.equals(documentToUpdate.getName())) {
+            if (fileInputStream == null) {
+                throw new NoValidDataFromSourceException("No valid data passed to update document");
+            }
+            return updateWithSameName(fileInputStream, documentToUpdate);
+        } else {
+            return updateWithNewName(fileInputStream, documentToUpdate, designatedName);
         }
-        return updateDocumentByPath(securityContext, documentToUpdate.getPath(), fileInputStream);
     }
 
-    public DocBean updateDocumentByPath(SecurityContextImplementation securityContext, String documentPath, InputStream fileInputStream) throws Exception {
-        InspectorService.checkIfStringDataIsBlank(documentPath);
-        DocBean updatedDocument = docDao.getDocByPath(documentPath);
-        InspectorService.checkIfUserHasRightsForDocument(securityContext.getUser(), updatedDocument, Permissions.WRITE);
-        String docNameForContentTypeCheck = localStorageService.fileUpdater(fileInputStream, documentPath);
+    private DocBean updateWithSameName(InputStream fileInputStream, DocBean documentToUpdate) throws Exception {
+        String docNameForContentTypeCheck = localStorageService.fileUpdater(fileInputStream, documentToUpdate.getPath());
         Runnable putTask = () -> {
             try {
-                SolrService.indexDocumentWithSolr(documentPath, new Tika().detect(docNameForContentTypeCheck));
+                SolrService.indexDocumentWithSolr(documentToUpdate.getPath(), new Tika().detect(docNameForContentTypeCheck));
             } catch (IOException | SolrServerException e) {
+                logger.error("Error wile updating file in Solr.", e);
                 throw new WebApplicationException("Error while indexing document. Please, try again.");
             }
         };
         executorService.execute(putTask);
-        return updatedDocument;
+        return documentToUpdate;
+    }
+
+    private DocBean updateWithNewName(InputStream fileInputStream, DocBean documentToUpdate, String designatedName) throws Exception {
+        documentToUpdate.setName(designatedName);
+        String oldPath = documentToUpdate.getPath();
+        String newPath = documentToUpdate.getPath()
+                .substring(0, documentToUpdate.getPath().lastIndexOf("/") + 1) + designatedName;
+        documentToUpdate.setPath(newPath);
+        if (fileInputStream == null) {
+            localStorageService.renameFile(oldPath, newPath);
+        } else {
+            localStorageService.fileDeleter(oldPath);
+            localStorageService.fileUploader(fileInputStream, newPath);
+        }
+        Runnable putTask = () -> {
+            try {
+                SolrService.deleteDocumentFromSolrIndex(oldPath);
+                SolrService.indexDocumentWithSolr(newPath, new Tika().detect(designatedName));
+            } catch (IOException | SolrServerException e) {
+                logger.error("Error wile updating file in Solr.", e);
+                throw new WebApplicationException("Error while indexing document. Please, try again.");
+            }
+        };
+        executorService.execute(putTask);
+        return docDao.updateDocument(documentToUpdate);
     }
 
     public String deleteDocumentById(SecurityContextImplementation securityContext, Long documentId) throws Exception {
         InspectorService.checkIfIdIsNull(documentId);
         DocBean documentToDelete = docDao.getById(documentId);
-        if (documentToDelete == null) {
-            throw new NoValidDataFromSourceException("No document with such id.");
-        }
-        return deleteDocument(securityContext, documentToDelete.getPath());
-    }
-
-    public String deleteDocument(SecurityContextImplementation securityContext, String documentPath) throws Exception {
-        InspectorService.checkIfStringDataIsBlank(documentPath);
-        DocBean docBeanToDelete = docDao.getDocByPath(documentPath);
-        InspectorService.checkIfUserHasRightsForDocument(securityContext.getUser(), docBeanToDelete, Permissions.WRITE);
-        localStorageService.fileDeleter(documentPath);
-        docDao.deleteDocument(docBeanToDelete);
+        InspectorService.checkIfDocumentIsNull(documentToDelete);
+        InspectorService.checkUserRightsForDocAndGetAllowedGroups(securityContext.getUserPrincipal(), documentToDelete, Permissions.WRITE);
+        localStorageService.fileDeleter(documentToDelete.getPath());
+        docDao.deleteDocument(documentToDelete.getId());
         Runnable deleteTask = () -> {
             try {
-                SolrService.deleteDocumentFromSolrIndex(documentPath);
+                SolrService.deleteDocumentFromSolrIndex(documentToDelete.getPath());
             } catch (IOException | SolrServerException e) {
+                logger.error("Error wile deleting from Solr.", e);
                 throw new WebApplicationException("Error while deleting document from index. Please, try again.");
             }
         };
         executorService.execute(deleteTask);
-        return documentPath;
+        return documentToDelete.getPath();
+    }
+
+    private FolderBean getFolderByGivenId(Long folderId) {
+        if (folderId == null || folderId == 0) {
+            return folderDao.getById(Long.parseLong(System.getProperty("default.folder")));
+        } else {
+            return folderDao.getById(folderId);
+        }
+    }
+
+    private DocBean saveDocToDBAndAssignPermissionsForAllowedGroups(Set<GroupBean> allowedGroups, String folderPath, String trimmedDesignatedName) throws Exception {
+        DocBean createdDoc = docDao.saveDocument(new DocBean(trimmedDesignatedName, folderPath + trimmedDesignatedName));
+        if (CollectionUtils.isNotEmpty(allowedGroups)) {
+            for (GroupBean groupBean : allowedGroups) {
+                docGroupPermissionsDao.setWriteForDocumentForGroup(createdDoc, groupBean);
+            }
+        }
+        return createdDoc;
+    }
+
+    private String replaceSlashesInDesignatedNameAndTrim(String designatedName) {
+        return StringUtils.trim(StringUtils.replaceEach(designatedName, new String[] { "\\", "/" }, new String[] { "", "" }));
     }
 }

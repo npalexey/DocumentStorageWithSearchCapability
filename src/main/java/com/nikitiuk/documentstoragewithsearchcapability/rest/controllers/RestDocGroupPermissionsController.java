@@ -54,7 +54,7 @@ public class RestDocGroupPermissionsController {
                     "Error at RestDocGroupPermissionsController getPermissionsForDocumentsByGroupId, groupId: %d.",
                     groupId), e);
             return ResponseService.errorResponse(Response.Status.NOT_FOUND, String.format(
-                    "Error while producing permissions for documents for group: %d. %s", groupId, e.getMessage()));
+                    "Error while producing permissions for documents for groupId: %d. %s", groupId, e.getMessage()));
         }
     }
 
@@ -91,7 +91,7 @@ public class RestDocGroupPermissionsController {
                     "Error at RestDocGroupPermissionsController setWritePermissionsForGroupForDocument, " +
                             "documentId: %d, groupId: %d.", requestObj.getDocumentId(), requestObj.getGroupId()), e);
             return ResponseService.errorResponse(Response.Status.NOT_FOUND,
-                    String.format("Error while setting write permissions for document: %d, for group: %d. %s",
+                    String.format("Error while setting write permissions for documentId: %d, for groupId: %d. %s",
                             requestObj.getDocumentId(), requestObj.getGroupId(), e.getMessage()));
         }
     }
@@ -111,7 +111,7 @@ public class RestDocGroupPermissionsController {
                     "Error at RestDocGroupPermissionsController setReadPermissionsForGroupForDocument, " +
                             "documentId: %d, groupId: %d.", requestObj.getDocumentId(), requestObj.getGroupId()), e);
             return ResponseService.errorResponse(Response.Status.NOT_FOUND,
-                    String.format("Error while setting read permissions for document: %d, for group: %d. %s",
+                    String.format("Error while setting read permissions for documentId: %d, for groupId: %d. %s",
                             requestObj.getDocumentId(), requestObj.getGroupId(), e.getMessage()));
         }
     }
@@ -130,7 +130,7 @@ public class RestDocGroupPermissionsController {
                     "Error at RestDocGroupPermissionsController deleteAllPermissionsForGroup, groupId: %d.",
                     groupid), e);
             return ResponseService.errorResponse(Response.Status.NOT_FOUND, String.format(
-                    "Error while deleting all permissions for documents for group: %d. %s", groupid, e.getMessage()));
+                    "Error while deleting all permissions for documents for groupId: %d. %s", groupid, e.getMessage()));
         }
     }
 
@@ -149,7 +149,7 @@ public class RestDocGroupPermissionsController {
                     "Error at RestDocGroupPermissionsController deleteAllPermissionsForDocument, documentId: %d.",
                     documentid), e);
             return ResponseService.errorResponse(Response.Status.NOT_FOUND, String.format(
-                    "Error while deleting all permissions for document: %d. %s", documentid, e.getMessage()));
+                    "Error while deleting all permissions for documentId: %d. %s", documentid, e.getMessage()));
         }
     }
 
@@ -169,7 +169,7 @@ public class RestDocGroupPermissionsController {
                     "Error at RestDocGroupPermissionsController deletePermissionsForDocumentForGroup, " +
                             "documentId: %d, groupId: %d", requestObj.getDocumentId(), requestObj.getGroupId()), e);
             return ResponseService.errorResponse(Response.Status.NOT_FOUND, String.format(
-                    "Error while deleting all permissions for document(id:%d) for group(id:%d). %s",
+                    "Error while deleting all permissions for documentId: %d,  for groupId: %d. %s",
                     requestObj.getDocumentId(), requestObj.getGroupId(), e.getMessage()));
         }
     }

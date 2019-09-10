@@ -1,4 +1,4 @@
-package com.nikitiuk.documentstoragewithsearchcapability.filters;
+package com.nikitiuk.documentstoragewithsearchcapability.security;
 
 import com.nikitiuk.documentstoragewithsearchcapability.dao.implementations.UserDao;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.GroupBean;
@@ -97,8 +97,9 @@ public class AuthenticationFilter implements ContainerRequestFilter {
 
     private void setDefaultContext(ContainerRequestContext requestContext) {
         UserBean user = userDao.getUserByName("Guest");
+
         String scheme = requestContext.getUriInfo().getRequestUri().getScheme();
-        requestContext.setSecurityContext(new SecurityContextImplementation(user, scheme));
+        requestContext.setSecurityContext(new SecurityContextImplementation(createUserPrincipal(user), scheme));
     }
 
     private void setContextIfNoAnnotationsArePresent(final String usernameAndPassword,
@@ -117,7 +118,7 @@ public class AuthenticationFilter implements ContainerRequestFilter {
             return;
         }
         String scheme = requestContext.getUriInfo().getRequestUri().getScheme();
-        requestContext.setSecurityContext(new SecurityContextImplementation(user, scheme));
+        requestContext.setSecurityContext(new SecurityContextImplementation(createUserPrincipal(user), scheme));
     }
 
     private boolean chekUserForValidityAndSetContextIfSo(final String usernameAndPassword,
@@ -135,7 +136,7 @@ public class AuthenticationFilter implements ContainerRequestFilter {
         for (GroupBean group : user.getGroups()) {
             if (rolesSet.contains(group.getName())) {
                 String scheme = requestContext.getUriInfo().getRequestUri().getScheme();
-                requestContext.setSecurityContext(new SecurityContextImplementation(user, scheme));
+                requestContext.setSecurityContext(new SecurityContextImplementation(createUserPrincipal(user), scheme));
                 return true;
             }
         }
@@ -148,5 +149,13 @@ public class AuthenticationFilter implements ContainerRequestFilter {
             throw new NoValidDataFromSourceException("Wrong syntax in username or password.");
         }
         return decoupledUsernameAndPassword;
+    }
+
+    private UserPrincipal createUserPrincipal(UserBean user) {
+        UserPrincipal userPrincipal = new UserPrincipal();
+        userPrincipal.setId(user.getId());
+        userPrincipal.setName(user.getName());
+        userPrincipal.setGroups(user.getGroups());
+        return userPrincipal;
     }
 }

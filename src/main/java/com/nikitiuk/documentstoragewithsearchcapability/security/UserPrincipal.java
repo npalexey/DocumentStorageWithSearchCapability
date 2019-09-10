@@ -1,9 +1,11 @@
-package com.nikitiuk.documentstoragewithsearchcapability.entities.helpers;
+package com.nikitiuk.documentstoragewithsearchcapability.security;
 
 import com.nikitiuk.documentstoragewithsearchcapability.entities.GroupBean;
 
 import javax.security.auth.Subject;
 import java.security.Principal;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 public class UserPrincipal implements Principal {
@@ -38,6 +40,14 @@ public class UserPrincipal implements Principal {
 
     public void setGroups(Set<GroupBean> groups) {
         this.groups = groups;
+    }
+
+    public List<Long> getGroupsIds() {
+        List<Long> groupIds = new ArrayList<>();
+        for (GroupBean groupBean : this.getGroups()) {
+            groupIds.add(groupBean.getId());
+        }
+        return groupIds;
     }
 
     @Override

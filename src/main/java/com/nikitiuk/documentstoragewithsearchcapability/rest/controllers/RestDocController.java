@@ -1,13 +1,13 @@
 package com.nikitiuk.documentstoragewithsearchcapability.rest.controllers;
 
 import com.nikitiuk.documentstoragewithsearchcapability.entities.DocBean;
-import com.nikitiuk.documentstoragewithsearchcapability.filters.SecurityContextImplementation;
 import com.nikitiuk.documentstoragewithsearchcapability.rest.entities.DocumentDownloaderResponseBuilder;
 import com.nikitiuk.documentstoragewithsearchcapability.rest.services.RestDocService;
 import com.nikitiuk.documentstoragewithsearchcapability.rest.services.helpers.ResponseService;
 import com.nikitiuk.documentstoragewithsearchcapability.rest.services.helpers.ThymeleafResponseService;
 import com.nikitiuk.documentstoragewithsearchcapability.rest.services.helpers.enums.Actions;
 import com.nikitiuk.documentstoragewithsearchcapability.rest.services.helpers.enums.EntityTypes;
+import com.nikitiuk.documentstoragewithsearchcapability.security.SecurityContextImplementation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.slf4j.Logger;
@@ -66,7 +66,7 @@ public class RestDocController {
     @GET
     @Path("{documentid}")
     public Response downloadDocument(@Context ContainerRequestContext context,
-                                         @PathParam("documentid") long documentId) {
+                                     @PathParam("documentid") long documentId) {
         try {
             DocumentDownloaderResponseBuilder documentDownloaderResponseBuilder = docService.downloadDocumentById(
                     (SecurityContextImplementation) context.getSecurityContext(), documentId);
@@ -84,7 +84,7 @@ public class RestDocController {
     @Path("/{documentid}/content")
     @Produces(MediaType.TEXT_HTML)
     public Response getContentOfDocument(@PathParam("documentid") long documentId,
-                                             @Context ContainerRequestContext context) {
+                                         @Context ContainerRequestContext context) {
         try {
             List<String> documentContent = docService.getContentOfDocumentById(
                     (SecurityContextImplementation) context.getSecurityContext(), documentId);
@@ -101,14 +101,14 @@ public class RestDocController {
     @POST
     @Path("/{parentid}")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @Produces(MediaType.TEXT_HTML)
     public Response uploadDocument(@FormDataParam("file") InputStream fileInputStream,
                                    @Context ContainerRequestContext context,
                                    @FormDataParam("designatedName") String designatedName,
-                                   //@FormDataParam("file") FormDataContentDisposition fileMetaData,
                                    @PathParam("parentid") long parentFolderId) {
         try {
-            DocBean uploadedDocument = docService.uploadDocument(fileInputStream,
-                    (SecurityContextImplementation) context.getSecurityContext(), designatedName, parentFolderId);
+            DocBean uploadedDocument = docService.uploadDocument((SecurityContextImplementation)
+                    context.getSecurityContext(), fileInputStream, designatedName, parentFolderId);
             return ThymeleafResponseService.visualiseSingleEntity(
                     EntityTypes.DOCUMENT, uploadedDocument, Actions.UPLOADED);
         } catch (Exception e) {
@@ -139,12 +139,14 @@ public class RestDocController {
     @PUT
     @Path("/{documentid}")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @Produces(MediaType.TEXT_HTML)
     public Response updateDocument(@Context ContainerRequestContext context,
-                                       @PathParam("documentid") long documentId,
-                                       @FormDataParam("file") InputStream fileInputStream) {
+                                   @PathParam("documentid") long documentId,
+                                   @FormDataParam("file") InputStream fileInputStream,
+                                   @FormDataParam("designatedName") String designatedName) {
         try {
             DocBean updatedDocument = docService.updateDocumentById(
-                    (SecurityContextImplementation) context.getSecurityContext(), documentId, fileInputStream);
+                    (SecurityContextImplementation) context.getSecurityContext(), fileInputStream, documentId, designatedName);
             return ThymeleafResponseService.visualiseSingleEntity(
                     EntityTypes.DOCUMENT, updatedDocument, Actions.UPDATED);
         } catch (Exception e) {
@@ -160,7 +162,7 @@ public class RestDocController {
     @Path("/{documentid}")
     @Produces(MediaType.TEXT_HTML)
     public Response deleteDocument(@Context ContainerRequestContext context,
-                                       @PathParam("documentid") long documentId) {
+                                   @PathParam("documentid") long documentId) {
         try {
             String deletedDocumentPath = docService.deleteDocumentById(
                     (SecurityContextImplementation) context.getSecurityContext(), documentId);

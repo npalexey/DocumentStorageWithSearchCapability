@@ -29,7 +29,6 @@ public class DocBean {
     @Column(name = "document_name", nullable = false)
     private String name;
 
-    @NaturalId
     @Column(name = "document_path", unique = true, nullable = false)
     private String path;
 

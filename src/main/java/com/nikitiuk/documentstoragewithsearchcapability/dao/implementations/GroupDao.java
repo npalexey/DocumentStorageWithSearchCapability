@@ -1,11 +1,11 @@
 package com.nikitiuk.documentstoragewithsearchcapability.dao.implementations;
 
 import com.nikitiuk.documentstoragewithsearchcapability.dao.GenericHibernateDao;
-import com.nikitiuk.documentstoragewithsearchcapability.entities.*;
-import com.nikitiuk.documentstoragewithsearchcapability.entities.helpers.enums.Permissions;
+import com.nikitiuk.documentstoragewithsearchcapability.entities.GroupBean;
+import com.nikitiuk.documentstoragewithsearchcapability.entities.UserBean;
 import com.nikitiuk.documentstoragewithsearchcapability.exceptions.AlreadyExistsException;
+import com.nikitiuk.documentstoragewithsearchcapability.rest.services.helpers.InspectorService;
 import com.nikitiuk.documentstoragewithsearchcapability.utils.HibernateUtil;
-import javassist.NotFoundException;
 import org.apache.commons.collections.CollectionUtils;
 import org.hibernate.Hibernate;
 import org.hibernate.Session;
@@ -13,7 +13,9 @@ import org.hibernate.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class GroupDao extends GenericHibernateDao<GroupBean> {
 
@@ -23,13 +25,12 @@ public class GroupDao extends GenericHibernateDao<GroupBean> {
         super(GroupBean.class);
     }
 
-    public List<GroupBean> getGroups() {
+    public List<GroupBean> getGroups() throws Exception {
         Transaction transaction = null;
-        List<GroupBean> groupBeanList = new ArrayList<>();
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             transaction = session.beginTransaction();
-            groupBeanList = session.createQuery("FROM GroupBean", GroupBean.class).list();
-            if(CollectionUtils.isNotEmpty(groupBeanList)){
+            List<GroupBean> groupBeanList = session.createQuery("FROM GroupBean", GroupBean.class).list();
+            if (CollectionUtils.isNotEmpty(groupBeanList)) {
                 initializeConnectionsForList(groupBeanList);
             }
             transaction.commit();
@@ -39,7 +40,7 @@ public class GroupDao extends GenericHibernateDao<GroupBean> {
             if (transaction != null) {
                 transaction.rollback();
             }
-            return groupBeanList;
+            throw e;
         }
     }
 
@@ -98,43 +99,15 @@ public class GroupDao extends GenericHibernateDao<GroupBean> {
     }
 
     public GroupBean updateGroup(GroupBean groupBean) throws Exception {
-        try {
-            boolean requiresMerge = true;
-            GroupBean updatedGroup = getGroupByName(groupBean.getName());
-            if (updatedGroup == null) {
-                throw new NotFoundException("Group not found.");
-            }
-            if (updatedGroup.getUsers().containsAll(groupBean.getUsers())) {
-                requiresMerge = false;
-            }
-            updatedGroup.setUsers(groupBean.getUsers());
-            /*updatedGroup.setDocumentsPermissions(groupBean.getDocumentsPermissions());*/
-            /*updatedGroup.setFoldersPermissions(groupBean.getFoldersPermissions());*/
-            initializeConnections(updatedGroup);
-            return save(updatedGroup, requiresMerge);
-        } catch (Exception e) {
-            logger.error("Error at GroupDao updateAndSaveGroup: ", e);
-            throw e;
+        boolean requiresMerge = true;
+        GroupBean updatedGroup = getGroupByName(groupBean.getName());
+        InspectorService.checkIfGroupIsNull(updatedGroup);
+        if (updatedGroup.getUsers().containsAll(groupBean.getUsers())) {
+            requiresMerge = false;
         }
-    }
-
-    public void deleteGroupByName(String groupName) {
-        Transaction transaction = null;
-        GroupBean checkedGroup = getGroupByName(groupName);
-        if (checkedGroup != null) {
-            try (Session session = HibernateUtil.getSessionFactory().openSession()) {
-                transaction = session.beginTransaction();
-                /*session.createQuery("DELETE FROM GroupBean WHERE name = '" +
-                        groupName + "'").executeUpdate();*/
-                session.delete(checkedGroup);
-                transaction.commit();
-            } catch (Exception e) {
-                logger.error("Error at GroupDao deleteGroupByName: ", e);
-                if (transaction != null) {
-                    transaction.rollback();
-                }
-            }
-        }
+        updatedGroup.setUsers(groupBean.getUsers());
+        initializeConnections(updatedGroup);
+        return save(updatedGroup, requiresMerge);
     }
 
     public boolean exists(GroupBean group) throws Exception {
@@ -148,8 +121,6 @@ public class GroupDao extends GenericHibernateDao<GroupBean> {
         Transaction transaction = null;
         try {
             group.setUsers(getExistingUsers(group));
-            /*group.setDocumentsPermissions(getPermissionsForExistingDocs(group));*/
-            /*group.setFoldersPermissions(getPermissionsForExistingFolders(group));*/
             Session session = HibernateUtil.getSessionFactory().openSession();
             transaction = session.beginTransaction();
             session.saveOrUpdate(group);
@@ -159,6 +130,7 @@ public class GroupDao extends GenericHibernateDao<GroupBean> {
             transaction.commit();
             return group;
         } catch (Exception e) {
+            logger.error("Error at GroupDao save.", e);
             if (transaction != null) {
                 transaction.rollback();
             }
@@ -167,20 +139,15 @@ public class GroupDao extends GenericHibernateDao<GroupBean> {
     }
 
     private Set<UserBean> getExistingUsers(GroupBean group) throws Exception {
-        if (group == null) {
-            throw new Exception("No GroupBean was passed to check.");
-        }
+        InspectorService.checkIfGroupIsNull(group);
         Set<UserBean> checkedUsers = new HashSet<>();
-        if (group.getUsers() == null || group.getUsers().isEmpty()) {
+        if (CollectionUtils.isEmpty(group.getUsers())) {
             return checkedUsers;
         }
         Transaction transaction = null;
         try {
             Session session = HibernateUtil.getSessionFactory().openSession();
-            Set<String> userNames = new HashSet<>();
-            for (UserBean userBean : group.getUsers()) {
-                userNames.add(userBean.getName());
-            }
+            Set<String> userNames = group.getUserNamesSet();
             transaction = session.beginTransaction();
             checkedUsers.addAll(session.createQuery("FROM UserBean WHERE name IN (:userNames)", UserBean.class).setParameterList("userNames", userNames).list());
             transaction.commit();
@@ -193,108 +160,6 @@ public class GroupDao extends GenericHibernateDao<GroupBean> {
         }
     }
 
-    /*private Set<DocGroupPermissions> getPermissionsForExistingDocs(GroupBean group) throws Exception {
-        if (group == null) {
-            throw new Exception("No GroupBean was passed to check.");
-        }
-        Set<DocGroupPermissions> docGroupPermissionsToSet = new HashSet<>();
-        Set<DocGroupPermissions> docGroupPermissionsToCheck = group.getDocumentsPermissions();
-        if (docGroupPermissionsToCheck == null || docGroupPermissionsToCheck.isEmpty()) {
-            return docGroupPermissionsToSet;
-        }
-        Map<String, Permissions> docPathsAndPermissions = new HashMap<>();
-        Map<Long, Permissions> docIdsAndPermissions = new HashMap<>();
-        for (DocGroupPermissions docGroupPermissions : docGroupPermissionsToCheck) {
-            if (docGroupPermissions.getPermissions() != null) {
-                if (docGroupPermissions.getDocument().getId() != null) {
-                    docIdsAndPermissions.put(docGroupPermissions.getDocument().getId(), docGroupPermissions.getPermissions());
-                } else if (docGroupPermissions.getDocument().getPath() != null) {
-                    docPathsAndPermissions.put(docGroupPermissions.getDocument().getPath(), docGroupPermissions.getPermissions());
-                }
-            }
-        }
-        if (docPathsAndPermissions.isEmpty() && docIdsAndPermissions.isEmpty()) {
-            return docGroupPermissionsToSet;
-        }
-        Transaction transaction = null;
-        try {
-            Session session = HibernateUtil.getSessionFactory().openSession();
-            transaction = session.beginTransaction();
-            if (!docPathsAndPermissions.isEmpty()) {
-                Set<DocBean> checkedDocsWithPath = new HashSet<>(session.createQuery("FROM DocBean WHERE path IN (:docPaths)", DocBean.class)
-                        .setParameterList("docPaths", docPathsAndPermissions.keySet()).list());
-                for (DocBean docBean : checkedDocsWithPath) {
-                    docGroupPermissionsToSet.add(new DocGroupPermissions(group, docBean, docPathsAndPermissions.get(docBean.getPath())));
-                }
-            }
-            if (!docIdsAndPermissions.isEmpty()) {
-                Set<DocBean> checkedDocsWithIds = new HashSet<>(session.createQuery("FROM DocBean WHERE id IN (:ids)", DocBean.class)
-                        .setParameterList("ids", docIdsAndPermissions.keySet()).list());
-                for (DocBean docBean : checkedDocsWithIds) {
-                    docGroupPermissionsToSet.add(new DocGroupPermissions(group, docBean, docIdsAndPermissions.get(docBean.getId())));
-                }
-            }
-            transaction.commit();
-            return docGroupPermissionsToSet;
-        } catch (Exception e) {
-            if (transaction != null) {
-                transaction.rollback();
-            }
-            throw e;
-        }
-    }*/
-
-    /*private Set<FolderGroupPermissions> getPermissionsForExistingFolders(GroupBean group) throws Exception {
-        if (group == null) {
-            throw new Exception("No GroupBean was passed to check.");
-        }
-        Set<FolderGroupPermissions> folderGroupPermissionsToSet = new HashSet<>();
-        Set<FolderGroupPermissions> folderGroupPermissionsToCheck = group.getFoldersPermissions();
-        if (folderGroupPermissionsToCheck == null || folderGroupPermissionsToCheck.isEmpty()) {
-            return folderGroupPermissionsToSet;
-        }
-        Map<String, Permissions> folderPathsAndPermissions = new HashMap<>();
-        Map<Long, Permissions> folderIdsAndPermissions = new HashMap<>();
-        for (FolderGroupPermissions folderGroupPermissions : folderGroupPermissionsToCheck) {
-            if (folderGroupPermissions.getPermissions() != null) {
-                if (folderGroupPermissions.getFolder().getId() != null) {
-                    folderIdsAndPermissions.put(folderGroupPermissions.getFolder().getId(), folderGroupPermissions.getPermissions());
-                } else if (folderGroupPermissions.getFolder().getPath() != null) {
-                    folderPathsAndPermissions.put(folderGroupPermissions.getFolder().getPath(), folderGroupPermissions.getPermissions());
-                }
-            }
-        }
-        if (folderPathsAndPermissions.isEmpty() && folderIdsAndPermissions.isEmpty()) {
-            return folderGroupPermissionsToSet;
-        }
-        Transaction transaction = null;
-        try {
-            Session session = HibernateUtil.getSessionFactory().openSession();
-            transaction = session.beginTransaction();
-            if (!folderPathsAndPermissions.isEmpty()) {
-                Set<FolderBean> checkedFoldersWithPath = new HashSet<>(session.createQuery("FROM FolderBean WHERE path IN (:folderPaths)", FolderBean.class)
-                        .setParameterList("folderPaths", folderPathsAndPermissions.keySet()).list());
-                for (FolderBean folderBean : checkedFoldersWithPath) {
-                    folderGroupPermissionsToSet.add(new FolderGroupPermissions(group, folderBean, folderPathsAndPermissions.get(folderBean.getPath())));
-                }
-            }
-            if (!folderIdsAndPermissions.isEmpty()) {
-                Set<FolderBean> checkedFoldersWithIds = new HashSet<>(session.createQuery("FROM FolderBean WHERE id IN (:ids)", FolderBean.class)
-                        .setParameterList("ids", folderIdsAndPermissions.keySet()).list());
-                for (FolderBean folderBean : checkedFoldersWithIds) {
-                    folderGroupPermissionsToSet.add(new FolderGroupPermissions(group, folderBean, folderIdsAndPermissions.get(folderBean.getId())));
-                }
-            }
-            transaction.commit();
-            return folderGroupPermissionsToSet;
-        } catch (Exception e) {
-            if (transaction != null) {
-                transaction.rollback();
-            }
-            throw e;
-        }
-    }*/
-
     private void initializeConnectionsForList(List<GroupBean> groupBeanList) {
         for (GroupBean groupBean : groupBeanList) {
             initializeConnections(groupBean);
@@ -303,11 +168,5 @@ public class GroupDao extends GenericHibernateDao<GroupBean> {
 
     private void initializeConnections(GroupBean group) {
         Hibernate.initialize(group.getUsers());
-        /*for (DocGroupPermissions docGroupPermissions : group.getDocumentsPermissions()) {
-            Hibernate.initialize(docGroupPermissions);
-        }*/
-        /*for (FolderGroupPermissions folderGroupPermissions : group.getFoldersPermissions()) {
-            Hibernate.initialize(folderGroupPermissions);
-        }*/
     }
 }

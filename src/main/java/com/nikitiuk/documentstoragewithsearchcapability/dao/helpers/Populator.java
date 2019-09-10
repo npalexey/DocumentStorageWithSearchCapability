@@ -40,41 +40,49 @@ public class Populator {
 
     private static void getFolderGroupPermissionsListForPopulate() {
         FolderDao folderDao = new FolderDao();
-        List<FolderBean> folderBeanList = folderDao.getAllFolders();
-        if (CollectionUtils.isNotEmpty(folderBeanList)) {
-            GroupDao groupDao = new GroupDao();
-            List<GroupBean> groupBeanList = groupDao.getGroups();
-            for (FolderBean folderBean : folderBeanList) {
-                FolderGroupPermissions folderGroupPermissionsAdmin = new FolderGroupPermissions(groupBeanList.get(0), folderBean);
-                FolderGroupPermissions folderGroupPermissionsUser = new FolderGroupPermissions(groupBeanList.get(1), folderBean);
-                FolderGroupPermissions folderGroupPermissionsGuest = new FolderGroupPermissions(groupBeanList.get(2), folderBean);
-                folderGroupPermissionsAdmin.setPermissions(Permissions.WRITE);
-                folderGroupPermissionsUser.setPermissions(Permissions.READ);
-                folderGroupPermissionsGuest.setPermissions(Permissions.READ);
-                folderGroupPermissionsList.add(folderGroupPermissionsAdmin);
-                folderGroupPermissionsList.add(folderGroupPermissionsUser);
-                folderGroupPermissionsList.add(folderGroupPermissionsGuest);
+        try {
+            List<FolderBean> folderBeanList = folderDao.getAllFolders();
+            if (CollectionUtils.isNotEmpty(folderBeanList)) {
+                GroupDao groupDao = new GroupDao();
+                List<GroupBean> groupBeanList = groupDao.getGroups();
+                for (FolderBean folderBean : folderBeanList) {
+                    FolderGroupPermissions folderGroupPermissionsAdmin = new FolderGroupPermissions(groupBeanList.get(0), folderBean);
+                    FolderGroupPermissions folderGroupPermissionsUser = new FolderGroupPermissions(groupBeanList.get(1), folderBean);
+                    FolderGroupPermissions folderGroupPermissionsGuest = new FolderGroupPermissions(groupBeanList.get(2), folderBean);
+                    folderGroupPermissionsAdmin.setPermissions(Permissions.WRITE);
+                    folderGroupPermissionsUser.setPermissions(Permissions.READ);
+                    folderGroupPermissionsGuest.setPermissions(Permissions.READ);
+                    folderGroupPermissionsList.add(folderGroupPermissionsAdmin);
+                    folderGroupPermissionsList.add(folderGroupPermissionsUser);
+                    folderGroupPermissionsList.add(folderGroupPermissionsGuest);
+                }
             }
+        } catch (Exception e) {
+            logger.error("Error at Populator getFolderGroupPermissionsListForPopulate.", e);
         }
     }
 
     private static void getDocGroupPermissionsListForPopulate() {
         DocDao docDao = new DocDao();
-        List<DocBean> docBeanList = docDao.getAllDocuments();
-        if (CollectionUtils.isNotEmpty(docBeanList)) {
-            GroupDao groupDao = new GroupDao();
-            List<GroupBean> groupBeanList = groupDao.getGroups();
-            for (DocBean docBean : docBeanList) {
-                DocGroupPermissions docGroupPermissionsAdmin = new DocGroupPermissions(groupBeanList.get(0), docBean);
-                DocGroupPermissions docGroupPermissionsUser = new DocGroupPermissions(groupBeanList.get(1), docBean);
-                DocGroupPermissions docGroupPermissionsGuest = new DocGroupPermissions(groupBeanList.get(2), docBean);
-                docGroupPermissionsAdmin.setPermissions(Permissions.WRITE);
-                docGroupPermissionsUser.setPermissions(Permissions.READ);
-                docGroupPermissionsGuest.setPermissions(Permissions.READ);
-                docGroupPermissionsList.add(docGroupPermissionsAdmin);
-                docGroupPermissionsList.add(docGroupPermissionsUser);
-                docGroupPermissionsList.add(docGroupPermissionsGuest);
+        try {
+            List<DocBean> docBeanList = docDao.getAllDocuments();
+            if (CollectionUtils.isNotEmpty(docBeanList)) {
+                GroupDao groupDao = new GroupDao();
+                List<GroupBean> groupBeanList = groupDao.getGroups();
+                for (DocBean docBean : docBeanList) {
+                    DocGroupPermissions docGroupPermissionsAdmin = new DocGroupPermissions(groupBeanList.get(0), docBean);
+                    DocGroupPermissions docGroupPermissionsUser = new DocGroupPermissions(groupBeanList.get(1), docBean);
+                    DocGroupPermissions docGroupPermissionsGuest = new DocGroupPermissions(groupBeanList.get(2), docBean);
+                    docGroupPermissionsAdmin.setPermissions(Permissions.WRITE);
+                    docGroupPermissionsUser.setPermissions(Permissions.READ);
+                    docGroupPermissionsGuest.setPermissions(Permissions.READ);
+                    docGroupPermissionsList.add(docGroupPermissionsAdmin);
+                    docGroupPermissionsList.add(docGroupPermissionsUser);
+                    docGroupPermissionsList.add(docGroupPermissionsGuest);
+                }
             }
+        } catch (Exception e) {
+            logger.error("Error at Populator getDocGroupPermissionsListForPopulate.", e);
         }
     }
 
@@ -87,7 +95,7 @@ public class Populator {
                 transaction.commit();
             }
         } catch (Exception e) {
-            logger.error("Error at Populator populateTableWithGroups: ", e);
+            logger.error("Error at Populator populateTableWithGroups.", e);
             if (transaction != null) {
                 transaction.rollback();
             }
@@ -108,7 +116,7 @@ public class Populator {
             if (transaction != null) {
                 transaction.rollback();
             }
-            logger.error("Error at Populator populateTableWithUsers: ", e);
+            logger.error("Error at Populator populateTableWithUsers.", e);
         }
     }
 
@@ -124,7 +132,7 @@ public class Populator {
             if (transaction != null) {
                 transaction.rollback();
             }
-            logger.error("Error at Populator populateTableWithFolders: ", e);
+            logger.error("Error at Populator populateTableWithFolders.", e);
         }
     }
 
@@ -140,7 +148,7 @@ public class Populator {
             if (transaction != null) {
                 transaction.rollback();
             }
-            logger.error("Error at Populator populateTableWithDocs: ", e);
+            logger.error("Error at Populator populateTableWithDocs.", e);
         }
     }
 
@@ -154,7 +162,7 @@ public class Populator {
                 transaction.commit();
             }
         } catch (Exception e) {
-            logger.error("Error at Populator populateTableWithFolderGroupPermissions: ", e);
+            logger.error("Error at Populator populateTableWithFolderGroupPermissions.", e);
             if (transaction != null) {
                 transaction.rollback();
             }
@@ -171,7 +179,7 @@ public class Populator {
                 transaction.commit();
             }
         } catch (Exception e) {
-            logger.error("Error at Populator populateTableWithDocGroupPermissions: ", e);
+            logger.error("Error at Populator populateTableWithDocGroupPermissions.", e);
             if (transaction != null) {
                 transaction.rollback();
             }

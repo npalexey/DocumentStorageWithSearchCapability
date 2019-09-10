@@ -2,6 +2,8 @@ package com.nikitiuk.documentstoragewithsearchcapability.services;
 
 import com.nikitiuk.documentstoragewithsearchcapability.entities.DocBean;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.FolderBean;
+import com.nikitiuk.documentstoragewithsearchcapability.exceptions.AlreadyExistsException;
+import javassist.NotFoundException;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -109,12 +111,24 @@ public class LocalStorageService {
         out.close();
     }
 
-    public String fileUpdater(InputStream fileInputStream, String documentPath) throws IOException {
+    public String fileUpdater(InputStream fileInputStream, String documentPath) throws Exception {
         File tempFile = new File(documentPath);
         if (tempFile.exists()) {
             fileUploader(fileInputStream, documentPath);
+            return tempFile.getName();
+        } else {
+            throw new NotFoundException("No document found in storage with such properties, even so its entry exists in DB.");
         }
-        return tempFile.getName();
+    }
+
+    public String renameFile(String oldFilePath, String newFilePath) throws Exception {
+        File tempFile = new File(oldFilePath);
+        File tempFileToRenameTo = new File(newFilePath);
+        if(tempFile.renameTo(tempFileToRenameTo)){
+            return tempFile.getName();
+        } else {
+            throw new AlreadyExistsException("File with such name already exists.");
+        }
     }
 
     public void fileDeleter(String documentPath) throws IOException {

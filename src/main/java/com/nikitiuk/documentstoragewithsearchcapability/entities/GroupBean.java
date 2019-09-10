@@ -1,6 +1,7 @@
 package com.nikitiuk.documentstoragewithsearchcapability.entities;
 
 import com.nikitiuk.documentstoragewithsearchcapability.entities.helpers.enums.Permissions;
+import org.apache.commons.collections.CollectionUtils;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.*;
 
@@ -108,6 +109,16 @@ public class GroupBean implements Serializable {
         }
         return false;
     }*/
+
+    public Set<String> getUserNamesSet() {
+        Set<String> userNames = new HashSet<>();
+        if(CollectionUtils.isNotEmpty(users)){
+            for(UserBean user : users) {
+                userNames.add(user.getName());
+            }
+        }
+        return userNames;
+    }
 
     @Override
     public String toString() {
