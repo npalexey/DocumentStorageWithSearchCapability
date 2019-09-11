@@ -174,6 +174,7 @@ public class DocGroupPermissionsDao extends GenericHibernateDao<DocGroupPermissi
 
     private DocGroupPermissions setPermission(Long docId, Long groupId, Permissions permission) throws Exception {
         Transaction transaction = null;
+        boolean rollbackOnException = false;
         DocGroupPermissions setDocGroupPermissions;
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             transaction = session.beginTransaction();
@@ -181,6 +182,7 @@ public class DocGroupPermissionsDao extends GenericHibernateDao<DocGroupPermissi
                     + docId + " AND group = " + groupId, DocGroupPermissions.class).uniqueResult();
             if (docGroupPermissions != null) {
                 docGroupPermissions.setPermissions(permission);
+                rollbackOnException = true;
                 session.merge(docGroupPermissions);
                 setDocGroupPermissions = docGroupPermissions;
             } else {
@@ -189,16 +191,21 @@ public class DocGroupPermissionsDao extends GenericHibernateDao<DocGroupPermissi
                 GroupBean groupBean = session.get(GroupBean.class, groupId);
                 InspectorService.checkIfGroupIsNull(groupBean);
                 setDocGroupPermissions = createNewPermissions(docBean, groupBean, permission);
+                rollbackOnException = true;
                 session.saveOrUpdate(setDocGroupPermissions);
                 session.merge(docBean);
             }
             transaction.commit();
             return setDocGroupPermissions;
         } catch (Exception e) {
-            logger.error("Error at DocGroupPermissionsDao set " + permission + " ForDocumentForGroup, where " +
-                    "DocId = " + docId + " and GroupId = " + groupId + ": ", e);
-            if (transaction != null && (transaction.getStatus() == TransactionStatus.FAILED_COMMIT || transaction.getStatus() == TransactionStatus.COMMITTING)) {
-                transaction.rollback();
+            /*logger.error("Error at DocGroupPermissionsDao set " + permission + " ForDocumentForGroup, where " +
+                    "DocId = " + docId + " and GroupId = " + groupId + ": ", e);*/
+            if (transaction != null && transaction.isActive() && rollbackOnException) {
+                try {
+                    transaction.rollback();
+                } catch (Exception txE) {
+                    logger.error("Error on rollback at DocGroupPermissionsDao ForDocumentForGroup.", txE);
+                }
             }
             throw e;
         }

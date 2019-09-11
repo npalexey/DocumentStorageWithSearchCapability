@@ -43,6 +43,8 @@ public class HibernateUtil {
                 //settings.put(Environment.USE_SQL_COMMENTS, "true");
                 settings.put(Environment.CURRENT_SESSION_CONTEXT_CLASS, "thread");
                 settings.put(Environment.HBM2DDL_AUTO, "create");
+                settings.put(Environment.AUTOCOMMIT, "false"); //default
+                settings.put(Environment.CONNECTION_PROVIDER_DISABLES_AUTOCOMMIT, "true");
                 //settings.put(Environment.UNIQUE_CONSTRAINT_SCHEMA_UPDATE_STRATEGY, "RECREATE_QUIETLY");
                 //settings.put(Environment.STORAGE_ENGINE, "");
                 configuration.setProperties(settings);
