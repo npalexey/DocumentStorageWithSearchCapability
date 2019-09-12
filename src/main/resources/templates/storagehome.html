@@ -24,11 +24,17 @@
             <td><span th:utext="|, Groups: |">Groups</span></td>
             <td><th:block th:each="docPermissions : ${entry.documentsPermissions}"><span th:utext="|[Id: ${docPermissions.group.id}, ${docPermissions.permissions}]  |">Permissions</span></th:block></td>
         </tr>
+        <tr th:if="${entityType.name()} == 'FOLDER'" th:each="entry : ${inStorage}">
+            <td><span th:utext="|Id: ${entry.id} |">Folder id</span></td>
+            <td><span th:utext="|, Path: ${entry.path} |">Folder Path</span></td>
+            <td><span th:utext="|, Groups: |">Groups</span></td>
+            <td><th:block th:each="folderPermissions : ${entry.foldersPermissions}"><span th:utext="|[Id: ${folderPermissions.group.id}, ${folderPermissions.permissions}]  |">Permissions</span></th:block></td>
+        </tr>
         <tr th:if="${entityType.name()} == 'USER'" th:each="entry : ${inStorage}">
             <td><span th:utext="|Id: ${entry.id} |">User name</span></td>
             <td><span th:utext="|, Name: ${entry.name} |">User id</span></td>
             <td><span th:utext="|, Groups: |">Groups</span></td>
-            <td><th:block th:each="group : ${entry.groups}"><span th:utext="|${group.name}   |">Group name</span></th:block></td>
+            <td><th:block th:each="group : ${entry.groups}"><span th:utext="|[id: ${group.id}, ${group.name}] |">Group name</span></th:block></td>
 <!--            <th:block th:each="group : ${entry.groups}"><td><span th:utext="|Group: ${group.name}; |">User's Groups</span></td></th:block>-->
         </tr>
         <tr th:if="${entityType.name()} == 'GROUP'" th:each="entry : ${inStorage}">
@@ -37,7 +43,7 @@
             <!--<td><span th:utext="|, Docs: |">Docs</span></td>
             <td><th:block th:each="docPermissions : ${entry.documentsPermissions}"><span th:utext="|[Id: ${docPermissions.document.id}, ${docPermissions.permissions}]  |">Permissions</span></th:block></td>-->
             <td><span th:utext="|, Users: |">Group's users</span></td>
-            <td><th:block th:each="user : ${entry.users}"><span th:utext="|${user.name} |">Group's users</span></th:block></td>
+            <td><th:block th:each="user : ${entry.users}"><span th:utext="|[id: ${user.id}, ${user.name}] |">Group's users</span></th:block></td>
             <!--<th:block th:each="user : ${entry.users}">
                 <td><span th:utext="|${user.name} |">Group's users</span></td>-->
 <!--                <th:block th:each="group : ${user.groups}"><td><span th:text="|${group.name} |">Group Name</span></td></th:block>-->

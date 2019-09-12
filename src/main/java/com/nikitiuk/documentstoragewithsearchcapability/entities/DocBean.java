@@ -6,6 +6,7 @@ import org.hibernate.annotations.*;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
+import javax.persistence.OrderBy;
 import javax.persistence.Table;
 import javax.persistence.*;
 import java.util.HashSet;
@@ -37,6 +38,7 @@ public class DocBean {
             cascade = CascadeType.ALL,
             orphanRemoval = true
     )
+    @OrderBy
     private Set<DocGroupPermissions> documentsPermissions = new HashSet<>();
 
     public DocBean(String name, String path) {

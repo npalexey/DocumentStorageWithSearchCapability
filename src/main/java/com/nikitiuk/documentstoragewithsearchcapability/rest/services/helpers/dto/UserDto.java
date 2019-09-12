@@ -11,5 +11,4 @@ public class UserDto {
     private String password;
 
     private List<GroupBean> groups;
-
 }

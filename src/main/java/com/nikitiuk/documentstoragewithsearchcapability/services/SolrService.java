@@ -1,5 +1,8 @@
 package com.nikitiuk.documentstoragewithsearchcapability.services;
 
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.core.SimpleAnalyzer;
+import org.apache.lucene.queryparser.complexPhrase.ComplexPhraseQueryParser;
 import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServerException;
@@ -31,9 +34,11 @@ public class SolrService {
         client.request(req);
     }
 
-    public static void deleteDocumentFromSolrIndex(String documentPath) throws IOException, SolrServerException {
+    public static void deleteDocumentOrRecursiveFolderFromSolrIndex(String documentPath) throws IOException, SolrServerException {
         SolrClient client = new HttpSolrClient.Builder("http://localhost:8983/solr/mycoll").build();
-        client.deleteByQuery(String.format("docpath:\"%s\"", documentPath));
+        ComplexPhraseQueryParser queryParser = new ComplexPhraseQueryParser("docpath", new SimpleAnalyzer());
+        //client.deleteByQuery(queryParser.parse(String.format("docpath:%s*", documentPath)));
+        client.deleteByQuery(String.format("docpath:\"%s*\"", documentPath)); // * for 'starts with'
         client.commit();
     }
 

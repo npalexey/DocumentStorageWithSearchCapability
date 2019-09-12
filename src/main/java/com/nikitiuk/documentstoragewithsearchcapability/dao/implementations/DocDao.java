@@ -36,7 +36,7 @@ public class DocDao extends GenericHibernateDao<DocBean> {
     }
 
     @Override
-    public DocBean getById(Long documentId){
+    public DocBean getById(Long documentId) {
         Transaction transaction = null;
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             transaction = session.beginTransaction();
@@ -75,12 +75,12 @@ public class DocDao extends GenericHibernateDao<DocBean> {
         }
     }
 
-    public List<DocBean> getDocumentsForUser(UserPrincipal userPrincipal) throws Exception {
+    public List<DocBean> getDocumentsForUser(UserBean userBean) throws Exception {
         List<DocBean> docBeanList = new ArrayList<>();
-        if (CollectionUtils.isEmpty(userPrincipal.getGroups())) {
+        if (CollectionUtils.isEmpty(userBean.getGroups())) {
             return docBeanList;
         }
-        List<Long> groupIds = userPrincipal.getGroupsIds();
+        List<Long> groupIds = userBean.getGroupsIds();
         Transaction transaction = null;
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             transaction = session.beginTransaction();
@@ -100,13 +100,13 @@ public class DocDao extends GenericHibernateDao<DocBean> {
         }
     }
 
-    public List<DocBean> getDocumentsForUserInFolder(UserPrincipal userPrincipal, FolderBean folderBean) throws Exception {
+    public List<DocBean> getDocumentsForUserInFolder(UserBean userBean, FolderBean folderBean) throws Exception {
         List<DocBean> docBeanList = new ArrayList<>();
         if(folderBean == null || folderBean.getPath() == null
-                || CollectionUtils.isEmpty(userPrincipal.getGroups())) {
+                || CollectionUtils.isEmpty(userBean.getGroups())) {
             return docBeanList;
         }
-        List<Long> groupIds = userPrincipal.getGroupsIds();
+        List<Long> groupIds = userBean.getGroupsIds();
         Transaction transaction = null;
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             transaction = session.beginTransaction();

@@ -7,6 +7,7 @@ import com.nikitiuk.documentstoragewithsearchcapability.entities.GroupBean;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.UserBean;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.helpers.enums.Permissions;
 import com.nikitiuk.documentstoragewithsearchcapability.exceptions.AlreadyExistsException;
+import com.nikitiuk.documentstoragewithsearchcapability.rest.services.helpers.InspectorService;
 import com.nikitiuk.documentstoragewithsearchcapability.utils.HibernateUtil;
 import javassist.NotFoundException;
 import org.apache.commons.collections.CollectionUtils;
@@ -27,30 +28,15 @@ public class FolderDao extends GenericHibernateDao<FolderBean> {
     }
 
     public FolderBean saveFolder(FolderBean folder) throws Exception {
-        try {
-            if (exists(folder)) {
-                throw new AlreadyExistsException("Such Folder Already Exists");
-            }
-            return save(folder);
-        } catch (Exception e) {
-            logger.error("Error at FolderDao saveFolder: ", e);
-            throw e;
+        if (exists(folder)) {
+            throw new AlreadyExistsException("Such Folder Already Exists");
         }
+        return save(folder);
     }
 
-    public FolderBean updateFolder(FolderBean folder) throws Exception {
-        try {
-            FolderBean updatedFolder = getById(folder.getId());
-            if (updatedFolder == null) {
-                throw new NotFoundException("Folder not found.");
-            }
-            /*updatedFolder.setDocumentsPermissions(folder.getDocumentsPermissions());*/
-            initializeConnections(updatedFolder);
-            return save(updatedFolder);
-        } catch (Exception e) {
-            logger.error("Error at FolderDao updateFolder: ", e);
-            throw e;
-        }
+    public FolderBean updateFolder(FolderBean updatedFolder) throws Exception {
+        InspectorService.checkIfFolderIsNull(updatedFolder);
+        return save(updatedFolder);
     }
 
     @Override
@@ -66,7 +52,7 @@ public class FolderDao extends GenericHibernateDao<FolderBean> {
             session.close();
             return folderBean;
         } catch (Exception e) {
-            logger.error("Error at FolderDao getFolderById: ", e);
+            logger.error("Error at FolderDao getFolderById.", e);
             if (transaction != null) {
                 transaction.rollback();
             }
@@ -86,7 +72,7 @@ public class FolderDao extends GenericHibernateDao<FolderBean> {
             transaction.commit();
             return folderBeanList;
         } catch (Exception e) {
-            logger.error("Error at FolderDao getAll: ", e);
+            logger.error("Error at FolderDao getAll.", e);
             if (transaction != null) {
                 transaction.rollback();
             }
@@ -94,7 +80,7 @@ public class FolderDao extends GenericHibernateDao<FolderBean> {
         return folderBeanList;
     }
 
-    public FolderBean getFolderByPath(String path) {
+    /*public FolderBean getFolderByPath(String path) {
         Transaction transaction = null;
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             transaction = session.beginTransaction();
@@ -107,13 +93,13 @@ public class FolderDao extends GenericHibernateDao<FolderBean> {
             session.close();
             return folderBean;
         } catch (Exception e) {
-            logger.error("Error at FolderDao getFolderByPath: ", e);
+            logger.error("Error at FolderDao getFolderByPath.", e);
             if (transaction != null) {
                 transaction.rollback();
             }
             throw e;
         }
-    }
+    }*/
 
     public List<FolderBean> getFoldersForUser(UserBean userBean) {
         List<FolderBean> folderBeanList = new ArrayList<>();
@@ -121,10 +107,7 @@ public class FolderDao extends GenericHibernateDao<FolderBean> {
         if (userBean.getGroups() == null || userBean.getGroups().isEmpty()) {
             return folderBeanList;
         }
-        List<Long> groupIds = userBean.getGroupsIds();/*new ArrayList<>();
-        for (GroupBean groupBean : userBean.getGroups()) {
-            groupIds.add(groupBean.getId());
-        }*/
+        List<Long> groupIds = userBean.getGroupsIds();
         Transaction transaction = null;
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             transaction = session.beginTransaction();
@@ -134,25 +117,30 @@ public class FolderDao extends GenericHibernateDao<FolderBean> {
                 initializeConnectionsForList(folderBeanList);
             }
             transaction.commit();
+            return folderBeanList;
         } catch (Exception e) {
-            logger.error("Error at FolderDao getFoldersForUser: ", e);
+            logger.error("Error at FolderDao getFoldersForUser.", e);
             if (transaction != null) {
                 transaction.rollback();
             }
+            throw e;
         }
-        return folderBeanList;
     }
 
-    public void deleteFolder(FolderBean folderBean) {
+    public void deleteFolder(Long folderId) {
         Transaction transaction = null;
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             transaction = session.beginTransaction();
-            session.createSQLQuery("DELETE FROM Folder_group_permissions WHERE folder_id IN (SELECT * FROM (SELECT id FROM Folders WHERE folder_path = '"
+            session.createSQLQuery("DELETE FROM Folder_group_permissions WHERE folder_id = (:id)")
+                    .setParameter("id", folderId).executeUpdate();
+            session.createQuery("DELETE FROM FolderBean WHERE id = (:id)")
+                    .setParameter("id", folderId).executeUpdate();
+            /*session.createSQLQuery("DELETE FROM Folder_group_permissions WHERE folder_id IN (SELECT * FROM (SELECT id FROM Folders WHERE folder_path = '"
                     + folderBean.getPath() + "') AS X)").executeUpdate();
-            session.createQuery("DELETE FROM FolderBean WHERE path = '" + folderBean.getPath() + "'").executeUpdate();
+            session.createQuery("DELETE FROM FolderBean WHERE path = '" + folderBean.getPath() + "'").executeUpdate();*/
             transaction.commit();
         } catch (Exception e) {
-            logger.error("Error at FolderDao delete: ", e);
+            logger.error("Error at FolderDao delete.", e);
             if (transaction != null) {
                 transaction.rollback();
             }

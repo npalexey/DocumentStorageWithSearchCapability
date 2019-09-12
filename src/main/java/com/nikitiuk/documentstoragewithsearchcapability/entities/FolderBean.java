@@ -6,6 +6,7 @@ import org.hibernate.annotations.*;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
+import javax.persistence.OrderBy;
 import javax.persistence.Table;
 import javax.persistence.*;
 import java.util.HashSet;
@@ -26,7 +27,6 @@ public class FolderBean {
     @Column(name = "id", unique = true, updatable = false, nullable = false)
     private Long id;
 
-    @NaturalId
     @Column(name = "folder_path", unique = true, nullable = false)
     private String path;
 
@@ -35,6 +35,7 @@ public class FolderBean {
             cascade = CascadeType.ALL,
             orphanRemoval = true
     )
+    @OrderBy
     private Set<FolderGroupPermissions> foldersPermissions = new HashSet<>();
 
     public FolderBean() {

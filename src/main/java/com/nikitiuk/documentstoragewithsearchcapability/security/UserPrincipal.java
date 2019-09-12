@@ -42,14 +42,6 @@ public class UserPrincipal implements Principal {
         this.groups = groups;
     }
 
-    public List<Long> getGroupsIds() {
-        List<Long> groupIds = new ArrayList<>();
-        for (GroupBean groupBean : this.getGroups()) {
-            groupIds.add(groupBean.getId());
-        }
-        return groupIds;
-    }
-
     @Override
     public String getName() {
         return name;

@@ -5,6 +5,7 @@ import org.hibernate.annotations.*;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
+import javax.persistence.OrderBy;
 import javax.persistence.Table;
 import javax.persistence.*;
 import java.security.Principal;
@@ -24,7 +25,6 @@ public class UserBean implements Principal {
     @Column(name = "id", unique = true, updatable = false, nullable = false)
     private Long id;
 
-    @NaturalId
     @Column(name = "user_name", unique = true, nullable = false)
     private String name;
 
@@ -33,6 +33,7 @@ public class UserBean implements Principal {
 
     @ManyToMany(cascade = { CascadeType.PERSIST, CascadeType.MERGE }, fetch = FetchType.LAZY)
     //@Cascade(org.hibernate.annotations.CascadeType.SAVE_UPDATE)
+    @OrderBy("id DESC")
     @JoinTable(
             name = "User_groups_binding",
             joinColumns = { @JoinColumn(name = "user_id") },

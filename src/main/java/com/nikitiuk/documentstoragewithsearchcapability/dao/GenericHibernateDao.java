@@ -69,6 +69,13 @@ public class GenericHibernateDao<T> {
         return (T) getCurrentSession().merge(entity);
     }*/
 
+    public void refresh(T entity) {
+        executeFunction((session) -> {
+            session.refresh(entity);
+            return entity;
+        });
+    }
+
     public void deleteById(Long entityId) {
         executeFunction((session) -> {
             T entity = session.load(clazz, entityId);

@@ -7,6 +7,7 @@ import org.hibernate.annotations.*;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
+import javax.persistence.OrderBy;
 import javax.persistence.Table;
 import javax.persistence.*;
 import java.io.Serializable;
@@ -24,7 +25,7 @@ import java.util.Set;
 public class GroupBean implements Serializable {
 
     @ManyToMany(mappedBy = "groups", cascade = { CascadeType.PERSIST, CascadeType.MERGE })
-    //@OrderBy("name ASC")
+    @OrderBy //same as @OrderBy("id ASC")
     @OnDelete(action = OnDeleteAction.CASCADE)
     Set<UserBean> users = new HashSet<>();
 
@@ -34,7 +35,6 @@ public class GroupBean implements Serializable {
     @Column(name = "id", unique = true, updatable = false, nullable = false)
     private Long id;
 
-    @NaturalId
     @Column(name = "group_name", unique = true, nullable = false)
     private String name;
 

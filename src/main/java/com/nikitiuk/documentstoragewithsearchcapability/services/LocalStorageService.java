@@ -131,7 +131,7 @@ public class LocalStorageService {
         }
     }
 
-    public void fileDeleter(String documentPath) throws IOException {
+    public void fileOrRecursiveFolderDeleter(String documentPath) throws IOException {
         FileUtils.touch(new File(documentPath));
         File fileToDelete = FileUtils.getFile(documentPath);
         FileUtils.deleteQuietly(fileToDelete);

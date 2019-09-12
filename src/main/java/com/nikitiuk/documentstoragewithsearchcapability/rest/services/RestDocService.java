@@ -6,6 +6,7 @@ import com.nikitiuk.documentstoragewithsearchcapability.dao.implementations.Fold
 import com.nikitiuk.documentstoragewithsearchcapability.entities.DocBean;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.FolderBean;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.GroupBean;
+import com.nikitiuk.documentstoragewithsearchcapability.entities.helpers.DtoDaoTransformer;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.helpers.enums.Permissions;
 import com.nikitiuk.documentstoragewithsearchcapability.exceptions.NoValidDataFromSourceException;
 import com.nikitiuk.documentstoragewithsearchcapability.rest.entities.DocumentDownloaderResponseBuilder;
@@ -39,14 +40,15 @@ public class RestDocService {
     private FolderDao folderDao = new FolderDao();
     private DocGroupPermissionsDao docGroupPermissionsDao = new DocGroupPermissionsDao();
     private LocalStorageService localStorageService = new LocalStorageService();
+    private DtoDaoTransformer dtoDaoTransformer = new DtoDaoTransformer();
 
     public List<DocBean> getDocuments(SecurityContextImplementation securityContext) throws Exception {
-        return docDao.getDocumentsForUser(securityContext.getUserPrincipal());
+        return docDao.getDocumentsForUser(dtoDaoTransformer.userPrincipalToUserBean(securityContext.getUserPrincipal()));
     }
 
     public List<DocBean> getDocumentsInFolder(SecurityContextImplementation securityContext, Long folderId) throws Exception {
         FolderBean folder = getFolderByGivenId(folderId);
-        return docDao.getDocumentsForUserInFolder(securityContext.getUserPrincipal(), folder);
+        return docDao.getDocumentsForUserInFolder(dtoDaoTransformer.userPrincipalToUserBean(securityContext.getUserPrincipal()), folder);
     }
 
     public List<String> getContentOfDocumentById(SecurityContextImplementation securityContext, Long documentId) throws Exception {
@@ -88,7 +90,7 @@ public class RestDocService {
             }
         };
         executorService.execute(addTask);
-        return docDao.getById(createdDoc.getId());
+        return createdDoc;
     }
 
     public String searchInEveryDocumentWithStringQuery(String query, SecurityContextImplementation securityContext) throws Exception {
@@ -96,7 +98,7 @@ public class RestDocService {
         if (StringUtils.isBlank(query)) {
             throw new NoValidDataFromSourceException("Query is blank.");
         }
-        List<DocBean> permittedDocs = docDao.getDocumentsForUser(securityContext.getUserPrincipal());
+        List<DocBean> permittedDocs = docDao.getDocumentsForUser(dtoDaoTransformer.userPrincipalToUserBean(securityContext.getUserPrincipal()));
         QueryResponse response = SolrService.searchInDocumentsByQuery(query);
         contentBuilder.append(SearchResultsModifier.getSearchResultForPermittedDocs(response, query, permittedDocs));
         return contentBuilder.toString().replace("\n", "<br/>");
@@ -142,12 +144,12 @@ public class RestDocService {
         if (fileInputStream == null) {
             localStorageService.renameFile(oldPath, newPath);
         } else {
-            localStorageService.fileDeleter(oldPath);
+            localStorageService.fileOrRecursiveFolderDeleter(oldPath);
             localStorageService.fileUploader(fileInputStream, newPath);
         }
         Runnable putTask = () -> {
             try {
-                SolrService.deleteDocumentFromSolrIndex(oldPath);
+                SolrService.deleteDocumentOrRecursiveFolderFromSolrIndex(oldPath);
                 SolrService.indexDocumentWithSolr(newPath, new Tika().detect(designatedName));
             } catch (IOException | SolrServerException e) {
                 logger.error("Error wile updating file in Solr.", e);
@@ -163,11 +165,11 @@ public class RestDocService {
         DocBean documentToDelete = docDao.getById(documentId);
         InspectorService.checkIfDocumentIsNull(documentToDelete);
         InspectorService.checkUserRightsForDocAndGetAllowedGroups(securityContext.getUserPrincipal(), documentToDelete, Permissions.WRITE);
-        localStorageService.fileDeleter(documentToDelete.getPath());
+        localStorageService.fileOrRecursiveFolderDeleter(documentToDelete.getPath());
         docDao.deleteDocument(documentToDelete.getId());
         Runnable deleteTask = () -> {
             try {
-                SolrService.deleteDocumentFromSolrIndex(documentToDelete.getPath());
+                SolrService.deleteDocumentOrRecursiveFolderFromSolrIndex(documentToDelete.getPath());
             } catch (IOException | SolrServerException e) {
                 logger.error("Error wile deleting from Solr.", e);
                 throw new WebApplicationException("Error while deleting document from index. Please, try again.");
@@ -191,6 +193,7 @@ public class RestDocService {
             for (GroupBean groupBean : allowedGroups) {
                 docGroupPermissionsDao.setWriteForDocumentForGroup(createdDoc, groupBean);
             }
+            docDao.refresh(createdDoc);
         }
         return createdDoc;
     }
