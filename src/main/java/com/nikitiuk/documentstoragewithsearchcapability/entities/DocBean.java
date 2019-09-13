@@ -39,6 +39,7 @@ public class DocBean {
             orphanRemoval = true
     )
     @OrderBy
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private Set<DocGroupPermissions> documentsPermissions = new HashSet<>();
 
     public DocBean(String name, String path) {

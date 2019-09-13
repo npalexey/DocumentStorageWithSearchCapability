@@ -39,10 +39,10 @@ public class RestFolderService {
         InspectorService.checkIfFolderIsNull(folderToDelete);
         InspectorService.checkUserRightsForFolderAndGetAllowedGroups(securityContext.getUserPrincipal(), folderToDelete, Permissions.WRITE);
         localStorageService.fileOrRecursiveFolderDeleter(folderToDelete.getPath());
-        for(DocBean docBean : docDao.getDocumentsForUserInFolder(
+        /*for(DocBean docBean : docDao.getDocumentsForUserInFolder(
                 dtoDaoTransformer.userPrincipalToUserBean(securityContext.getUserPrincipal()), folderToDelete)) {
             docDao.deleteDocument(docBean.getId());
-        }
+        }*/
         folderDao.deleteFolder(folderToDelete.getId());
         Runnable deleteTask = () -> {
             try {

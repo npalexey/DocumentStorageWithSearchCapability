@@ -74,9 +74,11 @@ public class RestDocService {
     public DocBean uploadDocument(SecurityContextImplementation securityContext, InputStream fileInputStream,
                                   String designatedName, Long parentFolderId) throws Exception {
         InspectorService.checkIfInputStreamIsNull(fileInputStream);
+        InspectorService.checkIfIdIsNull(parentFolderId);
         final String trimmedDesignatedName = replaceSlashesInDesignatedNameAndTrim(designatedName);
         InspectorService.checkIfStringDataIsBlank(trimmedDesignatedName);
         FolderBean folderBean = getFolderByGivenId(parentFolderId);
+        InspectorService.checkIfFolderIsNull(folderBean);
         Set<GroupBean> allowedGroups = InspectorService.checkUserRightsForFolderAndGetAllowedGroups(securityContext.getUserPrincipal(), folderBean, Permissions.WRITE);
         localStorageService.fileUploader(fileInputStream, folderBean.getPath() + trimmedDesignatedName);
         DocBean createdDoc = saveDocToDBAndAssignPermissionsForAllowedGroups(allowedGroups, folderBean.getPath(), trimmedDesignatedName);

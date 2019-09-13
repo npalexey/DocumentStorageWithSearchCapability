@@ -2,6 +2,7 @@ package com.nikitiuk.documentstoragewithsearchcapability.entities;
 
 import com.nikitiuk.documentstoragewithsearchcapability.entities.helpers.FolderGroupPermissionsId;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.helpers.enums.Permissions;
+import org.hibernate.annotations.Cascade;
 
 import javax.persistence.*;
 import java.util.Objects;

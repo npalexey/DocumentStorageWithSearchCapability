@@ -36,6 +36,7 @@ public class FolderBean {
             orphanRemoval = true
     )
     @OrderBy
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private Set<FolderGroupPermissions> foldersPermissions = new HashSet<>();
 
     public FolderBean() {

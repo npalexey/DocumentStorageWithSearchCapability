@@ -131,13 +131,14 @@ public class FolderDao extends GenericHibernateDao<FolderBean> {
         Transaction transaction = null;
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             transaction = session.beginTransaction();
-            session.createSQLQuery("DELETE FROM Folder_group_permissions WHERE folder_id = (:id)")
+            session.createSQLQuery("DELETE FROM Documents WHERE document_path LIKE CONCAT((SELECT folder_path FROM Folders WHERE id = (:id)) ,'%')")
                     .setParameter("id", folderId).executeUpdate();
-            session.createQuery("DELETE FROM FolderBean WHERE id = (:id)")
+            session.createSQLQuery("DELETE FROM Folders WHERE folder_path LIKE CONCAT((SELECT folder_path FROM (SELECT * FROM Folders) AS X WHERE id = (:id)) ,'%')")
                     .setParameter("id", folderId).executeUpdate();
-            /*session.createSQLQuery("DELETE FROM Folder_group_permissions WHERE folder_id IN (SELECT * FROM (SELECT id FROM Folders WHERE folder_path = '"
-                    + folderBean.getPath() + "') AS X)").executeUpdate();
-            session.createQuery("DELETE FROM FolderBean WHERE path = '" + folderBean.getPath() + "'").executeUpdate();*/
+            /*session.createSQLQuery("DELETE FROM Folder_group_permissions WHERE folder_id = (:id)")
+                    .setParameter("id", folderId).executeUpdate();*/
+            /*session.createQuery("DELETE FROM FolderBean WHERE id = (:id)")
+                    .setParameter("id", folderId).executeUpdate();*/
             transaction.commit();
         } catch (Exception e) {
             logger.error("Error at FolderDao delete.", e);

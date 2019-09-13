@@ -131,8 +131,8 @@ public class DocDao extends GenericHibernateDao<DocBean> {
         Transaction transaction = null;
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             transaction = session.beginTransaction();
-            session.createSQLQuery("DELETE FROM Document_group_permissions WHERE document_id = (:id)")
-                    .setParameter("id", documentId).executeUpdate();
+            /*session.createSQLQuery("DELETE FROM Document_group_permissions WHERE document_id = (:id)")
+                    .setParameter("id", documentId).executeUpdate();*/
             session.createQuery("DELETE FROM DocBean WHERE id = (:id)")
                     .setParameter("id", documentId).executeUpdate();
             /*session.createSQLQuery("DELETE FROM Document_group_permissions WHERE document_id IN (SELECT * FROM (SELECT id FROM Documents WHERE document_path = '"

@@ -13,6 +13,7 @@ import org.apache.solr.client.solrj.request.CoreAdminRequest;
 import org.apache.solr.client.solrj.response.CoreAdminResponse;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.params.CoreAdminParams;
+import org.apache.solr.handler.extraction.ExtractingParams;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,11 +35,9 @@ public class SolrService {
         client.request(req);
     }
 
-    public static void deleteDocumentOrRecursiveFolderFromSolrIndex(String documentPath) throws IOException, SolrServerException {
+    public static void deleteDocumentOrRecursiveFolderFromSolrIndex(String path) throws IOException, SolrServerException {
         SolrClient client = new HttpSolrClient.Builder("http://localhost:8983/solr/mycoll").build();
-        ComplexPhraseQueryParser queryParser = new ComplexPhraseQueryParser("docpath", new SimpleAnalyzer());
-        //client.deleteByQuery(queryParser.parse(String.format("docpath:%s*", documentPath)));
-        client.deleteByQuery(String.format("docpath:\"%s*\"", documentPath)); // * for 'starts with'
+        client.deleteByQuery(String.format("docpath:\"%s*\"", path)); // * for 'starts with'
         client.commit();
     }
 
