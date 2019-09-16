@@ -131,8 +131,10 @@ public class FolderDao extends GenericHibernateDao<FolderBean> {
         Transaction transaction = null;
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             transaction = session.beginTransaction();
-            session.createSQLQuery("DELETE FROM Documents WHERE document_path LIKE CONCAT((SELECT folder_path FROM Folders WHERE id = (:id)) ,'%')")
+            session.createQuery("DELETE FROM DocBean WHERE path LIKE CONCAT((SELECT path FROM FolderBean WHERE id = (:id)) ,'%')")
                     .setParameter("id", folderId).executeUpdate();
+            /*session.createSQLQuery("DELETE FROM Documents WHERE document_path LIKE CONCAT((SELECT folder_path FROM Folders WHERE id = (:id)) ,'%')")
+                    .setParameter("id", folderId).executeUpdate();*/
             session.createSQLQuery("DELETE FROM Folders WHERE folder_path LIKE CONCAT((SELECT folder_path FROM (SELECT * FROM Folders) AS X WHERE id = (:id)) ,'%')")
                     .setParameter("id", folderId).executeUpdate();
             /*session.createSQLQuery("DELETE FROM Folder_group_permissions WHERE folder_id = (:id)")

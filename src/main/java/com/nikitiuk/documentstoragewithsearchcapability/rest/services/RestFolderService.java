@@ -25,7 +25,6 @@ public class RestFolderService {
     private static final Logger logger = LoggerFactory.getLogger(RestFolderService.class);
     private static ExecutorService executorService = Executors.newSingleThreadExecutor();
     private FolderDao folderDao = new FolderDao();
-    private DocDao docDao = new DocDao();
     private DtoDaoTransformer dtoDaoTransformer = new DtoDaoTransformer();
     private LocalStorageService localStorageService = new LocalStorageService();
 
