@@ -59,7 +59,9 @@ public class RestDocService {
         List<String> docContent = new ArrayList<>();
         docContent.add(String.format("Document id: %d, name: %s, path: %s",
                 documentToGetContentOf.getId(), documentToGetContentOf.getName(), documentToGetContentOf.getPath()));
+        double start = System.currentTimeMillis();
         docContent.addAll(localStorageService.documentContentGetter(documentToGetContentOf.getPath()));
+        logger.debug("It took: " + (System.currentTimeMillis() - start) / 1000d);
         return docContent;
     }
 

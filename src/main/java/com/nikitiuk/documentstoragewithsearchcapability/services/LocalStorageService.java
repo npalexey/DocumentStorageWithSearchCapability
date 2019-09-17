@@ -8,6 +8,10 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
+import org.apache.poi.xwpf.usermodel.XWPFDocument;
+import org.apache.poi.xwpf.usermodel.XWPFParagraph;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.core.StreamingOutput;
 import java.io.*;
@@ -15,12 +19,16 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class LocalStorageService {
 
+    private static final Logger logger = LoggerFactory.getLogger(LocalStorageService.class);
     private static final String PATH = System.getProperty("local.path.to.storage"); /*"/home/npalexey/workenv/DOWNLOADED/"*/
 
     public List<DocBean> listDocumentsInPath() throws IOException {
@@ -62,9 +70,25 @@ public class LocalStorageService {
                 .collect(Collectors.toList());
     }
 
-    public List<String> documentContentGetter(String filePath) throws IOException {
+    public List<String> documentContentGetter(String filePath) throws Exception {
+        /*int lastIndexOfDot = filePath.lastIndexOf(".");
+        if (lastIndexOfDot == -1) {
+            logger.info("No extension of file is set, using default content getter.");
+            return otherTypesContentGetter(filePath);
+        }
+        switch (filePath.substring(lastIndexOfDot)) {
+            case ".pdf":
+                return pdfContentGetter(filePath);
+            case ".docx":
+                return docxContentGetter(filePath);
+            default:
+                return otherTypesContentGetter(filePath);
+        }
+*/
         if (filePath.endsWith(".pdf")) {
             return pdfContentGetter(filePath);
+        } else if (filePath.endsWith(".docx")) {
+            return docxContentGetter(filePath);
         } else {
             return otherTypesContentGetter(filePath);
         }
@@ -77,10 +101,26 @@ public class LocalStorageService {
             PDFTextStripper stripper = new PDFTextStripper();
             String text = stripper.getText(document);
             docContent.add(text
-                    .replace(" ", "&nbsp;")
+                    .replace(" ", "&nbsp;")         //(non-breaking space)
                     .replace("\n", "<br />"));
+        } else {
+            docContent.add("Document content is encrypted. Download and decrypt using appropriate resources.");
         }
         document.close();
+        return docContent;
+    }
+
+    private List<String> docxContentGetter(String filePath) throws Exception {
+        List<String> docContent = new ArrayList<>();
+        FileInputStream fis = new FileInputStream(filePath);
+        XWPFDocument document = new XWPFDocument(fis);
+        List<XWPFParagraph> paragraphs = document.getParagraphs();
+        for (XWPFParagraph para : paragraphs) {
+            docContent.add(para.getText()
+                    .replaceAll("(.{100})", "$1\n")   //replaces every 100 chars with themselves + \n
+                    .replace("\n", "<br />"));
+        }
+        fis.close();
         return docContent;
     }
 
@@ -124,7 +164,7 @@ public class LocalStorageService {
     public String renameFile(String oldFilePath, String newFilePath) throws Exception {
         File tempFile = new File(oldFilePath);
         File tempFileToRenameTo = new File(newFilePath);
-        if(tempFile.renameTo(tempFileToRenameTo)){
+        if (tempFile.renameTo(tempFileToRenameTo)) {
             return tempFile.getName();
         } else {
             throw new AlreadyExistsException("File with such name already exists.");

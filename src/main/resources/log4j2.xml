@@ -16,7 +16,7 @@
  
 	</Appenders>
 	<Loggers>
-		<Root level="info">
+		<Root level="debug">
 			<AppenderRef ref="Console" />
 <!--			<AppenderRef ref="RollingFile" />-->
 		</Root>
@@ -30,6 +30,27 @@
 			<AppenderRef ref="Console" />
 		</Logger>
 		<Logger name="org.hibernate.type.descriptor.sql" level="trace" additivity="false">
+			<AppenderRef ref="Console" />
+		</Logger>
+		<Logger name="org.thymeleaf" level="info" additivity="false">
+			<AppenderRef ref="Console" />
+		</Logger>
+
+
+
+		<Logger name="org.apache.pdfbox" level="error">
+			<AppenderRef ref="Console" />
+		</Logger>
+		<Logger name="org.apache.pdfbox.pdmodel.font.PDFont" level="error">
+			<AppenderRef ref="Console" />
+		</Logger>
+		<Logger name="org.apache.pdfbox.pdmodel.PDDocument" level="error">
+			<AppenderRef ref="Console" />
+		</Logger>
+		<Logger name="org.apache.pdfbox.text.PDFTextStripper" level="error">
+			<AppenderRef ref="Console" />
+		</Logger>
+		<Logger name="FontFileFinder" level="error">
 			<AppenderRef ref="Console" />
 		</Logger>
 	</Loggers>
