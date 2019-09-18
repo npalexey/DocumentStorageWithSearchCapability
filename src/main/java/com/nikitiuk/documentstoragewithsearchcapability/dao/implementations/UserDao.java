@@ -5,6 +5,7 @@ import com.nikitiuk.documentstoragewithsearchcapability.entities.GroupBean;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.UserBean;
 import com.nikitiuk.documentstoragewithsearchcapability.exceptions.AlreadyExistsException;
 import com.nikitiuk.documentstoragewithsearchcapability.utils.HibernateUtil;
+import com.nikitiuk.javabeansinitializer.annotations.Bean;
 import javassist.NotFoundException;
 import org.hibernate.Hibernate;
 import org.hibernate.Session;
@@ -14,6 +15,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
+@Bean
 public class UserDao extends GenericHibernateDao<UserBean> {
 
     private static final Logger logger = LoggerFactory.getLogger(UserDao.class);

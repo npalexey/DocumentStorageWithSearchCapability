@@ -6,6 +6,7 @@ import com.nikitiuk.documentstoragewithsearchcapability.security.UserPrincipal;
 import com.nikitiuk.documentstoragewithsearchcapability.exceptions.AlreadyExistsException;
 import com.nikitiuk.documentstoragewithsearchcapability.rest.services.helpers.InspectorService;
 import com.nikitiuk.documentstoragewithsearchcapability.utils.HibernateUtil;
+import com.nikitiuk.javabeansinitializer.annotations.Bean;
 import org.apache.commons.collections.CollectionUtils;
 import org.hibernate.Hibernate;
 import org.hibernate.Session;

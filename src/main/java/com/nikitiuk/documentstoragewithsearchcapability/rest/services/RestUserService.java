@@ -4,13 +4,17 @@ import com.nikitiuk.documentstoragewithsearchcapability.dao.implementations.User
 import com.nikitiuk.documentstoragewithsearchcapability.entities.UserBean;
 import com.nikitiuk.documentstoragewithsearchcapability.exceptions.NoValidDataFromSourceException;
 import com.nikitiuk.documentstoragewithsearchcapability.rest.services.helpers.InspectorService;
+import com.nikitiuk.javabeansinitializer.annotations.AutoWire;
+import com.nikitiuk.javabeansinitializer.annotations.Bean;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.List;
 
+@Bean
 public class RestUserService {
 
-    private UserDao userDao = new UserDao();
+    @AutoWire
+    private UserDao userDao/* = new UserDao()*/;
 
     public List<UserBean> getUsers() throws Exception {
         return userDao.getUsers();

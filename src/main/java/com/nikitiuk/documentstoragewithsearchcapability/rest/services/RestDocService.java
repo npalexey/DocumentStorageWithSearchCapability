@@ -15,6 +15,8 @@ import com.nikitiuk.documentstoragewithsearchcapability.security.SecurityContext
 import com.nikitiuk.documentstoragewithsearchcapability.services.LocalStorageService;
 import com.nikitiuk.documentstoragewithsearchcapability.services.SearchResultsModifier;
 import com.nikitiuk.documentstoragewithsearchcapability.services.SolrService;
+import com.nikitiuk.javabeansinitializer.annotations.AutoWire;
+import com.nikitiuk.javabeansinitializer.annotations.Bean;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.solr.client.solrj.SolrServerException;

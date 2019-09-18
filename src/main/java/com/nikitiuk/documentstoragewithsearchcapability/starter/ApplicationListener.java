@@ -1,5 +1,8 @@
 package com.nikitiuk.documentstoragewithsearchcapability.starter;
 
+import com.nikitiuk.javabeansinitializer.annotations.ApplicationCustomContext;
+import com.nikitiuk.javabeansinitializer.annotations.ContextInitializer;
+import org.apache.commons.logging.impl.Log4JLogger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,12 +15,12 @@ import java.util.logging.Level;
 public class ApplicationListener implements javax.servlet.ServletContextListener {
 
     private static final Logger logger = LoggerFactory.getLogger(ApplicationListener.class);
+    //private ContextInitializer contextInitializer = new ContextInitializer();
+    private static ApplicationCustomContext applicationCustomContext = null;
 
     @Override
     public void contextInitialized(ServletContextEvent servletContextEvent) {
         try {
-            System.setProperty("org.apache.commons.logging.Log",
-                    "org.apache.commons.logging.impl.NoOpLog");
             Properties prop = new Properties();
             String propFileName = "appconfig.properties";
             InputStream inputStream = getClass().getClassLoader().getResourceAsStream(propFileName);
@@ -32,36 +35,17 @@ public class ApplicationListener implements javax.servlet.ServletContextListener
             System.setProperty("tika.config", prop.getProperty("TIKA_CONFIG"));
             System.setProperty("default.folder", prop.getProperty("DEFAULT_FOLDER"));
             inputStream.close();
-
-            String[] loggers = { "org.apache.pdfbox.util.PDFStreamEngine",
-                    "org.apache.pdfbox.pdmodel.font.PDSimpleFont",
-                    "org.apache.pdfbox.pdmodel.font.PDFont",
-                    "org.apache.pdfbox.pdmodel.font.FontManager",
-                    "org.apache.pdfbox.pdfparser.PDFObjectStreamParser",
-                    "org.apache.pdfbox.pdmodel.graphics.xobject.PDPixelMap",
-                    "org.apache.pdfbox"};
-            for (String logger : loggers) {
-                org.apache.log4j.Logger logpdfengine = org.apache.log4j.Logger
-                        .getLogger(logger);
-                logpdfengine.setLevel(org.apache.log4j.Level.OFF);
-            }
-            /*String[] loggers = { "org.apache.pdfbox.util.PDFStreamEngine",
-                    "org.apache.pdfbox.pdmodel.font.PDSimpleFont, org.apache.pdfbox"};
-            for (String ln : loggers) {
-                // Try java.util.logging as backend
-                java.util.logging.Logger.getLogger(ln).setLevel(java.util.logging.Level.WARNING);
-
-                // Try Log4J as backend
-                org.apache.log4j.Logger.getLogger(ln).setLevel(org.apache.log4j.Level.WARN);
-
-                // Try another backend
-                //Log4JLoggerFactory.getInstance().getLogger(ln).setLevel(java.util.logging.Level.WARNING);
-            }*/
-            /*java.util.logging.Logger
-                    .getLogger("org.apache.pdfbox").setLevel(Level.SEVERE);*/
+            applicationCustomContext = new ContextInitializer().initializeContext("com.nikitiuk.documentstoragewithsearchcapability");
         } catch (Exception e) {
             logger.error("Error at ApplicationListener contextInitialized: ", e);
         }
+    }
+
+    public static ApplicationCustomContext getContext() {
+        if(applicationCustomContext == null) {
+            return applicationCustomContext = new ContextInitializer().initializeContext("com.nikitiuk.documentstoragewithsearchcapability");
+        }
+        return applicationCustomContext;
     }
 
     @Override

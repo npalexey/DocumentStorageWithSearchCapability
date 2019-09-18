@@ -18,7 +18,7 @@ import java.io.IOException;
 
 class RestDocServiceTest {
 
-    @Test
+    /*@Test
     void downloadFileTest() {
         Logger logger = LoggerFactory.getLogger(RestDocService.class);
         try {
@@ -34,5 +34,5 @@ class RestDocServiceTest {
         } catch (IOException e) {
             logger.error("Exception caught: " + e);
         }
-    }
+    }*/
 }

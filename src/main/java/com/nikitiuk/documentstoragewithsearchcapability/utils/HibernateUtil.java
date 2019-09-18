@@ -62,7 +62,7 @@ public class HibernateUtil {
                 localStorageService = new LocalStorageService();
                 populateTables();
             } catch (Exception e) {
-                logger.error("Exception caught while creating Session Factory. " + e);
+                logger.error("Exception caught while creating Session Factory. ", e);
             }
         }
         return sessionFactory;

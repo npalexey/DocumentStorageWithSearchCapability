@@ -6,6 +6,7 @@ import com.nikitiuk.documentstoragewithsearchcapability.rest.services.helpers.Re
 import com.nikitiuk.documentstoragewithsearchcapability.rest.services.helpers.ThymeleafResponseService;
 import com.nikitiuk.documentstoragewithsearchcapability.rest.services.helpers.enums.Actions;
 import com.nikitiuk.documentstoragewithsearchcapability.rest.services.helpers.enums.EntityTypes;
+import com.nikitiuk.documentstoragewithsearchcapability.starter.ApplicationListener;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,7 +24,14 @@ import java.util.List;
 public class RestUserController {
 
     private static final Logger logger = LoggerFactory.getLogger(RestUserController.class);
-    private RestUserService userService = new RestUserService();
+    private RestUserService userService/* = new RestUserService()*/;
+
+    public RestUserController() {
+        this.userService = (RestUserService) ApplicationListener
+                .getContext()
+                .getBeanContainer()
+                .get(RestUserService.class);
+    }
 
     @PermitAll
     @GET

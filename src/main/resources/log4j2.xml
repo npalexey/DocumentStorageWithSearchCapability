@@ -35,22 +35,24 @@
 		<Logger name="org.thymeleaf" level="info" additivity="false">
 			<AppenderRef ref="Console" />
 		</Logger>
+		<Logger name="org.reflections" level="info" additivity="false">
+			<AppenderRef ref="Console" />
+		</Logger>
+		<Logger name="io.swagger" level="info" additivity="false">
+			<AppenderRef ref="Console" />
+		</Logger>
 
 
-
-		<Logger name="org.apache.pdfbox" level="error">
+		<Logger name="org.apache.pdfbox" level="error" additivity="false">
 			<AppenderRef ref="Console" />
 		</Logger>
-		<Logger name="org.apache.pdfbox.pdmodel.font.PDFont" level="error">
+		<Logger name="org.apache.pdfbox.pdmodel.font.PDFont" level="error" additivity="false">
 			<AppenderRef ref="Console" />
 		</Logger>
-		<Logger name="org.apache.pdfbox.pdmodel.PDDocument" level="error">
+		<Logger name="org.apache.pdfbox.pdmodel.PDDocument" level="error" additivity="false">
 			<AppenderRef ref="Console" />
 		</Logger>
-		<Logger name="org.apache.pdfbox.text.PDFTextStripper" level="error">
-			<AppenderRef ref="Console" />
-		</Logger>
-		<Logger name="FontFileFinder" level="error">
+		<Logger name="org.apache.pdfbox.text.PDFTextStripper" level="error" additivity="false">
 			<AppenderRef ref="Console" />
 		</Logger>
 	</Loggers>
