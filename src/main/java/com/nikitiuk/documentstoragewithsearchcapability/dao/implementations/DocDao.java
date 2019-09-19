@@ -11,6 +11,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.hibernate.Hibernate;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
+import org.hibernate.jpa.QueryHints;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,10 +42,12 @@ public class DocDao extends GenericHibernateDao<DocBean> {
         Transaction transaction = null;
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             transaction = session.beginTransaction();
-            DocBean docBean = session.get(DocBean.class, documentId);
+            DocBean docBean = session.createQuery("FROM DocBean doc JOIN FETCH doc.documentsPermissions WHERE doc.id = :id", DocBean.class)
+                    .setParameter("id", documentId).uniqueResult();
+            /*DocBean docBean = session.get(DocBean.class, documentId);
             if(docBean != null) {
                 initializeConnections(docBean);
-            }
+            }*/
             transaction.commit();
             session.close();
             return docBean;
@@ -61,10 +64,10 @@ public class DocDao extends GenericHibernateDao<DocBean> {
         Transaction transaction = null;
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             transaction = session.beginTransaction();
-            List<DocBean> docBeanList = session.createQuery("FROM DocBean", DocBean.class).list();
-            if(CollectionUtils.isNotEmpty(docBeanList)) {
+            List<DocBean> docBeanList = session.createQuery("FROM DocBean doc LEFT JOIN FETCH doc.documentsPermissions", DocBean.class).list();
+            /*if(CollectionUtils.isNotEmpty(docBeanList)) {
                 initializeConnectionsForList(docBeanList);
-            }
+            }*/
             transaction.commit();
             return docBeanList;
         } catch (Exception e) {
@@ -85,11 +88,14 @@ public class DocDao extends GenericHibernateDao<DocBean> {
         Transaction transaction = null;
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             transaction = session.beginTransaction();
-            docBeanList = session.createQuery("SELECT DISTINCT doc FROM DocBean doc INNER JOIN DocGroupPermissions permissions ON doc.id = permissions.document.id " +
-                    "WHERE permissions.group.id IN (:ids)", DocBean.class).setParameterList("ids", groupIds).list();
-            if(CollectionUtils.isNotEmpty(docBeanList)){
+            docBeanList = session.createQuery("SELECT DISTINCT doc FROM DocBean doc JOIN FETCH doc.documentsPermissions permissions " +
+                    "WHERE permissions.group.id IN (:ids)", DocBean.class).setParameterList("ids", groupIds)
+                    .setHint(QueryHints.HINT_PASS_DISTINCT_THROUGH, false).list();
+            /*docBeanList = session.createQuery("SELECT DISTINCT doc FROM DocBean doc INNER JOIN DocGroupPermissions permissions ON doc.id = permissions.document.id " +
+                    "WHERE permissions.group.id IN (:ids)", DocBean.class).setParameterList("ids", groupIds).list();*/
+            /*if(CollectionUtils.isNotEmpty(docBeanList)){
                 initializeConnectionsForList(docBeanList);
-            }
+            }*/
             transaction.commit();
             return docBeanList;
         } catch (Exception e) {
@@ -111,11 +117,14 @@ public class DocDao extends GenericHibernateDao<DocBean> {
         Transaction transaction = null;
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             transaction = session.beginTransaction();
-            docBeanList = session.createQuery("SELECT DISTINCT doc FROM DocBean doc INNER JOIN DocGroupPermissions permissions ON doc.id = permissions.document.id " +
+            docBeanList = session.createQuery("SELECT DISTINCT doc FROM DocBean doc JOIN FETCH doc.documentsPermissions permissions " +
+                    "WHERE permissions.group.id IN (:ids) AND doc.path LIKE '" + folderBean.getPath() + "%'", DocBean.class)
+                    .setParameterList("ids", groupIds).setHint(QueryHints.HINT_PASS_DISTINCT_THROUGH, false).list();
+            /*docBeanList = session.createQuery("SELECT DISTINCT doc FROM DocBean doc INNER JOIN DocGroupPermissions permissions ON doc.id = permissions.document.id " +
                     "WHERE permissions.group.id IN (:ids) AND doc.path LIKE '" + folderBean.getPath() + "%'", DocBean.class).setParameterList("ids", groupIds).list();
             if(CollectionUtils.isNotEmpty(docBeanList)){
                 initializeConnectionsForList(docBeanList);
-            }
+            }*/
             transaction.commit();
             return docBeanList;
         } catch (Exception e) {

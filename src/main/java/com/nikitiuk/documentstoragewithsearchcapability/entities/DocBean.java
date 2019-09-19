@@ -36,8 +36,10 @@ public class DocBean {
     @OneToMany(
             mappedBy = "document",
             cascade = CascadeType.ALL,
-            orphanRemoval = true
+            orphanRemoval = true/*,
+            fetch = FetchType.EAGER*/
     )
+    //@Fetch(FetchMode.SUBSELECT)
     @OrderBy
     @OnDelete(action = OnDeleteAction.CASCADE)
     private Set<DocGroupPermissions> documentsPermissions = new HashSet<>();
