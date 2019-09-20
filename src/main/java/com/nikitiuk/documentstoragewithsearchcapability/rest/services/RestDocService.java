@@ -63,7 +63,7 @@ public class RestDocService {
                 documentToGetContentOf.getId(), documentToGetContentOf.getName(), documentToGetContentOf.getPath()));
         double start = System.currentTimeMillis();
         docContent.addAll(localStorageService.documentContentGetter(documentToGetContentOf.getPath()));
-        logger.debug("It took: " + (System.currentTimeMillis() - start) / 1000d);
+        logger.debug(String.format("It took: %fms to get content of document.", (System.currentTimeMillis() - start) / 1000d));
         return docContent;
     }
 
@@ -83,7 +83,7 @@ public class RestDocService {
         InspectorService.checkIfStringDataIsBlank(trimmedDesignatedName);
         FolderBean folderBean = getFolderByGivenId(parentFolderId);
         InspectorService.checkIfFolderIsNull(folderBean);
-        Set<GroupBean> allowedGroups = InspectorService.checkUserRightsForFolderAndGetAllowedGroups(securityContext.getUserPrincipal(), folderBean, Permissions.WRITE);
+        Set<GroupBean> allowedGroups = InspectorService.checkUserRightsForFolderAndGetAllowedGroups(securityContext.getUserPrincipal(), folderBean, Permissions.READ);
         localStorageService.fileUploader(fileInputStream, folderBean.getPath() + trimmedDesignatedName);
         DocBean createdDoc = saveDocToDBAndAssignPermissionsForAllowedGroups(allowedGroups, folderBean.getPath(), trimmedDesignatedName);
         Runnable addTask = () -> {

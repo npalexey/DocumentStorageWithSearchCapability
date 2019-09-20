@@ -38,7 +38,7 @@ public class HibernateUtil {
                 settings.put(Environment.PASS, "deranbor8989");
                 settings.put(Environment.DIALECT, "org.hibernate.dialect.MySQL8Dialect");
                 //settings.put(Environment.USE_NEW_ID_GENERATOR_MAPPINGS, "true");
-                settings.put(Environment.SHOW_SQL, "true");
+                //settings.put(Environment.SHOW_SQL, "true");
                 settings.put(Environment.FORMAT_SQL, "true");
                 //settings.put(Environment.USE_SQL_COMMENTS, "true");
                 settings.put(Environment.CURRENT_SESSION_CONTEXT_CLASS, "thread");

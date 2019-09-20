@@ -23,13 +23,35 @@
             <td><a href="content" th:href="@{~/DocumentStorageWithSearchCapability/rest/docs/{docid}/content(docid=${entry.id})}">Get Content</a></td>
             <td><a href="download" th:href="@{~/DocumentStorageWithSearchCapability/rest/docs/{docid}(docid=${entry.id})}">Download</a></td>
             <td><span th:utext="|, Groups: |">Groups</span></td>
-            <td><th:block th:each="docPermissions : ${entry.documentsPermissions}"><span th:utext="|[Id: ${docPermissions.group.id}, ${docPermissions.permissions}]  |">Permissions</span></th:block></td>
+            <td>
+                <th:block th:each="docPermissions : ${entry.documentsPermissions}"> <!--th:with="someVariable=${documentsPermissions.^[permissions == 'WRITE']}"-->
+                    <span th:utext="|[Id: ${docPermissions.group.id}, ${docPermissions.permissions}]  |">Permissions</span>
+                    <!--<th:block th:if="${docPermissionsStat.last} and ${someVariable} == 'WRITE'">
+                        <form action="@{~/DocumentStorageWithSearchCapability/rest/docs/{docid}(docid=${entry.id})}" method="" enctype="multipart/form-data">
+                            <p>File name: <input type="text" name="designatedName"><br></p>
+                            <p>Select a file : <input type="file" name="file" size="45" /></p> &lt;!&ndash;accept=".pdf"&ndash;&gt;
+                            <input type="submit" value="Upload Document" />
+                        </form>
+                    </th:block>-->
+                </th:block>
+            </td>
         </tr>
         <tr th:if="${entityType.name()} == 'FOLDER'" th:each="entry : ${inStorage}">
             <td><span th:utext="|Id: ${entry.id} |">Folder id</span></td>
             <td><span th:utext="|, Path: ${entry.path} |">Folder Path</span></td>
             <td><span th:utext="|, Groups: |">Groups</span></td>
-            <td><th:block th:each="folderPermissions : ${entry.foldersPermissions}"><span th:utext="|[Id: ${folderPermissions.group.id}, ${folderPermissions.permissions}]  |">Permissions</span></th:block></td>
+            <td>
+                <th:block th:each="folderPermissions : ${entry.foldersPermissions}">
+                    <span th:utext="|[Id: ${folderPermissions.group.id}, ${folderPermissions.permissions}]  |">Permissions</span>
+                    <!--<th:block th:if="${folderPermissionsStat.last} and ${someVariable} == 'WRITE'">
+                        <form action="docs/1" method="post" enctype="multipart/form-data">
+                            <p>File name: <input type="text" name="designatedName"><br></p>
+                            <p>Select a file : <input type="file" name="file" size="45" /></p> &lt;!&ndash;accept=".pdf"&ndash;&gt;
+                            <input type="submit" value="Upload Document" />
+                        </form>
+                    </th:block>-->
+                </th:block>
+            </td>
         </tr>
         <tr th:if="${entityType.name()} == 'USER'" th:each="entry : ${inStorage}">
             <td><span th:utext="|Id: ${entry.id} |">User name</span></td>
@@ -59,6 +81,26 @@
         </tr>
         </tbody>
     </table>
+    <th:block th:if="${entityType.name()} == 'DOCUMENT'">
+        <form name="submitDocumentForm" method="post" enctype="multipart/form-data">  <!--action="docs/1"-->
+
+            <p>To Folder(id): <input type="number" name="folder" value="1" step="1" min="0" required></p>
+            <p>File name: <input type="text" name="designatedName" placeholder="Document.doc" required><br></p>
+            <p>Select a file : <input type="file" name="file" size="45" required/></p> <!--accept=".pdf"-->
+            <input type="submit" value="Upload Document" />
+
+        </form>
+        <script>
+            var form=document.forms['submitDocumentForm'];
+            form.addEventListener('submit', function(){
+                var testVal = this.elements['folder'].value;
+                if(testVal){
+                    this.action = './' + testVal;
+                    this.submit();
+                }
+            }, false);
+        </script>
+    </th:block>
 </body>
 </html>
 <!--<body>-->

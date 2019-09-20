@@ -68,9 +68,7 @@ public class InspectorService {
     }
 
     public static Set<GroupBean> checkUserRightsForDocAndGetAllowedGroups(UserPrincipal userPrincipal, DocBean document, Permissions permissions) throws NoRightsForActionException {
-        if (CollectionUtils.isEmpty(userPrincipal.getGroups())) {
-            throw new NoRightsForActionException("User " + userPrincipal.getName() + " is not in any group.");
-        }
+        checkIfPrincipalsGroupsAreEmpty(userPrincipal);
         Set<GroupBean> userGroups = userPrincipal.getGroups();
         Set<GroupBean> groupSet = new HashSet<>();
         for(GroupBean group : userGroups) {
@@ -86,15 +84,13 @@ public class InspectorService {
             }
         }
         if(groupSet.isEmpty()){
-            throw new NoRightsForActionException("User " + userPrincipal.getName() + " doesn't have rights to " + permissions.toString() + " this document.");
+            throw new NoRightsForActionException(String.format("User %s doesn't have rights to %s this document.", userPrincipal.getName(), permissions.toString()));
         }
         return groupSet;
     }
 
     public static Set<GroupBean> checkUserRightsForFolderAndGetAllowedGroups(UserPrincipal userPrincipal, FolderBean folder, Permissions permissions) throws NoRightsForActionException {
-        if (userPrincipal.getGroups().isEmpty()) {
-            throw new NoRightsForActionException("User " + userPrincipal.getName() + " is not in any group.");
-        }
+        checkIfPrincipalsGroupsAreEmpty(userPrincipal);
         Set<GroupBean> userGroups = userPrincipal.getGroups();
         Set<GroupBean> groupSet = new HashSet<>();
         for(GroupBean group : userGroups) {
@@ -110,8 +106,14 @@ public class InspectorService {
             }
         }
         if(groupSet.isEmpty()){
-            throw new NoRightsForActionException("User " + userPrincipal.getName() + " doesn't have rights to " + permissions.toString() + " to/from this folder.");
+            throw new NoRightsForActionException(String.format("User %s doesn't have rights to %s to/from this folder.", userPrincipal.getName(), permissions.toString()));
         }
         return groupSet;
+    }
+
+    private static void checkIfPrincipalsGroupsAreEmpty(UserPrincipal userPrincipal) throws NoRightsForActionException {
+        if (CollectionUtils.isEmpty(userPrincipal.getGroups())) {
+            throw new NoRightsForActionException(String.format("User %s is not in any group.", userPrincipal.getName()));
+        }
     }
 }
