@@ -7,16 +7,11 @@ import com.nikitiuk.documentstoragewithsearchcapability.entities.GroupBean;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.helpers.enums.Permissions;
 import com.nikitiuk.documentstoragewithsearchcapability.rest.services.helpers.InspectorService;
 import com.nikitiuk.documentstoragewithsearchcapability.utils.HibernateUtil;
-import javassist.NotFoundException;
-import org.apache.commons.collections.CollectionUtils;
-import org.hibernate.Hibernate;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
-import org.hibernate.resource.transaction.spi.TransactionStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class DocGroupPermissionsDao extends GenericHibernateDao<DocGroupPermissions> {
@@ -27,132 +22,140 @@ public class DocGroupPermissionsDao extends GenericHibernateDao<DocGroupPermissi
         super(DocGroupPermissions.class);
     }
 
-    public List<DocGroupPermissions> getAllDocGroupPermissions() {
+    public List<DocGroupPermissions> getAllDocGroupPermissions() throws Exception {
         Transaction transaction = null;
-        List<DocGroupPermissions> docGroupPermissionsList = new ArrayList<>();
-        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+        Session session = HibernateUtil.getSessionFactory().openSession();
+        try {
             transaction = session.beginTransaction();
-            docGroupPermissionsList = session.createQuery("FROM DocGroupPermissions", DocGroupPermissions.class).list();
-            if(CollectionUtils.isNotEmpty(docGroupPermissionsList)){
-                initializeConnectionsForList(docGroupPermissionsList);
-            }
+            List<DocGroupPermissions> docGroupPermissionsList = session.createQuery("FROM DocGroupPermissions per LEFT JOIN FETCH " +
+                    "per.document LEFT JOIN FETCH per.group", DocGroupPermissions.class).list();
             transaction.commit();
+            return docGroupPermissionsList;
         } catch (Exception e) {
-            logger.error("Error at DocGroupPermissionsDao getAllDocGroupPermissions: ", e);
             if (transaction != null) {
-                transaction.rollback();
+                rollBackTransaction(transaction);
             }
+            throw e;
+        } finally {
+            session.close();
         }
-        return docGroupPermissionsList;
     }
 
-    public List<DocGroupPermissions> getPermissionsForDocumentsForGroup(Long groupId) {
+    public List<DocGroupPermissions> getPermissionsForDocumentsForGroup(Long groupId) throws Exception {
         Transaction transaction = null;
-        List<DocGroupPermissions> docGroupPermissionsList = new ArrayList<>();
-        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+        Session session = HibernateUtil.getSessionFactory().openSession();
+        try {
             transaction = session.beginTransaction();
-            docGroupPermissionsList = session.createQuery("FROM DocGroupPermissions WHERE group = " + groupId, DocGroupPermissions.class).list();
-            if (CollectionUtils.isNotEmpty(docGroupPermissionsList)) {
-                initializeConnectionsForList(docGroupPermissionsList);
-            }
+            List<DocGroupPermissions> docGroupPermissionsList = session.createQuery("FROM DocGroupPermissions per LEFT JOIN FETCH " +
+                    "per.document JOIN FETCH per.group WHERE per.group.id = :groupId", DocGroupPermissions.class)
+                    .setParameter("groupId", groupId).list();
             transaction.commit();
+            return docGroupPermissionsList;
         } catch (Exception e) {
-            logger.error("Error at DocGroupPermissionsDao getPermissionsForDocumentsForGroup: ", e);
             if (transaction != null) {
-                transaction.rollback();
+                rollBackTransaction(transaction);
             }
+            throw e;
+        } finally {
+            session.close();
         }
-        return docGroupPermissionsList;
     }
 
-    public List<DocGroupPermissions> getPermissionsForDocument(Long docId) {
+    public List<DocGroupPermissions> getPermissionsForDocument(Long documentId) throws Exception {
         Transaction transaction = null;
-        List<DocGroupPermissions> docPermissionsList = new ArrayList<>();
-        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+        Session session = HibernateUtil.getSessionFactory().openSession();
+        try {
             transaction = session.beginTransaction();
-            docPermissionsList = session.createQuery("FROM DocGroupPermissions WHERE document = " + docId, DocGroupPermissions.class).list();
-            if (CollectionUtils.isNotEmpty(docPermissionsList)) {
-                initializeConnectionsForList(docPermissionsList);
-            }
+            List<DocGroupPermissions> docPermissionsList = session.createQuery("FROM DocGroupPermissions per LEFT JOIN FETCH " +
+                    "per.group JOIN FETCH per.document WHERE per.document.id = :documentId", DocGroupPermissions.class)
+                    .setParameter("documentId", documentId).list();
             transaction.commit();
+            return docPermissionsList;
         } catch (Exception e) {
-            logger.error("Error at DocGroupPermissionsDao getPermissionsForDocument: ", e);
             if (transaction != null) {
-                transaction.rollback();
+                rollBackTransaction(transaction);
             }
+            throw e;
+        } finally {
+            session.close();
         }
-        return docPermissionsList;
     }
 
     public Integer deleteAllPermissionsForGroup(Long groupId) throws Exception {
         Transaction transaction = null;
-        Integer quantityOfDeletedPermissions;
-        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+        Session session = HibernateUtil.getSessionFactory().openSession();
+        try {
             transaction = session.beginTransaction();
-            quantityOfDeletedPermissions = session.createQuery("DELETE FROM DocGroupPermissions WHERE group = "
-                    + groupId).executeUpdate();
+            Integer quantityOfDeletedPermissions = session.createQuery("DELETE FROM DocGroupPermissions " +
+                    "WHERE group.id = :groupId").setParameter("groupId", groupId).executeUpdate();
             transaction.commit();
             return quantityOfDeletedPermissions;
         } catch (Exception e) {
-            logger.error("Error at DocGroupPermissionsDao deleteAllPermissionsForGroup: ", e);
             if (transaction != null) {
-                transaction.rollback();
+                rollBackTransaction(transaction);
             }
             throw e;
+        } finally {
+            session.close();
         }
     }
 
-    public Integer deletePermissionsForDocumentForGroup(Long docId, Long groupId) throws Exception {
+    public Integer deletePermissionsForDocumentForGroup(Long documentId, Long groupId) throws Exception {
         Transaction transaction = null;
-        Integer quantityOfDeletedPermissions;
-        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+        Session session = HibernateUtil.getSessionFactory().openSession();
+        try {
             transaction = session.beginTransaction();
-            quantityOfDeletedPermissions = session.createQuery("DELETE FROM DocGroupPermissions WHERE group = "
-                    + groupId + " AND document = " + docId).executeUpdate();
+            Integer quantityOfDeletedPermissions = session.createQuery("DELETE FROM DocGroupPermissions " +
+                    "WHERE group.id = :groupId AND document.id = :documentId")
+                    .setParameter("groupId", groupId).setParameter("documentId", documentId).executeUpdate();
             transaction.commit();
             return quantityOfDeletedPermissions;
         } catch (Exception e) {
-            logger.error("Error at DocGroupPermissionsDao deletePermissionsForDocumentForGroup: ", e);
             if (transaction != null) {
-                transaction.rollback();
+                rollBackTransaction(transaction);
             }
             throw e;
+        } finally {
+            session.close();
         }
     }
 
-    public Integer deleteAllPermissionsForDocumentExceptAdmin(Long docId) throws Exception {
+    public Integer deleteAllPermissionsForDocumentExceptAdmin(Long documentId) throws Exception {
         Transaction transaction = null;
-        Integer quantityOfDeletedPermissions;
-        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+        Session session = HibernateUtil.getSessionFactory().openSession();
+        try {
             transaction = session.beginTransaction();
-            quantityOfDeletedPermissions = session.createQuery("DELETE FROM DocGroupPermissions WHERE group != 1 AND document = "
-                    + docId).executeUpdate();
+            Integer quantityOfDeletedPermissions = session.createQuery("DELETE FROM DocGroupPermissions " +
+                    "WHERE group.id != 1 AND document.id = :documentId")
+                    .setParameter("documentId", documentId).executeUpdate();
             transaction.commit();
             return quantityOfDeletedPermissions;
         } catch (Exception e) {
-            logger.error("Error at DocGroupPermissionsDao deleteAllPermissionsForDocumentExceptAdmin: ", e);
             if (transaction != null) {
-                transaction.rollback();
+                rollBackTransaction(transaction);
             }
             throw e;
+        } finally {
+            session.close();
         }
     }
 
-    public Integer deleteAllPermissionsForDocument(Long docId) throws Exception {
+    public Integer deleteAllPermissionsForDocument(Long documentId) throws Exception {
         Transaction transaction = null;
-        Integer quantityOfDeletedPermissions;
-        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+        Session session = HibernateUtil.getSessionFactory().openSession();
+        try {
             transaction = session.beginTransaction();
-            quantityOfDeletedPermissions = session.createQuery("DELETE FROM DocGroupPermissions WHERE document = "
-                    + docId).executeUpdate();
+            Integer quantityOfDeletedPermissions = session.createQuery("DELETE FROM DocGroupPermissions " +
+                    "WHERE document.id = :documentId").setParameter("documentId", documentId).executeUpdate();
             transaction.commit();
             return quantityOfDeletedPermissions;
         } catch (Exception e) {
-            logger.error("Error at DocGroupPermissionsDao deleteAllPermissionsForDocument: ", e);
             if (transaction != null) {
-                transaction.rollback();
+                rollBackTransaction(transaction);
             }
             throw e;
+        } finally {
+            session.close();
         }
     }
 
@@ -160,54 +163,49 @@ public class DocGroupPermissionsDao extends GenericHibernateDao<DocGroupPermissi
         return setPermission(docBean.getId(), groupBean.getId(), Permissions.WRITE);
     }
 
-    public DocGroupPermissions setWriteForDocumentForGroup(long docId, long groupId) throws Exception {
-        return setPermission(docId, groupId, Permissions.WRITE);
+    public DocGroupPermissions setWriteForDocumentForGroup(long documentId, long groupId) throws Exception {
+        return setPermission(documentId, groupId, Permissions.WRITE);
     }
 
     public DocGroupPermissions setReadForDocumentForGroup(DocBean docBean, GroupBean groupBean) throws Exception {
         return setPermission(docBean.getId(), groupBean.getId(), Permissions.READ);
     }
 
-    public DocGroupPermissions setReadForDocumentForGroup(long docId, long groupId) throws Exception {
-        return setPermission(docId, groupId, Permissions.READ);
+    public DocGroupPermissions setReadForDocumentForGroup(long documentId, long groupId) throws Exception {
+        return setPermission(documentId, groupId, Permissions.READ);
     }
 
-    private DocGroupPermissions setPermission(Long docId, Long groupId, Permissions permission) throws Exception {
+    private DocGroupPermissions setPermission(Long documentId, Long groupId, Permissions permission) throws Exception {
         Transaction transaction = null;
-        boolean rollbackOnException = false;
-        DocGroupPermissions setDocGroupPermissions;
-        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+        Session session = HibernateUtil.getSessionFactory().openSession();
+        try {
             transaction = session.beginTransaction();
-            DocGroupPermissions docGroupPermissions = session.createQuery("FROM DocGroupPermissions WHERE document = "
-                    + docId + " AND group = " + groupId, DocGroupPermissions.class).uniqueResult();
+            DocGroupPermissions docGroupPermissions = session.createQuery("FROM DocGroupPermissions " +
+                    "WHERE document.id = :documentId AND group.id = :groupId", DocGroupPermissions.class)
+                    .setParameter("documentId", documentId).setParameter("groupId", groupId).uniqueResult();
+            DocGroupPermissions setDocGroupPermissions;
             if (docGroupPermissions != null) {
                 docGroupPermissions.setPermissions(permission);
-                rollbackOnException = true;
                 session.merge(docGroupPermissions);
                 setDocGroupPermissions = docGroupPermissions;
             } else {
-                DocBean docBean = session.get(DocBean.class, docId);
+                DocBean docBean = session.get(DocBean.class, documentId);
                 InspectorService.checkIfDocumentIsNull(docBean);
                 GroupBean groupBean = session.get(GroupBean.class, groupId);
                 InspectorService.checkIfGroupIsNull(groupBean);
                 setDocGroupPermissions = createNewPermissions(docBean, groupBean, permission);
-                rollbackOnException = true;
                 session.saveOrUpdate(setDocGroupPermissions);
                 session.merge(docBean);
             }
             transaction.commit();
             return setDocGroupPermissions;
         } catch (Exception e) {
-            /*logger.error("Error at DocGroupPermissionsDao set " + permission + " ForDocumentForGroup, where " +
-                    "DocId = " + docId + " and GroupId = " + groupId + ": ", e);*/
-            if (transaction != null && transaction.isActive() && rollbackOnException) {
-                try {
-                    transaction.rollback();
-                } catch (Exception txE) {
-                    logger.error("Error on rollback at DocGroupPermissionsDao ForDocumentForGroup.", txE);
-                }
+            if (transaction != null) {
+                rollBackTransaction(transaction);
             }
             throw e;
+        } finally {
+            session.close();
         }
     }
 
@@ -218,7 +216,15 @@ public class DocGroupPermissionsDao extends GenericHibernateDao<DocGroupPermissi
         return newDocGroupPermissions;
     }
 
-    private void initializeConnectionsForList(List<DocGroupPermissions> docGroupPermissionsList) {
+    private void rollBackTransaction(Transaction transaction) {
+        try {
+            transaction.rollback();
+        } catch (Exception txE) {
+            logger.error("Error on transaction rollback.", txE);
+        }
+    }
+
+    /*private void initializeConnectionsForList(List<DocGroupPermissions> docGroupPermissionsList) {
         for (DocGroupPermissions docGroupPermissions : docGroupPermissionsList) {
             initializeConnections(docGroupPermissions);
         }
@@ -227,5 +233,5 @@ public class DocGroupPermissionsDao extends GenericHibernateDao<DocGroupPermissi
     private void initializeConnections(DocGroupPermissions docGroupPermissions) {
         Hibernate.initialize(docGroupPermissions.getDocument());
         Hibernate.initialize(docGroupPermissions.getGroup());
-    }
+    }*/
 }

@@ -1,21 +1,21 @@
 package com.nikitiuk.documentstoragewithsearchcapability.dao.implementations;
 
 import com.nikitiuk.documentstoragewithsearchcapability.dao.GenericHibernateDao;
-import com.nikitiuk.documentstoragewithsearchcapability.entities.*;
-import com.nikitiuk.documentstoragewithsearchcapability.security.UserPrincipal;
+import com.nikitiuk.documentstoragewithsearchcapability.entities.DocBean;
+import com.nikitiuk.documentstoragewithsearchcapability.entities.FolderBean;
+import com.nikitiuk.documentstoragewithsearchcapability.entities.UserBean;
 import com.nikitiuk.documentstoragewithsearchcapability.exceptions.AlreadyExistsException;
 import com.nikitiuk.documentstoragewithsearchcapability.rest.services.helpers.InspectorService;
 import com.nikitiuk.documentstoragewithsearchcapability.utils.HibernateUtil;
-import com.nikitiuk.javabeansinitializer.annotations.Bean;
-import org.apache.commons.collections.CollectionUtils;
-import org.hibernate.Hibernate;
+import org.apache.commons.collections4.CollectionUtils;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.hibernate.jpa.QueryHints;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class DocDao extends GenericHibernateDao<DocBean> {
 
@@ -44,10 +44,6 @@ public class DocDao extends GenericHibernateDao<DocBean> {
             transaction = session.beginTransaction();
             DocBean docBean = session.createQuery("FROM DocBean doc JOIN FETCH doc.documentsPermissions WHERE doc.id = :id", DocBean.class)
                     .setParameter("id", documentId).uniqueResult();
-            /*DocBean docBean = session.get(DocBean.class, documentId);
-            if(docBean != null) {
-                initializeConnections(docBean);
-            }*/
             transaction.commit();
             session.close();
             return docBean;
@@ -65,9 +61,6 @@ public class DocDao extends GenericHibernateDao<DocBean> {
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             transaction = session.beginTransaction();
             List<DocBean> docBeanList = session.createQuery("FROM DocBean doc LEFT JOIN FETCH doc.documentsPermissions", DocBean.class).list();
-            /*if(CollectionUtils.isNotEmpty(docBeanList)) {
-                initializeConnectionsForList(docBeanList);
-            }*/
             transaction.commit();
             return docBeanList;
         } catch (Exception e) {
@@ -91,11 +84,6 @@ public class DocDao extends GenericHibernateDao<DocBean> {
             docBeanList = session.createQuery("SELECT DISTINCT doc FROM DocBean doc JOIN FETCH doc.documentsPermissions permissions " +
                     "WHERE permissions.group.id IN (:ids)", DocBean.class).setParameterList("ids", groupIds)
                     .setHint(QueryHints.HINT_PASS_DISTINCT_THROUGH, false).list();
-            /*docBeanList = session.createQuery("SELECT DISTINCT doc FROM DocBean doc INNER JOIN DocGroupPermissions permissions ON doc.id = permissions.document.id " +
-                    "WHERE permissions.group.id IN (:ids)", DocBean.class).setParameterList("ids", groupIds).list();*/
-            /*if(CollectionUtils.isNotEmpty(docBeanList)){
-                initializeConnectionsForList(docBeanList);
-            }*/
             transaction.commit();
             return docBeanList;
         } catch (Exception e) {
@@ -109,7 +97,7 @@ public class DocDao extends GenericHibernateDao<DocBean> {
 
     public List<DocBean> getDocumentsForUserInFolder(UserBean userBean, FolderBean folderBean) throws Exception {
         List<DocBean> docBeanList = new ArrayList<>();
-        if(folderBean == null || folderBean.getPath() == null
+        if (folderBean == null || folderBean.getPath() == null
                 || CollectionUtils.isEmpty(userBean.getGroups())) {
             return docBeanList;
         }
@@ -120,11 +108,6 @@ public class DocDao extends GenericHibernateDao<DocBean> {
             docBeanList = session.createQuery("SELECT DISTINCT doc FROM DocBean doc JOIN FETCH doc.documentsPermissions permissions " +
                     "WHERE permissions.group.id IN (:ids) AND doc.path LIKE '" + folderBean.getPath() + "%'", DocBean.class)
                     .setParameterList("ids", groupIds).setHint(QueryHints.HINT_PASS_DISTINCT_THROUGH, false).list();
-            /*docBeanList = session.createQuery("SELECT DISTINCT doc FROM DocBean doc INNER JOIN DocGroupPermissions permissions ON doc.id = permissions.document.id " +
-                    "WHERE permissions.group.id IN (:ids) AND doc.path LIKE '" + folderBean.getPath() + "%'", DocBean.class).setParameterList("ids", groupIds).list();
-            if(CollectionUtils.isNotEmpty(docBeanList)){
-                initializeConnectionsForList(docBeanList);
-            }*/
             transaction.commit();
             return docBeanList;
         } catch (Exception e) {
@@ -141,13 +124,8 @@ public class DocDao extends GenericHibernateDao<DocBean> {
         Transaction transaction = null;
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             transaction = session.beginTransaction();
-            /*session.createSQLQuery("DELETE FROM Document_group_permissions WHERE document_id = (:id)")
-                    .setParameter("id", documentId).executeUpdate();*/
             session.createQuery("DELETE FROM DocBean WHERE id = (:id)")
                     .setParameter("id", documentId).executeUpdate();
-            /*session.createSQLQuery("DELETE FROM Document_group_permissions WHERE document_id IN (SELECT * FROM (SELECT id FROM Documents WHERE document_path = '"
-                    + docBean.getPath() + "') AS X)").executeUpdate();
-            session.createQuery("DELETE FROM DocBean WHERE path = '" + docBean.getPath() + "'").executeUpdate();*/
             transaction.commit();
         } catch (Exception e) {
             logger.error("Error at DocDao delete: ", e);
@@ -167,7 +145,7 @@ public class DocDao extends GenericHibernateDao<DocBean> {
 
     private DocBean save(DocBean document) throws Exception {
         Transaction transaction = null;
-        try (Session session = HibernateUtil.getSessionFactory().openSession()){
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             transaction = session.beginTransaction();
             session.saveOrUpdate(document);
             transaction.commit();
@@ -178,18 +156,6 @@ public class DocDao extends GenericHibernateDao<DocBean> {
                 transaction.rollback();
             }
             throw e;
-        }
-    }
-
-    private void initializeConnectionsForList(List<DocBean> docBeanList) {
-        for(DocBean docBean : docBeanList) {
-            initializeConnections(docBean);
-        }
-    }
-
-    private void initializeConnections(DocBean document) {
-        for (DocGroupPermissions docGroupPermissions : document.getDocumentsPermissions()) {
-            Hibernate.initialize(docGroupPermissions);
         }
     }
 }

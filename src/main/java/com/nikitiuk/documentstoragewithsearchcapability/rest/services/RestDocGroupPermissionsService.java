@@ -5,7 +5,6 @@ import com.nikitiuk.documentstoragewithsearchcapability.entities.DocGroupPermiss
 import com.nikitiuk.documentstoragewithsearchcapability.exceptions.NoValidDataFromSourceException;
 import com.nikitiuk.documentstoragewithsearchcapability.rest.entities.DocGroupPermissionsRequest;
 import com.nikitiuk.documentstoragewithsearchcapability.rest.services.helpers.InspectorService;
-import javassist.NotFoundException;
 
 import java.util.List;
 
@@ -21,18 +20,14 @@ public class RestDocGroupPermissionsService {
         InspectorService.checkIfIdIsNull(groupId);
         List<DocGroupPermissions> docGroupPermissionsList =
                 docGroupPermissionsDao.getPermissionsForDocumentsForGroup(groupId);
-        if (docGroupPermissionsList == null) {
-            throw new NotFoundException("No permissions for such group.");
-        }
+        InspectorService.checkIfDesiredCollectionIsEmpty(docGroupPermissionsList);
         return docGroupPermissionsList;
     }
 
     public List<DocGroupPermissions> getPermissionsForDocumentByDocId(Long docId) throws Exception {
         InspectorService.checkIfIdIsNull(docId);
         List<DocGroupPermissions> docGroupPermissionsList = docGroupPermissionsDao.getPermissionsForDocument(docId);
-        if (docGroupPermissionsList == null) {
-            throw new NotFoundException("No permissions for such document.");
-        }
+        InspectorService.checkIfDesiredCollectionIsEmpty(docGroupPermissionsList);
         return docGroupPermissionsList;
     }
 

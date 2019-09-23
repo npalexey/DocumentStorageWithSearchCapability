@@ -1,7 +1,6 @@
 package com.nikitiuk.documentstoragewithsearchcapability.entities;
 
-import com.nikitiuk.documentstoragewithsearchcapability.entities.helpers.enums.Permissions;
-import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections4.CollectionUtils;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.*;
 
@@ -12,7 +11,6 @@ import javax.persistence.Table;
 import javax.persistence.*;
 import java.io.Serializable;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Objects;
 import java.util.Set;
 
@@ -112,8 +110,8 @@ public class GroupBean implements Serializable {
 
     public Set<String> getUserNamesSet() {
         Set<String> userNames = new HashSet<>();
-        if(CollectionUtils.isNotEmpty(users)){
-            for(UserBean user : users) {
+        if (CollectionUtils.isNotEmpty(users)) {
+            for (UserBean user : users) {
                 userNames.add(user.getName());
             }
         }

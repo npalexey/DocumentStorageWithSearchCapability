@@ -6,7 +6,7 @@ import com.nikitiuk.documentstoragewithsearchcapability.dao.implementations.Grou
 import com.nikitiuk.documentstoragewithsearchcapability.entities.*;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.helpers.enums.Permissions;
 import com.nikitiuk.documentstoragewithsearchcapability.utils.HibernateUtil;
-import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections4.CollectionUtils;
 import org.hibernate.Hibernate;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
