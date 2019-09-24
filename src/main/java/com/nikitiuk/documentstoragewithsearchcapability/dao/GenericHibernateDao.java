@@ -49,7 +49,6 @@ public class GenericHibernateDao<T> {
         return executeFunction((session) -> session.createQuery("FROM " + clazz.getSimpleName(), clazz).list());
     }
 
-
     public void create(T entity) {
         executeFunction((session) -> {
             List<T> beanList = session.createQuery("FROM " + clazz.getSimpleName(), clazz).list();
