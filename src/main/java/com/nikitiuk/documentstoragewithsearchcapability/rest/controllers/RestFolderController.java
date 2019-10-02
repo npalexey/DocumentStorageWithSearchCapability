@@ -11,7 +11,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.security.PermitAll;
-import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.*;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Context;
@@ -31,7 +30,7 @@ public class RestFolderController {
     @GET
     @Produces(MediaType.TEXT_HTML)
     public Response getFolders(@Context ContainerRequestContext context) {
-        try{
+        try {
             List<FolderBean> folderBeanList = folderService.getFolders(
                     (SecurityContextImplementation) context.getSecurityContext());
             return ThymeleafResponseService.visualiseEntitiesInStorage(EntityTypes.FOLDER, folderBeanList);

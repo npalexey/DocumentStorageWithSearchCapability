@@ -81,7 +81,7 @@ public class AuthenticationFilter implements ContainerRequestFilter {
                 RolesAllowed rolesAnnotation = method.getAnnotation(RolesAllowed.class);
                 Set<String> rolesSet = new HashSet<>(Arrays.asList(rolesAnnotation.value()));
                 //Is user valid?
-                if (!chekUserForValidityAndSetContextIfSo(usernameAndPassword, rolesSet, requestContext)) {
+                if (!checkUserForValidityAndSetContextIfSo(usernameAndPassword, rolesSet, requestContext)) {
                     requestContext.abortWith(ResponseService.errorResponse(
                             Response.Status.UNAUTHORIZED, "You cannot access this resource"));
                 }
@@ -121,8 +121,8 @@ public class AuthenticationFilter implements ContainerRequestFilter {
         requestContext.setSecurityContext(new SecurityContextImplementation(createUserPrincipal(user), scheme));
     }
 
-    private boolean chekUserForValidityAndSetContextIfSo(final String usernameAndPassword,
-                                                         final Set<String> rolesSet, ContainerRequestContext requestContext) throws Exception {
+    private boolean checkUserForValidityAndSetContextIfSo(final String usernameAndPassword,
+                                                          final Set<String> rolesSet, ContainerRequestContext requestContext) throws Exception {
         final String [] decoupledUsernameAndPassword = decoupleBasicAuth(usernameAndPassword);
 
         //Step 1. Fetch password from database and match with password in argument
