@@ -73,7 +73,7 @@ public class RestDocController {
 
     @PermitAll
     @GET
-    @Path("{documentid}")
+    @Path("/{documentid}")
     public Response downloadDocument(@Context ContainerRequestContext context,
                                      @PathParam("documentid") long documentId) {
         try {
