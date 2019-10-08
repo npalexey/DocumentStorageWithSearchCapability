@@ -1,8 +1,5 @@
 package com.nikitiuk.documentstoragewithsearchcapability.starter;
 
-import com.nikitiuk.javabeansinitializer.annotations.ApplicationCustomContext;
-import com.nikitiuk.javabeansinitializer.annotations.ContextInitializer;
-import org.apache.commons.logging.impl.Log4JLogger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -10,13 +7,11 @@ import javax.servlet.ServletContextEvent;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.Properties;
-import java.util.logging.Level;
 
 public class ApplicationListener implements javax.servlet.ServletContextListener {
 
     private static final Logger logger = LoggerFactory.getLogger(ApplicationListener.class);
-    //private ContextInitializer contextInitializer = new ContextInitializer();
-    private static ApplicationCustomContext applicationCustomContext = null;
+    //private static ApplicationCustomContext applicationCustomContext = null;
 
     @Override
     public void contextInitialized(ServletContextEvent servletContextEvent) {
@@ -35,18 +30,18 @@ public class ApplicationListener implements javax.servlet.ServletContextListener
             System.setProperty("tika.config", prop.getProperty("TIKA_CONFIG"));
             System.setProperty("default.folder", prop.getProperty("DEFAULT_FOLDER"));
             inputStream.close();
-            applicationCustomContext = new ContextInitializer().initializeContext("com.nikitiuk.documentstoragewithsearchcapability");
+            //applicationCustomContext = new ContextInitializer().initializeContext("com.nikitiuk.documentstoragewithsearchcapability");
         } catch (Exception e) {
             logger.error("Error at ApplicationListener contextInitialized: ", e);
         }
     }
 
-    public static ApplicationCustomContext getContext() {
+    /*public static ApplicationCustomContext getContext() {
         if(applicationCustomContext == null) {
             return applicationCustomContext = new ContextInitializer().initializeContext("com.nikitiuk.documentstoragewithsearchcapability");
         }
         return applicationCustomContext;
-    }
+    }*/
 
     @Override
     public void contextDestroyed(ServletContextEvent sce) {

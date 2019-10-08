@@ -24,14 +24,7 @@ import java.util.List;
 public class RestUserController {
 
     private static final Logger logger = LoggerFactory.getLogger(RestUserController.class);
-    private RestUserService userService/* = new RestUserService()*/;
-
-    public RestUserController() {
-        this.userService = (RestUserService) ApplicationListener
-                .getContext()
-                .getBeanContainer()
-                .get(RestUserService.class);
-    }
+    private RestUserService userService = new RestUserService();
 
     @PermitAll
     @GET

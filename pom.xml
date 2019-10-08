@@ -179,11 +179,6 @@
             <artifactId>tika-core</artifactId>
             <version>1.22</version>
         </dependency>
-        <dependency>
-            <groupId>com.nikitiuk</groupId>
-            <artifactId>java-beans-initializer</artifactId>
-            <version>1.0-SNAPSHOT</version>
-        </dependency>
     </dependencies>
 
     <build>

@@ -5,7 +5,6 @@ import com.nikitiuk.documentstoragewithsearchcapability.entities.GroupBean;
 import com.nikitiuk.documentstoragewithsearchcapability.entities.UserBean;
 import com.nikitiuk.documentstoragewithsearchcapability.exceptions.AlreadyExistsException;
 import com.nikitiuk.documentstoragewithsearchcapability.utils.HibernateUtil;
-import com.nikitiuk.javabeansinitializer.annotations.Bean;
 import javassist.NotFoundException;
 import org.hibernate.Hibernate;
 import org.hibernate.Session;
@@ -13,9 +12,12 @@ import org.hibernate.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
-@Bean
+
 public class UserDao extends GenericHibernateDao<UserBean> {
 
     private static final Logger logger = LoggerFactory.getLogger(UserDao.class);
@@ -50,7 +52,7 @@ public class UserDao extends GenericHibernateDao<UserBean> {
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             transaction = session.beginTransaction();
             UserBean userBean = session.get(UserBean.class, id);
-            if(userBean != null) {
+            if (userBean != null) {
                 Hibernate.initialize(userBean.getGroups());
             }
             transaction.commit();
@@ -71,7 +73,7 @@ public class UserDao extends GenericHibernateDao<UserBean> {
             transaction = session.beginTransaction();
             UserBean userBean = session.createQuery("FROM UserBean WHERE name = '"
                     + userName + "'", UserBean.class).uniqueResult();
-            if(userBean != null) {
+            if (userBean != null) {
                 Hibernate.initialize(userBean.getGroups());
                 /*for(GroupBean groupBean : userBean.getGroups()){
                     Hibernate.initialize(groupBean.getDocumentsPermissions());
@@ -90,7 +92,7 @@ public class UserDao extends GenericHibernateDao<UserBean> {
         }
     }
 
-    public UserBean saveUser(UserBean userBean) throws Exception{
+    public UserBean saveUser(UserBean userBean) throws Exception {
         try {
             if (exists(userBean)) {
                 throw new AlreadyExistsException("Such user already exists.");
@@ -103,7 +105,7 @@ public class UserDao extends GenericHibernateDao<UserBean> {
         }
     }
 
-    public UserBean updateUser(UserBean userBean) throws Exception{
+    public UserBean updateUser(UserBean userBean) throws Exception {
         try {
             UserBean updatedUser = getUserByName(userBean.getName());
             if (updatedUser == null) {
@@ -137,7 +139,7 @@ public class UserDao extends GenericHibernateDao<UserBean> {
     public boolean exists(UserBean user) throws Exception {
         Session session = HibernateUtil.getSessionFactory().openSession();
         return session.createQuery(
-                "SELECT 1 FROM UserBean WHERE EXISTS (SELECT 1 FROM UserBean WHERE name = '"+ user.getName() +"')")
+                "SELECT 1 FROM UserBean WHERE EXISTS (SELECT 1 FROM UserBean WHERE name = '" + user.getName() + "')")
                 .uniqueResult() != null;
     }
 
@@ -164,14 +166,14 @@ public class UserDao extends GenericHibernateDao<UserBean> {
             throw new Exception("No UserBean was passed to check.");
         }
         Set<GroupBean> checkedGroups = new HashSet<>();
-        if (user.getGroups() == null || user.getGroups().isEmpty()){
+        if (user.getGroups() == null || user.getGroups().isEmpty()) {
             return checkedGroups;
         }
         Transaction transaction = null;
-        try{
+        try {
             Session session = HibernateUtil.getSessionFactory().openSession();
             Set<String> groupNames = new HashSet<>();
-            for(GroupBean groupBean : user.getGroups()){
+            for (GroupBean groupBean : user.getGroups()) {
                 groupNames.add(groupBean.getName());
             }
             transaction = session.beginTransaction();

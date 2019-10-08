@@ -2,10 +2,7 @@ package com.nikitiuk.documentstoragewithsearchcapability.security;
 
 import com.nikitiuk.documentstoragewithsearchcapability.entities.GroupBean;
 
-import javax.security.auth.Subject;
 import java.security.Principal;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
 
 public class UserPrincipal implements Principal {
@@ -30,10 +27,6 @@ public class UserPrincipal implements Principal {
         this.id = id;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
     public Set<GroupBean> getGroups() {
         return groups;
     }
@@ -45,5 +38,9 @@ public class UserPrincipal implements Principal {
     @Override
     public String getName() {
         return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 }

@@ -5,6 +5,7 @@ import com.nikitiuk.documentstoragewithsearchcapability.entities.GroupBean;
 import javax.ws.rs.core.SecurityContext;
 
 public class SecurityContextImplementation implements SecurityContext {
+
     private UserPrincipal user;
     private String scheme;
 
@@ -14,13 +15,15 @@ public class SecurityContextImplementation implements SecurityContext {
     }
 
     @Override
-    public UserPrincipal getUserPrincipal() {return this.user;}
+    public UserPrincipal getUserPrincipal() {
+        return this.user;
+    }
 
     @Override
     public boolean isUserInRole(String s) {
         if (user.getGroups() != null) {
-            for(GroupBean groupBean : user.getGroups()){
-                if(groupBean.getName().equals(s)){
+            for (GroupBean groupBean : user.getGroups()) {
+                if (groupBean.getName().equals(s)) {
                     return true;
                 }
             }
@@ -29,7 +32,9 @@ public class SecurityContextImplementation implements SecurityContext {
     }
 
     @Override
-    public boolean isSecure() {return "https".equals(this.scheme);}
+    public boolean isSecure() {
+        return "https".equals(this.scheme);
+    }
 
     @Override
     public String getAuthenticationScheme() {
